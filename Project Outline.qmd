@@ -1,0 +1,40 @@
+---
+title: "Project Outline - Data Analysis Using R"
+subtitle: "Impact of school index on housing prices in NRW"
+author: 
+  - "Yanyi Yi" 
+  - "Daniel Tobien"
+  - "Luc Wichtmann"
+date: "12-03-2025"
+format:
+  beamer:
+    theme: Frankfurt
+    colortheme: seahorse
+bibliography: references.bib
+editor: source
+---
+
+## Research question
+
+How does the social index of schools influence housing prices, and does the proximity to schools modulate this effect in urban areas?
+
+## Findings from literature
+
+Many papers suggest that there is a connection between school performance or school quality and housing prices as parents value the education of their children [see @Machin_2011].
+
+## Usage of available data
+
+## Proposed empirical model
+
+## Shortcomings of our empirical strategy
+- A regression-based hedonic model in the housing context might be prone to
+certain endogeneity problems due to omitted variables.
+- A reason for that is the extensive scope of relevant housing characteristics and demographic features
+
+\vspace{0.5cm}
+
+> Source: @Machin_2011
+
+
+## References
+
