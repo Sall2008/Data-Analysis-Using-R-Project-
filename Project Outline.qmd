@@ -14,27 +14,42 @@ bibliography: references.bib
 editor: source
 ---
 
-## Research question
-
-How does the social index of schools influence housing prices, and does the proximity to schools modulate this effect in urban areas?
-
 ## Findings from literature
 
-Many papers suggest that there is a connection between school performance or school quality and housing prices as parents value the education of their children [see @Machin_2011].
+- Many papers suggest that there is a connection between school performance or school quality and housing prices as parents value the education of their children [see @Machin_2011].
+- Given the broader interest in how school-related factors shape local housing markets, we focus specifically on the role of the school social index.
+
+## Research question
+
+\begin{block}{}
+\large
+How does the social index of schools influence housing prices, and does the 
+proximity to schools modulate this effect in urban areas?
+\end{block}
 
 ## Usage of available data
+- We are planning to use the cross-sectional real-estate dataset from the RWI as well as the general school and -index dataset.
+- Panel data will not be used since school and index data is only available for one year. 
 
-## Proposed empirical model
+## Empirical approaches in the literature
+In their paper [@Black_Machin_2011] identified six main approaches to analyze the relationship between school characteristics and housing prices:
+
+1. Regression based estimates
+2. Parametric and non-parametric modelling of unobservable factors
+3. Instrumental variables approaches
+4. Discontinuity methods using administrative boundaries
+5. Difference-in-difference, repeat sales and quasi-experimental methods
+6. Combined methods
+
+
 
 ## Shortcomings of our empirical strategy
-- A regression-based hedonic model in the housing context might be prone to
-certain endogeneity problems due to omitted variables.
-- A reason for that is the extensive scope of relevant housing characteristics and demographic features
+
+-   A regression-based hedonic model in the housing context might be prone to certain endogeneity problems due to omitted variables.
+-   A reason for that is the extensive scope of relevant housing characteristics and demographic features
 
 \vspace{0.5cm}
 
 > Source: @Machin_2011
 
-
 ## References
-
