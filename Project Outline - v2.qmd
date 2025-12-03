@@ -2,7 +2,7 @@
 title: "Project Outline Presentation"
 subtitle: "Housing Prices & School Quality in NRW"
 author: "Daniel Jeffrey Tobien, Yanyi Ji, Luc Wichtmann"
-date: "⁠ r Sys.Date() ⁠" 
+date: "`r Sys.Date()`"
 format: beamer
 aspectratio: 169  
 theme: "Frankfurt"  
@@ -403,5 +403,6 @@ print(p5_sanity)
 •⁠  ⁠Model Application: Apply appropriate regression and spatial models to examine the impact of school quality and proximity on housing prices.
 
 •⁠  ⁠Result Interpretation: Analyze the model outputs, interpret key findings, and identify trends.
+
 
 •⁠  ⁠Prepare Report & Presentation: Summarize results, create visualizations, and prepare findings for presentation to stakeholders.
