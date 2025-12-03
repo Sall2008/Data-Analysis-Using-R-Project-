@@ -41,13 +41,13 @@ editor: source
 
 
 •⁠  ⁠*Why is this interesting to us?*
-  - Analyzing the real estate market's reaction to various factors is particularly interesting from an economic standpoint, as it offers insights into market dynamics. Additionally, the topic is personally intriguing, adding an extra layer of motivation to explore it further. 
-  - We also believe that understanding the relationship between school quality and property prices can provide valuable insights for researchers and individuals interested in the real estate market.
+  -  Analyzing the real estate market's reaction to various factors is particularly interesting from an economic standpoint, as it offers insights into market dynamics. Additionally, the topic is personally intriguing, adding an extra layer of motivation to explore it further. 
+  -  We also believe that understanding the relationship between school quality and property prices can provide valuable insights for researchers and individuals interested in the real estate market.
   
 
 •⁠  ⁠*Why is this important in a broader context?*
-  - *Housing markets* are influenced by various social and economic factors, and school quality is also cited as a underestimated determinant of property values, especially in research.\footnote{Youngme Seo, Robert A. Simons, 2009}
-  - Investigating how much the social index of schools influences housing prices, especially in relation to the proximity of schools, could offer an interesting perspective on the interplay between these factors in urban environments.
+  -  *Housing markets* are influenced by various social and economic factors, and school quality is also cited as a underestimated determinant of property values, especially in research.\footnote{Youngme Seo, Robert A. Simons, 2009}
+  -  Investigating how much the social index of schools influences housing prices, especially in relation to the proximity of schools, could offer an interesting perspective on the interplay between these factors in urban environments.
 
 ---
 
