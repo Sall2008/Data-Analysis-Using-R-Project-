@@ -1,53 +1,90 @@
-----2025/12/20----
-Add two files:
-**1. data_prep.R** (This is the data prepration step.)
-   
-**2. model.R** (This is the modelling step.)
-   The script requires a pre-existing dataframe df_analysis containing:
+# Housing Prices & School Distance Analysis
 
-2.1 Core Variables :
+**Last Updated:** 2025-12-20
 
-   log_ppsqm: log(price per square meter) - **outcome**
-   
-   social_index: school social index - **core explanatory variable** 
-   
-   dist_nearest_km: distance to nearest school in kilometers - **core explanatory variable** 
-   
-   school_ID_nearest: nearest school ID (for clustering)
-   
-   gid2019: location ID (for fixed effects)
-   
-   wohnflaeche: living area (housing control)
-   
-   house_age: house age in years (housing control)
-   
-   renovated: renovation indicator (housing control)
+This project consists of two sequential R scripts: **Data Preparation** and **Econometric Modeling**.
 
-2.2 The script creates unified variable names for modeling:
-  
-  Outcome: y_log_ppsqm
-  
-  Key regressors: x_social_index, x_dist_km
-  
-  Controls: c_area_sqm, c_house_age, c_renovated
-  
-  FE/clustering: fe_location, cl_school
+---
 
-2.3 Sample Filtering
-  
-  Removes observations with missing values in any core variable.
+##  1. `data_prep.R` (Data Preparation)
 
-2.4 Regression Ladder
-  
-  Baseline 0 (B0): Distance only (y ~ distance)
-  
-  Baseline 1 (B1): Distance + Social Index (additive)
-  
-  Model 2 (M2): Interaction only (y ~ social_index * distance)
-  
-  Model 3 (M3): Interaction + Housing controls
-  
-  Model 4 (M4): Main specification​ - Interaction + Controls + Location FE
+This script handles the complete ETL pipeline: importing raw data, cleaning, merging, and generating descriptive statistics. It produces the final `df_analysis` dataset used for modeling.
 
-  Robustness (R): Log-distance specification (non-linear decay)
+###  1.1 Data Inputs
 
+| Source Data | Content | Key Identifier |
+| :--- | :--- | :--- |
+| **Housing** (`CampusFile_HK_2022.csv`) | RWI-GEO-RED v7 listings (NRW only) | `gid2019` |
+| **School** (`2022_social_index.csv`) | Social index & metadata | School ID |
+| **Distance** (`distance_to_schools.csv`) | Distances from 1km grids to schools | `ergg_1km` |
+| **Region** (`region_data.csv`) | Urban/Non-urban classification | `AGS` |
+
+###  1.2 Processing Workflow
+
+1. **Cleaning:**
+    * **Housing:** Standardizes `gid2019`, censors extreme values (price, area, rooms), and creates feature variables (`house_age`, `renovated`).
+    * **Distance:** Filters invalid distances (<0 or >100km) and keeps only the **nearest school** per grid cell.
+    * **School:** Parses social index to numeric; ensures unique School IDs.
+2. **Merging:** Sequential join: `Housing` $\to$ `Distance` $\to$ `School` $\to$ `Region`.
+3. **Diagnostics:** Generates a merge quality table to distinguish between structural missingness (e.g., non-urban) and data errors.
+
+###  1.3 Sample Definition
+
+**Main Sample (`df_analysis`):**
+* **Filters:** Urban regions only, valid distance & social index, positive price & area.
+* **Outcome Variable:**
+```r
+log_ppsqm = log(kaufpreis / wohnflaeche)
+```
+
+**Robustness Sample (`df_analysis_all`):** Includes non-urban regions.
+
+###  1.4 Outputs
+* **Datasets:** `df_analysis.rds`, `df_analysis_all.rds`
+* **Tables:** Merge diagnostics, Descriptive stats (overall & by bins).
+* **Plots:** Histograms, Scatter plots (Price vs. Distance), Boxplots.
+
+---
+
+##  2. `model.R` (Econometric Modeling)
+
+This script performs the regression analysis using `df_analysis`. It estimates the interaction between **School Social Index** and **Distance** on housing prices.
+
+###  2.1 Setup & Variables
+
+* **Pre-requisite:** Requires `df_analysis` from step 1.
+* **Sanity Check:** Stops if core variables are missing.
+* **Standardization:** Maps raw variables to unified modeling names:
+
+| Role | Unified Name | Description |
+| :--- | :--- | :--- |
+| **Outcome** | `y_log_ppsqm` | Log price per sqm |
+| **Key Regressors**| `x_social_index`<br>`x_dist_km` | School Social Index<br>Distance to nearest school (km) |
+| **Controls** | `c_area_sqm`<br>`c_house_age`<br>`c_renovated` | Living area, Age, Renovation status |
+| **Fixed Effects** | `fe_location` | Location ID (`gid2019`) |
+| **Cluster** | `cl_school` | Nearest School ID |
+
+###  2.2 Regression Specifications
+
+The analysis follows a "regression ladder" of increasing complexity. Standard errors are clustered at the school level.
+
+1. **Baseline Models:**
+    * **B0:** $Price \sim Distance$
+    * **B1:** $Price \sim Distance + SocialIndex$
+2. **Interaction Models:**
+    * **M2:** $Price \sim SocialIndex \times Distance$
+    * **M3:** M2 + Housing Controls
+    * **M4 (Main):** M3 + Location Fixed Effects
+3. **Robustness (R):** Uses log-distance $\log(Distance + 0.05)$ to test non-linear spatial decay.
+
+###  2.3 Outputs
+
+* **Console:** Coefficient estimates for the main FE model.
+* **Tables:** Publication-ready regression table (using `modelsummary`).
+* **Visualization:** Marginal effects plot (`plot_marginal_effect_social_by_distance.png`) showing the impact of social index across different distances.
+
+---
+
+###  How to Run
+1. Run `data_prep.R` to generate the clean datasets.
+2. Run `model.R` to generate regression tables and plots.
