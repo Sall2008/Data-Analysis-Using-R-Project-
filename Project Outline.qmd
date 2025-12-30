@@ -2,7 +2,7 @@
 title: "Project Outline Presentation"
 subtitle: "Housing Prices & School Quality in NRW"
 author: "Daniel Jeffrey Tobien, Yanyi Ji, Luc Wichtmann"
-date: "⁠ r Sys.Date() ⁠" 
+date: "`r Sys.Date()`"
 format: beamer
 aspectratio: 169  
 theme: "Frankfurt"  
@@ -37,15 +37,27 @@ editor: source
 
 ---
 
-## Motivation & Research Question  
+## Motivation
 
+•⁠ ⁠*Why is this interesting to us?*
 
-•⁠  ⁠*Why is this interesting to us?*
-  - We believe that understanding this relationship can offer valuable insights for individuals making decisions about where to live based on local education quality.
-Die Qualität von Schulen hat einen entscheidenden Einfluss auf den Wert von Immobilien in der Region. In Nordrhein-Westfalen (NRW) untersuchen wir die folgenden Fragen:
+-    Analyzing the real estate market's reaction to various factors is particularly interesting from an economic standpoint, as it offers insights into market dynamics. Additionally, the topic is personally intriguing, adding an extra layer of motivation to explore it further.
 
-•⁠  ⁠*Why is this important in a broader context?*
-  - *Housing markets* are influenced by various social and economic factors, and school quality is often cited as a key determinant of property values, also in research.\footnote{Youngme Seo, Robert A. Simons, 2009}
+-   We also believe that understanding the relationship between school quality and property prices can provide valuable insights for researchers and individuals interested in the real estate market.
+
+---
+
+## Motivation
+
+•⁠ ⁠*Why is this important in a broader context?*
+
+-   *Housing markets* are influenced by various social and economic factors, and school quality is also cited as a underestimated determinant of property values, especially in research.\footnote{Youngme Seo, Robert A. Simons, 2009}
+
+-   Investigating how much the social index of schools influences housing prices, especially in relation to the proximity of schools, could offer an interesting perspective on the interplay between these factors in urban environments.
+
+---
+
+## Research Question 
 
 \vspace{0.4cm}
 
@@ -293,50 +305,64 @@ p7_distance <- df_dist %>%
 
 ```
 
-## Data
+## Data : Housing Price Transformation
+The raw price distribution (left) is highly **right-skewed**, violating the normality assumption required for OLS regression. By applying a **log-transformation** (right), the data approximates a normal distribution, making it suitable for our later analysis model.
 
 ```{r}
+#| layout-ncol: 2
+#| echo: false
+
 print(p1_price_raw)
-```
-
-## Data 
-
-```{r}
 print(p2_price_log)
 ```
 
 
-## Data
+## Data : School Quality & Proximity
+These two variables directly address our research question regarding the impact of school quality and distance on housing prices.
 
 ```{r}
-print(p3_age)
-```
+#| layout-ncol: 2
+#| echo: false
 
-## Data
-
-```{r}
-print(p4_area_log)
-```
-
-## Data
-
-```{r}
-print(p5_sanity)
-```
-
-## Data
-
-```{r}
 print(p6_social)
-```
-
-
-## Data
-
-```{r}
 print(p7_distance)
 ```
 
+## Data : Housing Characteristics
+Our sample captures the diversity of the housing stock in NRW. We observe a bimodal age structure (Post-war reconstruction vs. Modern development) and a log-normally distributed plot size (Median: 531 sqm).
+```{r}
+#| layout-ncol: 2
+#| echo: false
+
+print(p3_age)
+print(p4_area_log)
+```
+
+## Data Validation
+
+::: {.columns}
+
+::: {.column width="40%"}
+       
+\textbf{Sanity Check Analysis}
+
+- A clear *positive correlation* is observed.
+- This confirms economic intuition: *larger houses cost more*.
+- The plot helps visually identify *extreme values* for further cleaning.
+:::
+
+::: {.column width="60%"}
+```{r}
+#| out-width: "100%"
+#| fig-align: "center"
+#| echo: false
+
+print(p5_sanity)
+```
+:::
+
+:::
+  
 ## Empirical approaches in the literature
 
 •⁠  ⁠In the paper from Black & Machin, they identified six main approaches to analyze the relationship between school characteristics and housing prices:
@@ -384,4 +410,7 @@ print(p7_distance)
 
 •⁠  ⁠Result Interpretation: Analyze the model outputs, interpret key findings, and identify trends.
 
+
 •⁠  ⁠Prepare Report & Presentation: Summarize results, create visualizations, and prepare findings for presentation to stakeholders.
+
+
