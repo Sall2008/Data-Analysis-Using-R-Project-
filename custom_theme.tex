@@ -1,0 +1,25 @@
+%------------------------------------------------------------------------------%
+% Custom Footer
+%------------------------------------------------------------------------------%
+
+\setbeamertemplate{footline}{%
+  % Show footer only from slide 2 onward
+  \ifnum\insertframenumber>1
+    \begin{beamercolorbox}[wd=\paperwidth,ht=3.0ex,dp=2.00ex]{footline}
+      \hbox to \paperwidth{%
+        \hfil
+        Ji, Tobien, Wichtmann | Data Analysis using R | Winter Term 25 / 26
+        \hfil
+        % Start numbering at 1 on slide 2:
+        \number\numexpr\insertframenumber\relax
+        \hspace{1em}
+      }
+    \end{beamercolorbox}
+  \fi
+}
+
+%------------------------------------------------------------------------------%
+% Date macro
+%------------------------------------------------------------------------------%
+
+\newcommand{\presentationdate}{4th February 2026}

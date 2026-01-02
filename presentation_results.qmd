@@ -1,0 +1,15 @@
+---
+title: "The Effects of School Proximity and the School Social Index on Housing Prices"
+subtitle: "\\presentationdate"
+author: 
+  - name: Yanyi Ji
+  - name: Daniel Tobien
+  - name: Luc Wichtmann
+format: 
+  beamer:
+    theme: "metropolis"
+    colortheme: "seahorse"
+    include-in-header: custom_theme.tex
+
+---
+
