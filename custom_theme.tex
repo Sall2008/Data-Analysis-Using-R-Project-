@@ -1,0 +1,63 @@
+%------------------------------------------------------------------------------%
+% Custom Footer
+%------------------------------------------------------------------------------%
+
+\xdefinecolor{rubblue}{RGB}{0,53,96}
+
+\setbeamercolor{progress bar}{fg=rubblue}
+\setbeamercolor{footline}{fg=rubblue}
+
+\setbeamertemplate{footline}{%
+  \ifnum\insertframenumber>1
+
+    % Progress bar
+    \begin{beamercolorbox}[wd=\paperwidth,ht=0.4ex,dp=0ex]{progress bar}
+      \rule{\dimexpr\paperwidth*
+        \numexpr\insertframenumber-1\relax
+        /\numexpr\inserttotalframenumber-1\relax}{0.4ex}
+    \end{beamercolorbox}
+
+    % Footer
+    \begin{beamercolorbox}[wd=\paperwidth,ht=3.0ex,dp=2.00ex]{footline}
+      \hbox to \paperwidth{%
+        \hfil
+        Ji, Tobien, Wichtmann | Data Analysis using R | Winter Term 25 / 26
+        \hfil
+        % Start numbering at 1 on slide 2:
+        \number\numexpr\insertframenumber\relax
+        \hspace{1em}
+      }
+    \end{beamercolorbox}
+
+  \fi
+}
+
+%------------------------------------------------------------------------------%
+% Date macro
+%------------------------------------------------------------------------------%
+
+\newcommand{\presentationdate}{4th February 2026}
+
+%------------------------------------------------------------------------------%
+% Clean frametitle: text + full-width blue bar
+%------------------------------------------------------------------------------%
+
+\setbeamercolor{frametitle}{bg=white, fg=black}
+
+\makeatletter
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \par
+  \vspace*{2.5ex} % distance from top → title
+
+  % Title text
+  \hspace*{0.2ex}%
+  {\Large\bfseries\insertframetitle}%
+  \par
+
+  % Full-width rule
+  \hspace*{-\beamer@leftmargin}%
+  {\color{rubblue}\rule{\paperwidth}{0.6pt}}%
+}
+\makeatother
+
