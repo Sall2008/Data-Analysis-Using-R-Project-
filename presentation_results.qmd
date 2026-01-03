@@ -1,5 +1,6 @@
 ---
-title: "The Effects of School Proximity and the School Social Index on Housing Prices"
+title: "The Effects of School Proximity and the School Social Index on Housing 
+Prices"
 subtitle: "\\presentationdate"
 author: 
   - name: Yanyi Ji
@@ -13,3 +14,32 @@ format:
 
 ---
 
+## Agenda
+
+**1. Motivation \& Research Question**  
+Why school proximity and social indices matter and what we empirically test  
+
+\vspace{0.3em}
+
+**2. Data \& Methodology**  
+Data used and our empirical model  
+
+\vspace{0.3em}
+
+**3. Results \& Conclusion**  
+Presentation and interpretation of our findings
+
+\vspace{0.3em}
+
+
+## Motivation \& Research Question
+
+**Research Question:**
+*How does the social index of schools influence housing prices, and does the 
+proximity to schools modulate this effect?*
+
+## Data
+
+## Empirical Framework
+
+##
