@@ -254,6 +254,40 @@ modelsummary(
 library(tidyverse)
 library(modelsummary)
 
+
+path_schooldata <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/school_data (1).xlsx"
+
+# 1) Load school_data and create (school_id -> school_type) lookup
+df_school_lookup <- read_excel(path_schooldata) %>%
+  clean_names() %>%
+  transmute(
+    school_id = as.character(school_id),
+    school_type_from_schooldata = str_pad(as.character(school_type), 2, pad = "0")
+  ) %>%
+  filter(!is.na(school_id), school_id != "") %>%
+  distinct(school_id, .keep_all = TRUE)
+
+# 2) Attach school_type to social index (from Part 1: df_school_meta)
+df_social_with_type <- df_school_meta %>%
+  mutate(
+    school_id = as.character(school_id),
+    social_index = parse_number(as.character(social_index)),
+    social_index = if_else(social_index %in% 1:9, social_index, NA_real_)
+  ) %>%
+  left_join(df_school_lookup, by = "school_id")
+
+# QC (optional)
+cat("\n--- QC: df_social_with_type created ---\n")
+df_social_with_type %>%
+  summarise(
+    n_rows = n(),
+    share_missing_type = mean(is.na(school_type_from_schooldata)),
+    share_missing_si = mean(is.na(social_index))
+  ) %>%
+  print()
+
+
+
 # ==== 1) FIXED RADIUS (5 km): Availability (counts) ====
 
 radius_km <- 5
