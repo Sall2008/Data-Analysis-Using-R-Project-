@@ -16,10 +16,6 @@ path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_school  <- "course_data/school_data/2022_social_index.csv"
 path_dist    <- "course_data/school_data/distance_to_schools.csv"
 
-path_housing <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/CampusFile_HK_2022.csv"
-path_school  <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/2022_social_index.csv"
-path_dist    <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/distance_to_schools.csv"
-
 ## ==== 1.3 Clean Housing Data (HK - Houses for Sale) ====
 raw_housing <- read_delim(
   path_housing, 
@@ -255,7 +251,7 @@ library(tidyverse)
 library(modelsummary)
 
 
-path_schooldata <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/school_data (1).xlsx"
+path_schooldata <- "course_data/school_data/school_data.xlsx"
 
 # 1) Load school_data and create (school_id -> school_type) lookup
 df_school_lookup <- read_excel(path_schooldata) %>%
