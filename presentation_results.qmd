@@ -14,31 +14,53 @@ format:
 
 ---
 
+```{r}
+#| echo: false
+#| eval: false 
+#| file: distance_analysis.R
+```
+
+
 ## Agenda
 
-**1. Motivation \& Research Question**  
-Why school proximity and social indices matter and what we empirically test  
+**1. Motivation \& Contribution to Existing Literature**  
+*Why school proximity and social indices matter.*
 
 \vspace{0.3em}
 
-**2. Data \& Methodology**  
-Data used and our empirical model  
+**2. Research Question**  
+*What we empirically test.*
+
+**3. Data \& Methodology**  
+*Data used and our empirical model.*  
 
 \vspace{0.3em}
 
-**3. Results \& Conclusion**  
-Presentation and interpretation of our findings
+**4. Results \& Conclusion**  
+*Presentation and interpretation of our findings.*
 
 \vspace{0.3em}
 
 
-## Motivation \& Research Question
+## Motivation
 
-**Research Question:**
-*How does the social index of schools influence housing prices, and does the 
-proximity to schools modulate this effect?*
+**Motivation:**
+- Understanding the relationship between school quality and property prices can 
+provide valuable insights for researchers and individuals interested in the real 
+estate market.
+
+## Existing Literature
+
+
+
+## Research Question
+
+**Research Question:** How does the social index of schools influence housing 
+prices, and does the proximity to schools modulate this effect?
 
 ## Data
+
+
 
 ## Empirical Framework
 
