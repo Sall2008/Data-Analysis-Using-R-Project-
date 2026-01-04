@@ -11,45 +11,60 @@ format:
     theme: "metropolis"
     colortheme: "seahorse"
     include-in-header: custom_theme.tex
+bibliography: references_results.bib
 
 ---
 
 ```{r}
 #| echo: false
 #| eval: false 
-#| file: distance_analysis.R
+#| source: distance_analysis.R
 ```
 
 
 ## Agenda
 
-**1. Motivation \& Contribution to Existing Literature**  
+**1. Motivation, Existing Literature \& Research Question**  
 *Why school proximity and social indices matter.*
 
-\vspace{0.3em}
-
-**2. Research Question**  
-*What we empirically test.*
-
-**3. Data \& Methodology**  
+**2. Data \& Methodology**  
 *Data used and our empirical model.*  
 
-\vspace{0.3em}
+\vspace{0.1em}
 
-**4. Results \& Conclusion**  
+**3. Results \& Main Findings**  
 *Presentation and interpretation of our findings.*
 
-\vspace{0.3em}
+\vspace{0.1em}
+
+**4. Limitations \& Conclusion**  
+*Limitations of our work and concluding thoughts.*
+
+\vspace{0.1em}
+
+# Motivation, Existing Literature \& Research Question
+
+## Motivation
+
+- **Personal Interest**: Analyzing the real estate market's reaction to various 
+factors is particularly interesting from an economic standpoint, as it offers 
+insights into market dynamics. Additionally, the topic is personally intriguing, 
+adding an extra layer of motivation to explore it further.
+
+- **Academic and Practical Relevance**: Housing markets are influenced by 
+various social and  economic factors, and school quality is also cited as a 
+underestimated determinant of property values, especially in research 
+[@Seo_Simons_2009].
 
 
 ## Motivation
 
-**Motivation:**
-- Understanding the relationship between school quality and property prices can 
-provide valuable insights for researchers and individuals interested in the real 
-estate market.
+Understanding the relationship between school distance, school quality and 
+property prices can provide valuable insights for researchers and individuals 
+interested in the real estate market.  
 
-## Existing Literature
+
+## Related Literature Background
 
 
 
@@ -58,10 +73,28 @@ estate market.
 **Research Question:** How does the social index of schools influence housing 
 prices, and does the proximity to schools modulate this effect?
 
+# Data \& Methodology
+
 ## Data
 
+- **Housing Data**: Cross-section dataset for  houses for sale published by the 
+Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
+- **School Data**: 
 
+\footnotetext{Data used from both datasets refers to the year 2022.}
+
+
+
+
+
+## Pre-Processing of Housing Data
+
+## Pre-Processing of School Data
 
 ## Empirical Framework
 
 ##
+
+### References {.allowframebreaks}
+::: {#refs}
+:::

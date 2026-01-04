@@ -61,3 +61,20 @@
 }
 \makeatother
 
+%------------------------------------------------------------------------------%
+% Footnote layout
+%------------------------------------------------------------------------------%
+
+% Unnumbered footnotes (slide-level notes)
+\setbeamertemplate{footnote}{%
+  \hspace*{0.5em}\scriptsize\insertfootnotetext
+}
+
+% Unnumbered slide-level footnotes with extra spacing above footer
+\setbeamertemplate{footnote}{%
+  \hspace*{0.5em}%
+  \scriptsize
+  \insertfootnotetext
+  \vspace{0.8ex}
+}
+
