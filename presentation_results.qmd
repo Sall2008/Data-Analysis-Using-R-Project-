@@ -66,12 +66,39 @@ interested in the real estate market.
 
 ## Related Literature Background
 
+Several papers have examined the effect of proximity to schools on housing 
+prices:
+
+- **Empirical Strategies**: While hedonic models are the dominant approach to 
+estimating housing price effects, alternative empirical strategies have also 
+been proposed [see @Black_Machin_2011]
+
+- **Findings**: Empirical evidence suggests that proximity to schools positively 
+affects housing prices [@Rosiers_Lagana_Theriault_2001; @Huang_Hess_2018]
+
+## Related Literature Background
+
+- **Other Factors**: Related work also documents capitalization effects of school 
+reputation [@Chin_Foong_2006], differences between public and private schools 
+[@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; 
+@Metz_2015]
+
+- **Environment of studies**: Much of the literature focuses on settings with 
+binding school catchment areas and measures school quality primarily through 
+test scores rather than demographic composition.
 
 
 ## Research Question
 
-**Research Question:** How does the social index of schools influence housing 
-prices, and does the proximity to schools modulate this effect?
+We study a setting *without binding school catchment areas* (NRW, Germany)
+and assess whether both *school proximity* and a *demographically based school* 
+*social index* are capitalized into housing prices.
+
+## Research Question
+
+**Research Question:** How do school proximity and school social indices affect 
+the prices of detached houses, and do these effects differ between primary and 
+secondary schools in North Rhine–Westphalia?
 
 # Data \& Methodology
 
@@ -81,7 +108,7 @@ prices, and does the proximity to schools modulate this effect?
 Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
 - **School Data**: 
 
-\footnotetext{Data used from both datasets refers to the year 2022.}
+\footnotetext{Data used from both datasets refer to the year 2022.}
 
 
 
@@ -93,8 +120,8 @@ Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
 
 ## Empirical Framework
 
-##
+# Results and Main Findings
 
-### References {.allowframebreaks}
+## References {.allowframebreaks}
 ::: {#refs}
 :::
