@@ -23,7 +23,6 @@ bibliography: references_results.bib
 
 
 ## Agenda
-
 **1. Motivation, Existing Literature \& Research Question**  
 *Why school proximity and social indices matter.*
 
@@ -42,10 +41,9 @@ bibliography: references_results.bib
 
 \vspace{0.1em}
 
+
 # Motivation, Existing Literature \& Research Question
-
 ## Motivation
-
 - **Personal Interest**: Analyzing the real estate market's reaction to various 
 factors is particularly interesting from an economic standpoint, as it offers 
 insights into market dynamics. Additionally, the topic is personally intriguing, 
@@ -58,14 +56,12 @@ underestimated determinant of property values, especially in research
 
 
 ## Motivation
-
 Understanding the relationship between school distance, school quality and 
 property prices can provide valuable insights for researchers and individuals 
 interested in the real estate market.  
 
 
 ## Related Literature Background
-
 Several papers have examined the effect of proximity to schools on housing 
 prices:
 
@@ -76,8 +72,8 @@ been proposed [see @Black_Machin_2011]
 - **Findings**: Empirical evidence suggests that proximity to schools positively 
 affects housing prices [@Rosiers_Lagana_Theriault_2001; @Huang_Hess_2018]
 
-## Related Literature Background
 
+## Related Literature Background
 - **Other Factors**: Related work also documents capitalization effects of school 
 reputation [@Chin_Foong_2006], differences between public and private schools 
 [@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; 
@@ -89,38 +85,93 @@ test scores rather than demographic composition.
 
 
 ## Research Question
-
 We study a setting *without binding school catchment areas* (NRW, Germany)
 and assess whether both *school proximity* and a *demographically based school* 
 *social index* are capitalized into housing prices.
 
 ## Research Question
-
 **Research Question:** How do school proximity and school social indices affect 
 the prices of detached houses, and do these effects differ between primary and 
 secondary schools in North Rhine–Westphalia?
 
+
 # Data \& Methodology
-
 ## Data
-
 - **Housing Data**: Cross-section dataset for  houses for sale published by the 
 Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
-- **School Data**: 
+- **School Data**: School social index dataset from North Rhine-Westphalias
+Ministry of Schools and Education [@MSB_NRW_Schulsozialindex]
 
 \footnotetext{Data used from both datasets refer to the year 2022.}
 
 
+## Pre-Processing of Data: Cleaning
+```{mermaid}
+%%| label: fig-data_cleaning
+%%| fig-height: 2.5
+%%| fig-align: center
+stateDiagram-v2
+    
+    [*] --> Housing
+    Housing: Housing Data
+    state Housing {
+        NA: Removing NA values
+        File: Filtered for single-family houses in NRW
+        Outl: Removed outliers
+        Muta: Renamed column names
+        [*]   --> NA
+        NA --> File
+        File --> Outl
+        Outl --> Muta
+        Muta -->[*]
+    }
+    
+    [*] --> Index
+    Index: School Data
+    state Index {
+        Types: Grouped school types
+        Muta2: Renamed column names
+        [*] --> Types
+        Types --> Muta2
+        Muta2 --> [*]
+    }
+    
+    [*] --> Dist
+    Dist: Distance Data
+    state Dist {
+        [*] --> [*]
+    }
+    
+    [*] --> School_Dist
+    School_Dist: School and Distance Data
+    state School_Dist {
+        Index --> [*]
+        Dist --> [*]
+    }
+    
+```
 
 
+## Pre-Processing of Data: Merging
 
-## Pre-Processing of Housing Data
+```{mermaid}
+%%| label: fig-data_merging
+%%| fig-width: 4
+%%| fig-align: center
+%%| fig-show-cap: false
+flowchart LR
+  A[Housing Data] --> E(Final Dataset)
+  B[School Data] --> D(School & Distance Data)
+  C[Distance Data] --> D(School & Distance Data)
+  D --> E
+```
 
-## Pre-Processing of School Data
 
 ## Empirical Framework
 
+
 # Results and Main Findings
+
 
 ## References {.allowframebreaks}
 ::: {#refs}
