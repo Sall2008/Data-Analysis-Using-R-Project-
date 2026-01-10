@@ -1,0 +1,368 @@
+---
+title: "Proxy Part"
+subtitle: "Housing Prices & School Quality in NRW"
+author: "Daniel Jeffrey Tobien, Yanyi Ji, Luc Wichtmann"
+date: "`r Sys.Date()`"
+format: beamer
+aspectratio: 169  
+theme: "Frankfurt"  
+colortheme: "seahorse"  
+fontsize: 11pt  
+header-includes:
+  - \usepackage{xcolor}  # Ermöglicht die Verwendung von Farben
+  - \usepackage{fontawesome5}  # Fügt Symbole hinzu
+  - \setbeamercolor{block title}{fg=white,bg=blue}  
+  - \setbeamercolor{block body}{fg=white,bg=lightgray} 
+  - \usepackage{graphicx}  
+  - \usepackage{amsmath}  
+  - \usepackage{siunitx}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \setbeamertemplate{footline}{\hfill\insertframenumber\footnotesize{Data Analysis with R}}
+editor: source  
+---
+
+```{r}
+#| include: false
+
+library(ggplot2)
+library(tidyverse)
+library(modelsummary)
+
+theme_set(
+theme_minimal(base_size = 18) +
+theme(
+plot.title = element_text(face = "bold"),
+plot.subtitle = element_text(color = "grey35"),
+axis.title = element_text(face = "bold"),
+panel.grid.minor = element_blank(),
+panel.grid.major.x = element_blank()
+)
+)
+
+source("Distance + Social Index Model.R")
+
+# Construct unit price
+df_plot_base <- df_final %>%
+  mutate(
+    price_per_sqm = kaufpreis / wohnflaeche,
+    log_ppsqm = log(price_per_sqm)
+  )
+
+# Distance bins (same for all types)
+breaks_km <- c(0, 2, 3, 4, 5, Inf)
+labels_km <- c("0–2", "2–3", "3–4", "4–5", ">5")
+
+df_bins_all <- df_plot_base %>%
+  transmute(
+    log_ppsqm,
+    primary_bin   = cut(dist_primary_km, breaks = breaks_km, labels = labels_km, include.lowest = TRUE),
+    secondary_bin = cut(dist_secondary_km, breaks = breaks_km, labels = labels_km, include.lowest = TRUE),
+    any_bin       = cut(dist_any_km, breaks = breaks_km, labels = labels_km, include.lowest = TRUE)
+  ) %>%
+  pivot_longer(
+    cols = ends_with("_bin"),
+    names_to = "type",
+    values_to = "dist_bin"
+  ) %>%
+  mutate(
+    type = recode(type,
+                  primary_bin = "Primary",
+                  secondary_bin = "Secondary",
+                  any_bin = "Any school"),
+    dist_bin = factor(dist_bin, levels = labels_km)
+  ) %>%
+  filter(!is.na(log_ppsqm), !is.na(dist_bin))
+
+df_bin_mean_all <- df_bins_all %>%
+  group_by(type, dist_bin) %>%
+  summarise(
+    mean_log_ppsqm = mean(log_ppsqm, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
+  )
+
+```
+
+## Descriptive Price Gradient
+
+::::: columns
+::: {.column width="42%"}
+**Key patterns**
+
+-   Unit prices decline with distance
+
+-   Strongest gradient for **primary**
+
+-   Secondary is weaker
+
+**Note**
+
+-   Outcome: log(price per sqm)
+
+-   Identical distance bins
+:::
+
+::: {.column width="62%"}
+```{r}
+#| echo: false
+#| fig.width: 9
+#| fig.height: 4.8
+
+ggplot(df_bin_mean_all,
+       aes(x = dist_bin, y = mean_log_ppsqm, color = type, group = type)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  labs(
+    x = "Distance bin (km)",
+    y = "Mean log(price per sqm)",
+    color = NULL
+  ) +
+  theme(
+    legend.position = "top",
+    plot.title = element_blank(),
+    plot.subtitle = element_blank()
+  )
+```
+:::
+:::::
+
+## Does School Type Matter?
+
+-   Housing prices decline more steeply with distance to **primary schools**
+-   Secondary school proximity shows a substantially weaker association
+
+```{r}
+#| echo: false
+#| fig.width: 11
+#| fig.height: 5.5
+
+set.seed(123)  # reproducible sampling
+
+df_long <- df_final %>%
+  select(log_price, dist_primary_km, dist_secondary_km) %>%
+  pivot_longer(
+    cols = starts_with("dist_"),
+    names_to = "school_type",
+    values_to = "dist_km"
+  ) %>%
+  mutate(
+    school_type = recode(
+      school_type,
+      dist_primary_km   = "Primary",
+      dist_secondary_km = "Secondary"
+    ),
+    school_type = factor(school_type, levels = c("Primary", "Secondary"))
+  ) %>%
+  filter(!is.na(log_price), !is.na(dist_km), dist_km <= 10)
+
+# sample points for readability (keep all data for regression lines)
+df_points <- df_long %>% slice_sample(prop = 0.10)
+
+ggplot(df_long, aes(x = dist_km, y = log_price, color = school_type)) +
+  geom_point(data = df_points, alpha = 0.08, size = 1) +
+  geom_smooth(method = "lm", se = TRUE, linewidth = 1.4, alpha = 0.15) +
+  labs(
+    x = "Distance to nearest school (km)",
+    y = "log(housing price)",
+    color = NULL
+  ) +
+  theme(
+    legend.position = c(0.8, 0.8),
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(fill = "white", color = NA),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+```
+
+## Empirical Strategy: Hedonic Models
+
+We estimate a sequence of hedonic regressions:
+
+-   **(1) Naive**: distance to nearest primary school only\
+-   **(2) Controls**: add housing characteristics\
+-   **(3) Non-linear**: allow a quadratic distance effect\
+-   **(4) Multi-school**: include secondary-school distance
+
+```{r}
+#| echo: false
+#| results: asis
+
+spec <- data.frame(
+  Component = c(
+    "Outcome",
+    "Primary distance",
+    "Primary distance squared",
+    "Secondary distance",
+    "Housing controls"
+  ),
+  `(1) Naive` = c(
+    "log(housing price)",
+    "Yes",
+    "No",
+    "No",
+    "No"
+  ),
+  `(2) Controls` = c(
+    "log(housing price)",
+    "Yes",
+    "No",
+    "No",
+    "Yes"
+  ),
+  `(3) Non-linear` = c(
+    "log(housing price)",
+    "Yes",
+    "Yes",
+    "No",
+    "Yes"
+  ),
+  `(4) Multi-school` = c(
+    "log(housing price)",
+    "Yes",
+    "No",
+    "Yes",
+    "Yes"
+  ),
+  check.names = FALSE
+)
+
+cat("\\begingroup\n")
+cat("\\setlength{\\tabcolsep}{4pt}\n")
+cat("\\renewcommand{\\arraystretch}{1.1}\n")
+cat("\\scriptsize\n")
+cat("\\rmfamily\n")
+
+# Simple LaTeX table (no extra packages needed)
+cat("\\begin{table}[!ht]\n\\centering\n")
+cat("\\begin{tabular}{lcccc}\n\\hline\n")
+cat(" & (1) Naive & (2) Controls & (3) Non-linear & (4) Multi-school \\\\\n\\hline\n")
+
+for (i in seq_len(nrow(spec))) {
+  cat(spec$Component[i], " & ",
+      spec[i, 2], " & ", spec[i, 3], " & ", spec[i, 4], " & ", spec[i, 5],
+      " \\\\\n", sep = "")
+}
+
+cat("\\hline\n\\end{tabular}\n")
+cat("\\end{table}\n")
+cat("\\endgroup\n")
+```
+
+## Regression Results
+
+```{r}
+#| echo: false
+#| results: asis
+
+# --- helper: stars + robust se + format cell as "b*** (se)" ---
+stars_p <- function(p) {
+  if (is.na(p)) "" else if (p < 0.01) "***" else if (p < 0.05) "**" else if (p < 0.10) "*" else ""
+}
+fmt <- function(x, d = 3) ifelse(is.na(x), "", formatC(x, format = "f", digits = d))
+
+robust_vcov <- function(model) {
+  if (requireNamespace("sandwich", quietly = TRUE)) {
+    sandwich::vcovHC(model, type = "HC1")
+  } else {
+    vcov(model)  # fallback
+  }
+}
+
+cell_est_se <- function(model, term, d = 3) {
+  if (!(term %in% names(coef(model)))) return("")
+  b <- coef(model)[term]
+  V <- robust_vcov(model)
+  se <- sqrt(diag(V))[term]
+  tval <- b / se
+  p <- 2 * pt(abs(tval), df = df.residual(model), lower.tail = FALSE)
+  paste0(fmt(b, d), stars_p(p), " (", fmt(se, d), ")")
+}
+
+# --- models (your objects) ---
+models <- list(
+  "(1) Naive"        = m1_naive,
+  "(2) Controls"     = m2_base,
+  "(3) Non-linear"   = m3_poly,
+  "(4) Multi-school" = m4_multi_dist
+)
+
+# --- build a "spec-table-like" results table ---
+tab <- data.frame(
+  Component = c(
+    "Distance to Primary (km)",
+    "Distance Squared",
+    "Distance to Secondary (km)",
+    "Obs.",
+    "R$^2$",
+    "Adj. R$^2$"
+  ),
+  check.names = FALSE
+)
+
+tab[["(1) Naive"]] <- c(
+  cell_est_se(models[["(1) Naive"]], "dist_primary_km"),
+  cell_est_se(models[["(1) Naive"]], "I(dist_primary_km^2)"),
+  cell_est_se(models[["(1) Naive"]], "dist_secondary_km"),
+  as.character(stats::nobs(models[["(1) Naive"]])),
+  fmt(summary(models[["(1) Naive"]])$r.squared, 3),
+  fmt(summary(models[["(1) Naive"]])$adj.r.squared, 3)
+)
+
+tab[["(2) Controls"]] <- c(
+  cell_est_se(models[["(2) Controls"]], "dist_primary_km"),
+  cell_est_se(models[["(2) Controls"]], "I(dist_primary_km^2)"),
+  cell_est_se(models[["(2) Controls"]], "dist_secondary_km"),
+  as.character(stats::nobs(models[["(2) Controls"]])),
+  fmt(summary(models[["(2) Controls"]])$r.squared, 3),
+  fmt(summary(models[["(2) Controls"]])$adj.r.squared, 3)
+)
+
+tab[["(3) Non-linear"]] <- c(
+  cell_est_se(models[["(3) Non-linear"]], "dist_primary_km"),
+  cell_est_se(models[["(3) Non-linear"]], "I(dist_primary_km^2)"),
+  cell_est_se(models[["(3) Non-linear"]], "dist_secondary_km"),
+  as.character(stats::nobs(models[["(3) Non-linear"]])),
+  fmt(summary(models[["(3) Non-linear"]])$r.squared, 3),
+  fmt(summary(models[["(3) Non-linear"]])$adj.r.squared, 3)
+)
+
+tab[["(4) Multi-school"]] <- c(
+  cell_est_se(models[["(4) Multi-school"]], "dist_primary_km"),
+  cell_est_se(models[["(4) Multi-school"]], "I(dist_primary_km^2)"),
+  cell_est_se(models[["(4) Multi-school"]], "dist_secondary_km"),
+  as.character(stats::nobs(models[["(4) Multi-school"]])),
+  fmt(summary(models[["(4) Multi-school"]])$r.squared, 3),
+  fmt(summary(models[["(4) Multi-school"]])$adj.r.squared, 3)
+)
+
+# --- print LaTeX in the SAME style as your model/spec table ---
+cat("\\begingroup\n")
+cat("\\setlength{\\tabcolsep}{6pt}\n")
+cat("\\renewcommand{\\arraystretch}{1.15}\n")
+cat("\\scriptsize\n")
+cat("\\rmfamily\n")
+cat("\\begin{center}\n")
+
+cat("\\begin{tabular}{lcccc}\n")
+cat("\\toprule\n")
+cat(" & (1) Naive & (2) Controls & (3) Non-linear & (4) Multi-school \\\\\n")
+cat("\\midrule\n")
+
+for (i in seq_len(nrow(tab))) {
+  cat(tab$Component[i], " & ",
+      tab[i, 2], " & ", tab[i, 3], " & ", tab[i, 4], " & ", tab[i, 5],
+      " \\\\\n", sep = "")
+  if (tab$Component[i] == "Distance to Secondary (km)") cat("\\midrule\n")
+}
+
+cat("\\bottomrule\n")
+cat("\\end{tabular}\n")
+
+cat("\\vspace{0.35em}\n")
+cat("\\parbox{0.95\\linewidth}{\\scriptsize\\rmfamily Notes: Dependent variable is log(housing price). Cells report coefficient with robust SE in parentheses. * p<0.10, ** p<0.05, *** p<0.01.}\n")
+
+cat("\\end{center}\n")
+cat("\\endgroup\n")
+```
