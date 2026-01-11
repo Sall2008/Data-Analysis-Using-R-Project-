@@ -154,8 +154,7 @@ stateDiagram-v2
 
 ## Test Graphic
 ```{mermaid}
-%%| label: fig-data_cleaning2
-%%| fig-height: 3.2
+%%| fig-height: 2.9
 %%| fig-align: center
 stateDiagram-v2
     direction LR
@@ -164,12 +163,12 @@ stateDiagram-v2
     %% Housing pillar
     %% -------------------------
     state Housing {
-        [*] --> NA
-        NA: Removing NA values
-        NA --> File
-        File: Filtered for single-family houses in NRW
-        File --> Outl
-        Outl: Removed outliers
+        [*] --> NA: Removing NA values
+        NA: MissingCleaned
+        NA --> File: Filtered for single-family houses in NRW
+        File: FilteredSample
+        File --> Outl: Removed outliers
+        Outl: OutlierCleaned
         Outl --> Muta
         Muta: Renamed column names
         Muta --> [*]
@@ -182,7 +181,7 @@ stateDiagram-v2
         [*] --> Types
         Types: Grouped school types
         Types --> Muta2
-        Muta2: Renamed column names
+        Muta2: Renamed columns
         Muta2 --> [*]
     }
 
@@ -190,25 +189,30 @@ stateDiagram-v2
     %% Distance pillar
     %% -------------------------
     state Distance {
-        [*] --> DistClean
-        DistClean: Distance processing
-        DistClean --> [*]
+        [*] -->[*]
     }
 
     %% -------------------------
-    %% Merges
+    %% First join: School + Distance
     %% -------------------------
-    School --> School_Dist
-    Distance --> School_Dist
+    state SD_join <<join>>
+
+    School --> SD_join: Merge
+    Distance --> SD_join: Merge
+    SD_join --> School_Dist
 
     state School_Dist {
-        [*] --> MergeSD
-        MergeSD: Merge school & distance data
-        MergeSD --> [*]
+        [*] --> [*]
     }
 
-    School_Dist --> Final
-    Housing --> Final
+    %% -------------------------
+    %% Final join: Housing + School_Dist
+    %% -------------------------
+    state Final_join <<join>>
+
+    Housing --> Final_join: Merge
+    School_Dist --> Final_join: Merge
+    Final_join --> Final
 
     state Final {
         [*] --> FinalData
@@ -217,6 +221,79 @@ stateDiagram-v2
     }
 ```
 
+## Another test graphic (Pillar)
+:::: {.columns}
+::: {.column width="50%"}
+```{mermaid}
+%%| fig-height: 2.9
+%%| fig-align: center
+stateDiagram-v2
+
+    %% -------------------------
+    %% Housing pillar
+    %% -------------------------
+    state Housing {
+        [*] --> NA: Removing NA values
+        NA: MissingCleaned
+        NA --> File: Filtered for single-family houses in NRW
+        File: FilteredSample
+        File --> Outl: Removed outliers
+        Outl: OutlierCleaned
+        Outl --> Muta
+        Muta: Renamed column names
+        Muta --> [*]
+    }
+```
+:::
+::: {.column width="50%"}
+- Some bulletpoints explaining our process
+:::
+::::
+
+## Another test graphic (Left to right)
+```{mermaid}
+%%| fig-width: 4.5
+%%| fig-height: 1.5
+%%| fig-align: center
+stateDiagram-v2
+
+    %% -------------------------
+    %% Housing pillar
+    %% -------------------------
+    state Housing {
+        direction LR
+    
+        [*] --> NA: Remove missing values
+        NA: Missing cleaned
+    
+        NA --> File: Filter sample
+        File: Single-family houses (NRW)
+    
+        File --> Outl: Remove outliers
+        Outl: Outliers removed
+    
+        Outl --> Muta: Harmonize variables
+        Muta: Columns renamed
+    
+        Muta --> [*]
+    }
+
+```
+
+- Bulletpoints to explain processes
+
+## Flowchart Test
+```{mermaid}
+%%| fig-width: 4
+flowchart LR
+  A@{ shape: doc, label: "Housing Data" }
+  B@{ shape: rect, label: "Remove missing values" }
+  C@{ shape: rect, label: "Filtered for single-family houses in NRW" }
+  
+  A --> B
+  B --> C
+
+```
 
 ## Pre-Processing of Data: Merging
 
