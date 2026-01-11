@@ -11,57 +11,234 @@ format:
     theme: "metropolis"
     colortheme: "seahorse"
     include-in-header: custom_theme.tex
+bibliography: references_results.bib
 
 ---
 
 ```{r}
 #| echo: false
 #| eval: false 
-#| file: distance_analysis.R
+#| source: distance_analysis.R
 ```
 
 
 ## Agenda
-
-**1. Motivation \& Contribution to Existing Literature**  
+**1. Motivation, Existing Literature \& Research Question**  
 *Why school proximity and social indices matter.*
 
-\vspace{0.3em}
-
-**2. Research Question**  
-*What we empirically test.*
-
-**3. Data \& Methodology**  
+**2. Data \& Methodology**  
 *Data used and our empirical model.*  
 
-\vspace{0.3em}
+\vspace{0.1em}
 
-**4. Results \& Conclusion**  
+**3. Results \& Main Findings**  
 *Presentation and interpretation of our findings.*
 
-\vspace{0.3em}
+\vspace{0.1em}
+
+**4. Limitations \& Conclusion**  
+*Limitations of our work and concluding thoughts.*
+
+\vspace{0.1em}
+
+
+# Motivation, Existing Literature \& Research Question
+## Motivation
+- **Personal Interest**: Analyzing the real estate market's reaction to various 
+factors is particularly interesting from an economic standpoint, as it offers 
+insights into market dynamics. Additionally, the topic is personally intriguing, 
+adding an extra layer of motivation to explore it further.
+
+- **Academic and Practical Relevance**: Housing markets are influenced by 
+various social and  economic factors, and school quality is also cited as a 
+underestimated determinant of property values, especially in research 
+[@Seo_Simons_2009].
 
 
 ## Motivation
+Understanding the relationship between school distance, school quality and 
+property prices can provide valuable insights for researchers and individuals 
+interested in the real estate market.  
 
-**Motivation:**
-- Understanding the relationship between school quality and property prices can 
-provide valuable insights for researchers and individuals interested in the real 
-estate market.
 
-## Existing Literature
+## Related Literature Background
+Several papers have examined the effect of proximity to schools on housing 
+prices:
 
+- **Empirical Strategies**: While hedonic models are the dominant approach to 
+estimating housing price effects, alternative empirical strategies have also 
+been proposed [see @Black_Machin_2011]
+
+- **Findings**: Empirical evidence suggests that proximity to schools positively 
+affects housing prices [@Rosiers_Lagana_Theriault_2001; @Huang_Hess_2018]
+
+
+## Related Literature Background
+- **Other Factors**: Related work also documents capitalization effects of school 
+reputation [@Chin_Foong_2006], differences between public and private schools 
+[@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; 
+@Metz_2015]
+
+- **Environment of studies**: Much of the literature focuses on settings with 
+binding school catchment areas and measures school quality primarily through 
+test scores rather than demographic composition.
 
 
 ## Research Question
+We study a setting *without binding school catchment areas* (NRW, Germany)
+and assess whether both *school proximity* and a *demographically based school* 
+*social index* are capitalized into housing prices.
 
-**Research Question:** How does the social index of schools influence housing 
-prices, and does the proximity to schools modulate this effect?
+## Research Question
+**Research Question:** How do school proximity and school social indices affect 
+the prices of detached houses, and do these effects differ between primary and 
+secondary schools in North Rhine–Westphalia?
 
+
+# Data \& Methodology
 ## Data
+- **Housing Data**: Cross-section dataset for  houses for sale published by the 
+Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
+- **School Data**: School social index dataset from North Rhine-Westphalias
+Ministry of Schools and Education [@MSB_NRW_Schulsozialindex]
 
+\footnotetext{Data used from both datasets refer to the year 2022.}
+
+
+## Pre-Processing of Data: Cleaning
+```{mermaid}
+%%| label: fig-data_cleaning
+%%| fig-height: 2.5
+%%| fig-align: center
+stateDiagram-v2
+    
+    [*] --> Housing
+    Housing: Housing Data
+    state Housing {
+        NA: Removing NA values
+        File: Filtered for single-family houses in NRW
+        Outl: Removed outliers
+        Muta: Renamed column names
+        [*]   --> NA
+        NA --> File
+        File --> Outl
+        Outl --> Muta
+        Muta -->[*]
+    }
+    
+    [*] --> Index
+    Index: School Data
+    state Index {
+        Types: Grouped school types
+        Muta2: Renamed column names
+        [*] --> Types
+        Types --> Muta2
+        Muta2 --> [*]
+    }
+    
+    [*] --> Dist
+    Dist: Distance Data
+    state Dist {
+        [*] --> [*]
+    }
+    
+    [*] --> School_Dist
+    School_Dist: School and Distance Data
+    state School_Dist {
+        Index --> [*]
+        Dist --> [*]
+    }
+    
+```
+
+
+## Test Graphic
+```{mermaid}
+%%| label: fig-data_cleaning2
+%%| fig-height: 3.2
+%%| fig-align: center
+stateDiagram-v2
+    direction LR
+
+    %% -------------------------
+    %% Housing pillar
+    %% -------------------------
+    state Housing {
+        [*] --> NA
+        NA: Removing NA values
+        NA --> File
+        File: Filtered for single-family houses in NRW
+        File --> Outl
+        Outl: Removed outliers
+        Outl --> Muta
+        Muta: Renamed column names
+        Muta --> [*]
+    }
+
+    %% -------------------------
+    %% School pillar
+    %% -------------------------
+    state School {
+        [*] --> Types
+        Types: Grouped school types
+        Types --> Muta2
+        Muta2: Renamed column names
+        Muta2 --> [*]
+    }
+
+    %% -------------------------
+    %% Distance pillar
+    %% -------------------------
+    state Distance {
+        [*] --> DistClean
+        DistClean: Distance processing
+        DistClean --> [*]
+    }
+
+    %% -------------------------
+    %% Merges
+    %% -------------------------
+    School --> School_Dist
+    Distance --> School_Dist
+
+    state School_Dist {
+        [*] --> MergeSD
+        MergeSD: Merge school & distance data
+        MergeSD --> [*]
+    }
+
+    School_Dist --> Final
+    Housing --> Final
+
+    state Final {
+        [*] --> FinalData
+        FinalData: Final analysis dataset
+        FinalData --> [*]
+    }
+```
+
+
+## Pre-Processing of Data: Merging
+
+```{mermaid}
+%%| label: fig-data_merging
+%%| fig-width: 4
+%%| fig-align: center
+%%| fig-show-cap: false
+flowchart LR
+  A[Housing Data] --> E(Final Dataset)
+  B[School Data] --> D(School & Distance Data)
+  C[Distance Data] --> D(School & Distance Data)
+  D --> E
+```
 
 
 ## Empirical Framework
 
-##
+
+# Results and Main Findings
+
+
+## References {.allowframebreaks}
+::: {#refs}
+:::
