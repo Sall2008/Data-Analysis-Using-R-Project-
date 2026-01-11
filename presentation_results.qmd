@@ -152,6 +152,72 @@ stateDiagram-v2
 ```
 
 
+## Test Graphic
+```{mermaid}
+%%| label: fig-data_cleaning2
+%%| fig-height: 3.2
+%%| fig-align: center
+stateDiagram-v2
+    direction LR
+
+    %% -------------------------
+    %% Housing pillar
+    %% -------------------------
+    state Housing {
+        [*] --> NA
+        NA: Removing NA values
+        NA --> File
+        File: Filtered for single-family houses in NRW
+        File --> Outl
+        Outl: Removed outliers
+        Outl --> Muta
+        Muta: Renamed column names
+        Muta --> [*]
+    }
+
+    %% -------------------------
+    %% School pillar
+    %% -------------------------
+    state School {
+        [*] --> Types
+        Types: Grouped school types
+        Types --> Muta2
+        Muta2: Renamed column names
+        Muta2 --> [*]
+    }
+
+    %% -------------------------
+    %% Distance pillar
+    %% -------------------------
+    state Distance {
+        [*] --> DistClean
+        DistClean: Distance processing
+        DistClean --> [*]
+    }
+
+    %% -------------------------
+    %% Merges
+    %% -------------------------
+    School --> School_Dist
+    Distance --> School_Dist
+
+    state School_Dist {
+        [*] --> MergeSD
+        MergeSD: Merge school & distance data
+        MergeSD --> [*]
+    }
+
+    School_Dist --> Final
+    Housing --> Final
+
+    state Final {
+        [*] --> FinalData
+        FinalData: Final analysis dataset
+        FinalData --> [*]
+    }
+```
+
+
 ## Pre-Processing of Data: Merging
 
 ```{mermaid}
