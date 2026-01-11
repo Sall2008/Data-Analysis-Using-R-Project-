@@ -98,9 +98,9 @@ secondary schools in North Rhine–Westphalia?
 # Data \& Methodology
 ## Data
 - **Housing Data**: Cross-section dataset for  houses for sale published by the 
-Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
+Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
 - **School Data**: School social index dataset from North Rhine-Westphalias
-Ministry of Schools and Education [@MSB_NRW_Schulsozialindex]
+Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
 
 \footnotetext{Data used from both datasets refer to the year 2022.}
 
@@ -277,7 +277,6 @@ stateDiagram-v2
     
         Muta --> [*]
     }
-
 ```
 
 - Bulletpoints to explain processes
