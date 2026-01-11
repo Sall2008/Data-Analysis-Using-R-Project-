@@ -105,52 +105,56 @@ Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
 \footnotetext{Data used from both datasets refer to the year 2022.}
 
 
-## Pre-Processing of Data: Cleaning
+## Pre-Processing of Data
+::: {.center  data-latex=""}
 ```{mermaid}
-%%| label: fig-data_cleaning
-%%| fig-height: 2.5
-%%| fig-align: center
-stateDiagram-v2
-    
-    [*] --> Housing
-    Housing: Housing Data
-    state Housing {
-        NA: Removing NA values
-        File: Filtered for single-family houses in NRW
-        Outl: Removed outliers
-        Muta: Renamed column names
-        [*]   --> NA
-        NA --> File
-        File --> Outl
-        Outl --> Muta
-        Muta -->[*]
-    }
-    
-    [*] --> Index
-    Index: School Data
-    state Index {
-        Types: Grouped school types
-        Muta2: Renamed column names
-        [*] --> Types
-        Types --> Muta2
-        Muta2 --> [*]
-    }
-    
-    [*] --> Dist
-    Dist: Distance Data
-    state Dist {
-        [*] --> [*]
-    }
-    
-    [*] --> School_Dist
-    School_Dist: School and Distance Data
-    state School_Dist {
-        Index --> [*]
-        Dist --> [*]
-    }
-    
-```
+%%| fig-height: 2.9
 
+stateDiagram-v2
+    direction LR
+
+    Final: Final Dataset
+    state Final {
+        
+        Housing: Houses for sale
+        state Housing {
+            [*] --> NA
+            NA: Removing NA values
+            NA --> File
+            File: Filtered for single-family houses in NRW
+            File --> Outl
+            Outl: Removed outliers
+            Outl --> Dedu
+            Dedu: Eliminating duplicates 
+            Dedu --> Muta
+            Muta: Renamed columns
+            Muta --> [*]
+        }
+        
+        School_Dist: School Social Index and Distance
+        state School_Dist {
+
+            Index: School Social Index
+            state Index {
+                [*] --> Types
+                Types: Grouped school types
+                Types --> Muta2
+                Muta2: Renameds
+                Muta2 --> [*]
+            }
+
+
+            Dist: Distance to Schools
+            state Dist {
+                [*] --> [*]
+            }
+
+        }
+
+    }
+
+```
+:::
 
 ## Test Graphic
 ```{mermaid}
