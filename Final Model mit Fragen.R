@@ -294,16 +294,74 @@ ggplot(df_final_with_social_5km, aes(x = dist_secondary_km, y = log_price, color
 
 
 
+# Interaktionseffekt
+
+# 1. Erstelle die `school_quality`-Variable im `df_school_meta`-Datensatz
+df_school_meta <- df_school_meta %>%
+  mutate(
+    school_quality = case_when(
+      social_index == 1 ~ "good",   # Gute Schule (Sozialindex 1)
+      social_index == 2 ~ "good",   # Gute Schule (Sozialindex 2)
+      social_index >= 3 ~ "bad",    # Schlechte Schule (ab Sozialindex 3)
+      TRUE ~ "average"              # Wenn eine mittlere Kategorie gebraucht wird
+    )
+  )
+
+# 2. Überprüfen der `school_quality`-Verteilung
+table(df_school_meta$school_quality)
+
+# 3. `school_quality` zu `df_final_with_social_5km` hinzufügen
+df_final_with_social_5km <- df_final_with_social_5km %>%
+  left_join(df_school_meta %>%
+              select(school_id, school_quality), by = c("school_id_primary" = "school_id")) %>%
+  left_join(df_school_meta %>%
+              select(school_id, school_quality), by = c("school_id_secondary" = "school_id")) %>%
+  left_join(df_school_meta %>%
+              select(school_id, school_quality), by = c("school_id_any" = "school_id"))
+
+# Überprüfen, ob `school_quality` erfolgreich hinzugefügt wurde
+head(df_final_with_social_5km)
+
+# 4. Modell mit Interaktionseffekten zwischen der Distanz zu guten und schlechten Schulen
+m_interaction_quality <- lm(
+  log_price ~ dist_primary_km * school_quality + dist_secondary_km * school_quality + 
+    log_area + log_plot_area + zimmeranzahl + house_age, 
+  data = df_final_with_social_5km
+)
+
+# Zusammenfassung des Modells für gute und schlechte Schulen als Referenz
+summary(m_interaction_quality)
 
 
+# 5. `school_quality` als Faktor mit der Referenzkategorie "bad"
+df_school_meta <- df_school_meta %>%
+  mutate(
+    school_quality = factor(school_quality, levels = c("bad", "good"))  # "bad" als Referenzkategorie
+  )
 
+# 6. Modell mit Interaktionseffekten für schlechte Schulen als Referenz
+m_interaction_quality_bad_ref <- lm(
+  log_price ~ dist_primary_km * school_quality + dist_secondary_km * school_quality + 
+    log_area + log_plot_area + zimmeranzahl + house_age, 
+  data = df_final_with_social_5km
+)
 
+# Zusammenfassung des Modells für schlechte Schulen als Referenz
+summary(m_interaction_quality_bad_ref)
 
+# 7. Visualisierung der Interaktionseffekte für das Modell mit guten und schlechten Schulen
+# Plot für das Modell mit guten und schlechten Schulen als Referenz
 
-
-
-
-
+# Visualisierung für das Modell mit guten Schulen als Referenz
+ggplot(df_final_with_social_5km, aes(x = dist_primary_km, y = log_price, color = school_quality)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Einfluss der Entfernung zur Primärschule auf Hauspreise nach Schulqualität (Gute Schulen als Referenz)",
+       x = "Entfernung zur Primärschule (km)",
+       y = "Log-Hauspreis",
+       color = "Schulqualität") +
+  scale_color_manual(values = c("good" = "#66C2A5", "bad" = "#FC8D62")) +
+  theme_minimal()
 
 
 
