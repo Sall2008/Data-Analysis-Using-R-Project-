@@ -121,13 +121,13 @@ stateDiagram-v2
             [*] --> NA
             NA: Removing NA values
             NA --> File
-            File: Filtered for single-family houses in NRW
+            File: Including only single-family houses in NRW
             File --> Outl
-            Outl: Removed outliers
+            Outl: Removing outliers
             Outl --> Dedu
             Dedu: Eliminating duplicates 
             Dedu --> Muta
-            Muta: Renamed columns
+            Muta: Renaming columns
             Muta --> [*]
         }
         
@@ -137,9 +137,11 @@ stateDiagram-v2
             Index: School Social Index
             state Index {
                 [*] --> Types
-                Types: Grouped school types
-                Types --> Muta2
-                Muta2: Renameds
+                Types: Grouping school types
+                Types --> Remo
+                Remo: Removing invalid values
+                Remo --> Muta2
+                Muta2: Renaming columns
                 Muta2 --> [*]
             }
 
@@ -156,168 +158,28 @@ stateDiagram-v2
 ```
 :::
 
-## Test Graphic
-```{mermaid}
-%%| fig-height: 2.9
-%%| fig-align: center
-stateDiagram-v2
-    direction LR
-
-    %% -------------------------
-    %% Housing pillar
-    %% -------------------------
-    state Housing {
-        [*] --> NA: Removing NA values
-        NA: MissingCleaned
-        NA --> File: Filtered for single-family houses in NRW
-        File: FilteredSample
-        File --> Outl: Removed outliers
-        Outl: OutlierCleaned
-        Outl --> Muta
-        Muta: Renamed column names
-        Muta --> [*]
-    }
-
-    %% -------------------------
-    %% School pillar
-    %% -------------------------
-    state School {
-        [*] --> Types
-        Types: Grouped school types
-        Types --> Muta2
-        Muta2: Renamed columns
-        Muta2 --> [*]
-    }
-
-    %% -------------------------
-    %% Distance pillar
-    %% -------------------------
-    state Distance {
-        [*] -->[*]
-    }
-
-    %% -------------------------
-    %% First join: School + Distance
-    %% -------------------------
-    state SD_join <<join>>
-
-    School --> SD_join: Merge
-    Distance --> SD_join: Merge
-    SD_join --> School_Dist
-
-    state School_Dist {
-        [*] --> [*]
-    }
-
-    %% -------------------------
-    %% Final join: Housing + School_Dist
-    %% -------------------------
-    state Final_join <<join>>
-
-    Housing --> Final_join: Merge
-    School_Dist --> Final_join: Merge
-    Final_join --> Final
-
-    state Final {
-        [*] --> FinalData
-        FinalData: Final analysis dataset
-        FinalData --> [*]
-    }
-```
-
-## Another test graphic (Pillar)
-:::: {.columns}
-::: {.column width="50%"}
-```{mermaid}
-%%| fig-height: 2.9
-%%| fig-align: center
-stateDiagram-v2
-
-    %% -------------------------
-    %% Housing pillar
-    %% -------------------------
-    state Housing {
-        [*] --> NA: Removing NA values
-        NA: MissingCleaned
-        NA --> File: Filtered for single-family houses in NRW
-        File: FilteredSample
-        File --> Outl: Removed outliers
-        Outl: OutlierCleaned
-        Outl --> Muta
-        Muta: Renamed column names
-        Muta --> [*]
-    }
-```
-:::
-::: {.column width="50%"}
-- Some bulletpoints explaining our process
-:::
-::::
-
-## Another test graphic (Left to right)
-```{mermaid}
-%%| fig-width: 4.5
-%%| fig-height: 1.5
-%%| fig-align: center
-stateDiagram-v2
-
-    %% -------------------------
-    %% Housing pillar
-    %% -------------------------
-    state Housing {
-        direction LR
-    
-        [*] --> NA: Remove missing values
-        NA: Missing cleaned
-    
-        NA --> File: Filter sample
-        File: Single-family houses (NRW)
-    
-        File --> Outl: Remove outliers
-        Outl: Outliers removed
-    
-        Outl --> Muta: Harmonize variables
-        Muta: Columns renamed
-    
-        Muta --> [*]
-    }
-```
-
-- Bulletpoints to explain processes
-
-## Flowchart Test
-```{mermaid}
-%%| fig-width: 4
-flowchart LR
-  A@{ shape: doc, label: "Housing Data" }
-  B@{ shape: rect, label: "Remove missing values" }
-  C@{ shape: rect, label: "Filtered for single-family houses in NRW" }
-  
-  A --> B
-  B --> C
-
-```
-
-## Pre-Processing of Data: Merging
-
-```{mermaid}
-%%| label: fig-data_merging
-%%| fig-width: 4
-%%| fig-align: center
-%%| fig-show-cap: false
-flowchart LR
-  A[Housing Data] --> E(Final Dataset)
-  B[School Data] --> D(School & Distance Data)
-  C[Distance Data] --> D(School & Distance Data)
-  D --> E
-```
-
 
 ## Empirical Framework
 
 
 # Results and Main Findings
 
+## Visualization for Distance to Primary School
+
+
+```{r}
+source("Final Model mit Fragen.R")
+
+ggplot(df_final_with_social_5km, aes(x = dist_primary_km, y = log_price, color = social_index_factor)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Influence of Distance to Primary School on House Prices by Social Index Level",
+       x = "Distance to Primary School (km)",
+       y = "Log-House Price",
+       color = "Social Index Level") +
+  scale_color_manual(values = c("#FFB6C1", "#98C9E6", "#FFD700", "#D3D3D3", "#8FBC8F", "#D2B48C", "#A9A9A9", "#E6E6FA", "#F08080")) +
+  theme_minimal()
+```
 
 ## References {.allowframebreaks}
 ::: {#refs}
