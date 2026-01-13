@@ -1,6 +1,5 @@
 ---
-title: "The Effects of School Proximity and the School Social Index on Housing 
-Prices"
+title: "The Effects of School Proximity and the School Social Index on Housing Prices" 
 subtitle: "\\presentationdate"
 author: 
   - name: Yanyi Ji
@@ -12,7 +11,9 @@ format:
     colortheme: "seahorse"
     include-in-header: custom_theme.tex
 bibliography: references_results.bib
-
+editor: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r}
@@ -21,92 +22,74 @@ bibliography: references_results.bib
 #| source: distance_analysis.R
 ```
 
-
 ## Agenda
-**1. Motivation, Existing Literature \& Research Question**  
+
+**1. Motivation, Existing Literature & Research Question**\
 *Why school proximity and social indices matter.*
 
-**2. Data \& Methodology**  
-*Data used and our empirical model.*  
+\vspace{0.3em}
 
-\vspace{0.1em}
+**2. Data & Methodology**\
+*Data used and our empirical model.*
 
-**3. Results \& Main Findings**  
+\vspace{0.3em}
+
+**3. Results & Main Findings**\
 *Presentation and interpretation of our findings.*
 
-\vspace{0.1em}
+\vspace{0.3em}
 
-**4. Limitations \& Conclusion**  
+**4. Limitations & Conclusion**\
 *Limitations of our work and concluding thoughts.*
 
-\vspace{0.1em}
+\vspace{0.3em}
 
-
-# Motivation, Existing Literature \& Research Question
-## Motivation
-- **Personal Interest**: Analyzing the real estate market's reaction to various 
-factors is particularly interesting from an economic standpoint, as it offers 
-insights into market dynamics. Additionally, the topic is personally intriguing, 
-adding an extra layer of motivation to explore it further.
-
-- **Academic and Practical Relevance**: Housing markets are influenced by 
-various social and  economic factors, and school quality is also cited as a 
-underestimated determinant of property values, especially in research 
-[@Seo_Simons_2009].
-
+# Motivation, Existing Literature & Research Question
 
 ## Motivation
-Understanding the relationship between school distance, school quality and 
-property prices can provide valuable insights for researchers and individuals 
-interested in the real estate market.  
 
+-   **Personal Interest**: Analyzing the real estate market's reaction to various factors is particularly interesting from an economic standpoint, as it offers insights into market dynamics. Additionally, the topic is personally intriguing, adding an extra layer of motivation to explore it further.
 
-## Related Literature Background
-Several papers have examined the effect of proximity to schools on housing 
-prices:
+-   **Academic and Practical Relevance**: Housing markets are influenced by various social and economic factors, and school quality is also cited as a underestimated determinant of property values, especially in research [@Seo_Simons_2009].
 
-- **Empirical Strategies**: While hedonic models are the dominant approach to 
-estimating housing price effects, alternative empirical strategies have also 
-been proposed [see @Black_Machin_2011]
+## Motivation
 
-- **Findings**: Empirical evidence suggests that proximity to schools positively 
-affects housing prices [@Rosiers_Lagana_Theriault_2001; @Huang_Hess_2018]
-
+Understanding the relationship between school distance, school quality and property prices can provide valuable insights for researchers and individuals interested in the real estate market.
 
 ## Related Literature Background
-- **Other Factors**: Related work also documents capitalization effects of school 
-reputation [@Chin_Foong_2006], differences between public and private schools 
-[@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; 
-@Metz_2015]
 
-- **Environment of studies**: Much of the literature focuses on settings with 
-binding school catchment areas and measures school quality primarily through 
-test scores rather than demographic composition.
+Several papers have examined the effect of proximity to schools on housing prices:
 
+-   **Empirical Strategies**: While hedonic models are the dominant approach to estimating housing price effects, alternative empirical strategies have also been proposed [see @Black_Machin_2011]
 
-## Research Question
-We study a setting *without binding school catchment areas* (NRW, Germany)
-and assess whether both *school proximity* and a *demographically based school* 
-*social index* are capitalized into housing prices.
+-   **Findings**: Empirical evidence suggests that proximity to schools positively affects housing prices [@Rosiers_Lagana_Theriault_2001; @Huang_Hess_2018]
+
+## Related Literature Background
+
+-   **Other Factors**: Related work also documents capitalization effects of school reputation [@Chin_Foong_2006], differences between public and private schools [@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; @Metz_2015]
+
+-   **Environment of studies**: Much of the literature focuses on settings with binding school catchment areas and measures school quality primarily through test scores rather than demographic composition.
 
 ## Research Question
-**Research Question:** How do school proximity and school social indices affect 
-the prices of detached houses, and do these effects differ between primary and 
-secondary schools in North Rhine–Westphalia?
 
+We study a setting *without binding school catchment areas* (NRW, Germany) and assess whether both *school proximity* and a *demographically based school* *social index* are capitalized into housing prices.
 
-# Data \& Methodology
+## Research Question
+
+**Research Question:** How do school proximity and school social indices affect the prices of detached houses, and do these effects differ between primary and secondary schools in North Rhine–Westphalia?
+
+# Data & Methodology
+
 ## Data
-- **Housing Data**: Cross-section dataset for  houses for sale published by the 
-Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
-- **School Data**: School social index dataset from North Rhine-Westphalias
-Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
+
+-   **Housing Data**: Cross-section dataset for houses for sale published by the Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
+-   **School Data**: School social index dataset from North Rhine-Westphalias Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
 
 \footnotetext{Data used from both datasets refer to the year 2022.}
 
-
 ## Pre-Processing of Data
-::: {.center  data-latex=""}
+
+::: {.center data-latex=""}
 ```{mermaid}
 %%| fig-height: 2.9
 
@@ -158,29 +141,42 @@ stateDiagram-v2
 ```
 :::
 
-
 ## Empirical Framework
+We estimate regression-based hedonic models to 
+
+- examine how school proximity and school characteristics are capitalized into 
+housing prices and
+- whether the impact of school proximity on housing prices differs by the 
+school’s social index
+
+
+## Empirical Framework: Hedonic Price Model
+$$
+\log(P_i) = \beta_0 + \beta_1 \text{Dist}_i + \beta_2 X_i + \varepsilon_i
+$$
+
+\vspace{1.5em}
+
+- $P_i$ denotes the listing price of house $i$
+\vspace{0.1em}
+- $\text{Dist}_i$ measures distance to the nearest school
+\vspace{0.1em}
+- $X_i$ is a vector of housing characteristics
+\vspace{0.1em}
+- $\varepsilon_i$ captures unobserved factors
 
 
 # Results and Main Findings
 
 ## Visualization for Distance to Primary School
 
+<!-- This part has to stay on the last page before the references to indicate
+the end of the presentation for the progress bar defined in the custom 
+theme file. -->
+\setcontentend
 
-```{r}
-source("Final Model mit Fragen.R")
-
-ggplot(df_final_with_social_5km, aes(x = dist_primary_km, y = log_price, color = social_index_factor)) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Influence of Distance to Primary School on House Prices by Social Index Level",
-       x = "Distance to Primary School (km)",
-       y = "Log-House Price",
-       color = "Social Index Level") +
-  scale_color_manual(values = c("#FFB6C1", "#98C9E6", "#FFD700", "#D3D3D3", "#8FBC8F", "#D2B48C", "#A9A9A9", "#E6E6FA", "#F08080")) +
-  theme_minimal()
-```
 
 ## References {.allowframebreaks}
+
 ::: {#refs}
 :::

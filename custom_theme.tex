@@ -32,6 +32,16 @@
   \fi
 }
 
+% --------------------------------------------------
+% Frame limit macro (for progress bar)
+% --------------------------------------------------
+\newcounter{contentframe}
+\setcounter{contentframe}{0}
+
+\newcommand{\setcontentend}{
+  \setcounter{contentframe}{\value{framenumber}}
+}
+
 %------------------------------------------------------------------------------%
 % Date macro
 %------------------------------------------------------------------------------%
@@ -81,7 +91,6 @@
 %------------------------------------------------------------------------------%
 % References layout
 %------------------------------------------------------------------------------%
-
 
 % Roman numerals for allowframebreaks continuation (References I, II, III, ...)
 \setbeamertemplate{frametitle continuation}{%
