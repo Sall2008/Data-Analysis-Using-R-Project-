@@ -15,9 +15,13 @@ theme_set(theme_minimal(base_size = 14))
 ## ==== 1.2 Define Paths ====
 
 # Definiere den Pfad für die CSV-Dateien
-path_housing <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/CampusFile_HK_2022.csv"
-path_school  <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/2022_social_index.csv"
-path_dist    <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/distance_to_schools.csv"
+# path_housing <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/CampusFile_HK_2022.csv"
+# path_school  <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/2022_social_index.csv"
+# path_dist    <- "C:/Users/lucwi/OneDrive/Dokumente/Studium/Master/2.Semester/Data Analysis Using R/distance_to_schools.csv"
+
+path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
+path_school  <- "course_data/school_data/2022_social_index.csv"
+path_dist    <- "course_data/school_data/distance_to_schools.csv"
 
 ## ==== 1.3 Clean Housing Data (HK - Houses for Sale) ====
 raw_housing <- read_delim(
@@ -270,7 +274,7 @@ df_final_with_social_5km <- df_final_with_social_5km %>%
   )
 
 # Visualization for Distance to Primary School
-ggplot(df_final_with_social_5km, aes(x = dist_primary_km, y = log_price, color = social_index_factor)) +
+Testplot <- ggplot(df_final_with_social_5km, aes(x = dist_primary_km, y = log_price, color = social_index_factor)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Influence of Distance to Primary School on House Prices by Social Index Level",

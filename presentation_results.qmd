@@ -17,9 +17,8 @@ editor:
 ---
 
 ```{r}
-#| echo: false
-#| eval: false 
-#| source: distance_analysis.R
+#| include: false
+source("Final Model mit Fragen.R")
 ```
 
 ## Agenda
@@ -175,6 +174,12 @@ the end of the presentation for the progress bar defined in the custom
 theme file. -->
 \setcontentend
 
+
+
+```{r}
+#| include: true 
+Testplot
+```
 
 ## References {.allowframebreaks}
 
