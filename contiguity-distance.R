@@ -11,7 +11,7 @@ library(spdep)
 library(dplyr)
 library(tidyr)
 library(RANN)
-library(ggplot2)
+library(ggplot2) 
 
 # Set global theme
 theme_set(theme_minimal(base_size = 14))
@@ -163,7 +163,7 @@ df_final <- df_housing_clean %>%
 # Final check
 cat("Final Dataset Dimensions:", dim(df_final), "\n")
 
-# ==== 2. Queen contiguity =====
+# ==== 2. Queen contiguity (raster only) =====
 
 # Separate numeric coordinates
 df_queen_contiguity <- df_final %>%
@@ -267,86 +267,8 @@ lm(
   data = df_final
 )
 
-####################
+# ==== 3. Queen contiguity (distance) =====
 # Distance calculation (might have double steps compared to above)
-
-# Create coordinates
-df_cells <- df_final %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE)
-
-# Prepare school coordinates
-schools_cells <- raw_dist %>%
-  separate(ergg_1km, into = c("sx","sy"), sep = "_", convert = TRUE, remove = FALSE) %>%
-  distinct(school_id, sx, sy)
-
-# Prepare grid (cells)
-grid <- df_final %>%
-  separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE,
-    remove = FALSE
-  ) %>%
-  distinct(x, y) %>%
-  arrange(x, y)
-
-# Build queen contiguity neighbors, gives first order neighbors
-coords <- as.matrix(grid[, c("x", "y")])
-
-nb_queen <- dnearneigh(
-  coords,
-  d1 = 0,
-  d2 = sqrt(2),
-  longlat = FALSE
-)
-
-# Identify school raster cells, tolerance of 0.8km 
-school_cells <- raw_dist %>%
-  filter(
-    school_type == "02",
-    nn_order == 1,
-    dist_km <= 0.8
-  ) %>%
-  select(ergg_1km) %>%
-  distinct()
-
-# Split coordinates
-school_cells <- school_cells %>%
-  tidyr::separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE
-  )
-
-# Sanity check
-summary(
-  raw_dist %>%
-    filter(
-      school_type == "02",
-      nn_order == 1
-    ) %>%
-    pull(dist_km)
-)
-
-# Adjusting tolerance
-school_cells <- raw_dist %>%
-  filter(
-    school_type == "02",
-    nn_order == 1,
-    dist_km <= 0.75
-  ) %>%
-  select(ergg_1km) %>%
-  distinct() %>%
-  tidyr::separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE
-  )
-
-# Prepare grid + school cells
 
 # Grid (unique raster cells)
 grid <- df_final %>%
@@ -357,6 +279,23 @@ grid <- df_final %>%
     .groups = "drop"
   ) %>%
   arrange(x, y)
+
+nb_queen <- dnearneigh(
+  coords,
+  d1 = 0,
+  d2 = sqrt(2),
+  longlat = FALSE
+)
+
+# Sanity check
+summary(
+  raw_dist %>%
+    filter(
+      school_type == "02",
+      nn_order == 1
+    ) %>%
+    pull(dist_km)
+)
 
 # Identify school cells (from previous step)
 school_cells <- raw_dist %>%
@@ -375,7 +314,6 @@ grid <- grid %>%
     has_school = paste(x, y) %in% paste(school_cells$x, school_cells$y)
   )
 
-
 ### Queen cont
 coords <- as.matrix(grid[, c("x", "y")])
 
@@ -388,7 +326,7 @@ nb_queen <- dnearneigh(
 )
 
 # Higher-order neighbors
-nb_lags <- nblag(nb_queen, maxlag = 5)
+nb_lags <- nblag(nb_queen, maxlag = 15)
 
 # Compute
 # Initialize distance
@@ -411,7 +349,8 @@ for (k in 1:5) {
 }
 
 # Any remaining → very far
-grid$q_dist[is.na(grid$q_dist)] <- 6
+max_lag <- length(nb_lags)
+grid$q_dist[is.na(grid$q_dist)] <- max_lag + 1
 
 # Distribution check
 table(grid$q_dist)
@@ -427,11 +366,13 @@ df_final <- df_final %>%
 # Regression
 # Each additional queen-contiguity ring away from a primary school is associated with about a
 # 5.5% lower listing price, holding housing characteristics constant.
-lm(
+model <- lm(
   log_price ~ q_dist +
     log_area + log_plot_area + zimmeranzahl + house_age,
   data = df_final
 )
+
+summary(model)
 
 # Regression: factor distance
 df_final$q_dist_f <- factor(df_final$q_dist)
@@ -446,8 +387,7 @@ lm(
 # Prices drop sharply already in first- and second-order neighbors
 # Effects are non-linear and strongly spatial
 
-####################
-# Plot
+## ==== 3.1 Plot ====
 grid_map <- df_final %>%
   distinct(x, y, q_dist)
 
@@ -470,57 +410,48 @@ ggplot(grid_map, aes(x = x, y = y, fill = factor(q_dist))) +
     panel.grid = element_blank()
   )
 
-####################
-grid <- grid %>%
-  mutate(
-    has_school = paste(x, y) %in% paste(school_cells$x, school_cells$y)
-  )
+## ==== 3.2 Diagnostics ====
 
-# Compute distance
-# Precompute higher-order neighbors
-nb_lags <- spdep::nblag(nb_queen, maxlag = 10)
+# Confirming whether row 6 and 7 in "grid" are actually 6+ steps apart
 
-# Function: minimum order at which a school is reached
-contiguity_distance <- function(i, nb_lags, has_school) {
-  if (has_school[i]) return(0)
+i <- which(grid$x == 4036 & grid$y == 3108)
+
+k_hit <- which(sapply(seq_along(nb_lags), function(k) {
+  any(grid$has_school[ nb_lags[[k]][[i]] ])
+}))[1]
+
+k_hit  # NA if no school reachable within maxlag
+
+# What would be the first cell to hit a school for row 7
+find_school_path <- function(i, nb_lags, grid) {
+  if (grid$has_school[i]) {
+    return(list(lag = 0, cell = i))
+  }
   
   for (k in seq_along(nb_lags)) {
-    neighbors_k <- nb_lags[[k]][[i]]
-    if (length(neighbors_k) > 0 && any(has_school[neighbors_k])) {
-      return(k)
+    neigh_k <- nb_lags[[k]][[i]]
+    
+    if (length(neigh_k) > 0) {
+      hits <- neigh_k[grid$has_school[neigh_k]]
+      
+      if (length(hits) > 0) {
+        return(list(
+          lag = k,
+          cell_index = hits[1],
+          x = grid$x[hits[1]],
+          y = grid$y[hits[1]]
+        ))
+      }
     }
   }
   
-  return(NA_integer_)
+  return(NULL)
 }
 
-# Applying code
-grid$dist_cells <- sapply(
-  seq_len(nrow(grid)),
-  contiguity_distance,
-  nb_lags = nb_lags,
-  has_school = grid$has_school
-)
+find_school_path(i, nb_lags, grid)
 
-grid$dist_km <- grid$dist_cells * 1  # 1 km per cell
+# Check graph fragmentation: Number of neighbors per cell
+table(spdep::card(nb_queen))
 
-
-# Merge back
-df_final <- df_final %>%
-  separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE,
-    remove = FALSE
-  ) %>%
-  left_join(
-    grid %>% select(x, y, dist_km),
-    by = c("x", "y")
-  )
-
-# Sanity check
-table(df_final$dist_km, useNA = "ifany")
-summary(df_final$dist_km)
 
 
