@@ -281,16 +281,14 @@ df_school_meta <- read_delim(
 ) %>%
   clean_names() %>%
   rename(
-    school_id    = schulnummer,
+    school_id = schulnummer,
     social_index_raw = sozialindexstufe
   ) %>%
   mutate(
     school_id = as.character(school_id),
     social_index = case_when(
-      str_detect(as.character(social_index_raw), "^\\d+$") ~ 
-        as.numeric(social_index_raw),
-      !is.na(gemeinde) & str_detect(as.character(gemeinde), "^\\d+$") ~ 
-        as.numeric(gemeinde),
+      str_detect(as.character(social_index_raw), "^\\d+$") ~ as.numeric(social_index_raw),
+      !is.na(gemeinde) & str_detect(as.character(gemeinde), "^\\d+$") ~ as.numeric(gemeinde),
       TRUE ~ NA_real_
     )
   ) %>%
@@ -305,24 +303,33 @@ df_school_meta <- read_delim(
   ) %>%
   select(-social_index_raw)
 
-### ==== 2.2 Merge Social Index (nearest schools) ====
+### ==== 2.2 Merge Social Index (nearest primary school) ====
 df_social <- df_housing %>%
-  left_join(df_dist_primary,   by = "ergg_1km") %>%
+  left_join(df_dist_primary, by = "ergg_1km") %>%
   left_join(df_dist_secondary, by = "ergg_1km") %>%
-  left_join(df_dist_any,       by = "ergg_1km") %>%
-  left_join(df_school_meta %>% select(school_id, social_index, school_quality),
-            by = c("school_id_primary" = "school_id")) %>%
-  drop_na(kaufpreis, wohnflaeche, ergg_1km, dist_primary_km, dist_secondary_km, social_index)
+  left_join(df_dist_any, by = "ergg_1km") %>%
+  left_join(
+    df_school_meta %>% select(school_id, social_index, school_quality),
+    by = c("school_id_primary" = "school_id")
+  ) %>%
+  drop_na(
+    kaufpreis, wohnflaeche, ergg_1km,
+    dist_primary_km, dist_secondary_km,
+    social_index
+  )
 
 cat("Merged dataset dimensions (social):", dim(df_social), "\n")
 summary(df_social$social_index)
 
-### ==== 2.3 Within-Radius Quality (e.g., 5km) ====
+### ==== 2.3 School Quality Within Radius (5 km) ====
 radius_km <- 5
 
 df_quality_radius <- raw_dist %>%
   filter(dist_km <= radius_km) %>%
-  left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = "school_id") %>%
+  left_join(
+    df_school_meta %>% select(school_id, social_index, school_quality),
+    by = "school_id"
+  ) %>%
   filter(!is.na(social_index), social_index %in% 1:8) %>%
   group_by(ergg_1km) %>%
   summarise(
@@ -334,7 +341,7 @@ df_quality_radius <- raw_dist %>%
 df_social_5km <- df_social %>%
   left_join(df_quality_radius, by = "ergg_1km")
 
-### ==== 2.4 Models with School Quality ====
+### ==== 2.4 Regression Models with School Quality ====
 m6_quality_naive <- lm(log_price ~ school_quality, data = df_social_5km)
 
 m7_quality_base <- lm(
@@ -355,9 +362,11 @@ m_quality_interaction <- lm(
   data = df_social_5km
 )
 
-### ==== 2.5 Plots (Social index) ====
+### ==== 2.5 Plots (Social Index and School Quality) ====
 df_social_5km <- df_social_5km %>%
-  mutate(social_index_f = factor(social_index, levels = 1:9, labels = as.character(1:9)))
+  mutate(
+    social_index_f = factor(social_index, levels = 1:9, labels = as.character(1:9))
+  )
 
 ggplot(df_social_5km, aes(x = dist_primary_km, y = log_price, color = social_index_f)) +
   geom_point(alpha = 0.6) +
