@@ -532,7 +532,7 @@ summary(card(nb_queen))
 n.comp.nb(nb_queen)$nc
 table(spdep::card(nb_queen))
 
-## ==== 4.7 Compute continguituy ====
+## ==== 4.7 Compute contiguity ====
 
 # Initialize distance vector
 q_dist <- rep(NA_integer_, nrow(cells_big))
@@ -579,7 +579,7 @@ df_final <- df_final %>%
     by = c("x","y")
   )
 
-## ==== 4. Regression ====
+## ==== 4.9 Regression ====
 
 model_all_data <- lm(
   log_price ~ q_dist +
@@ -589,17 +589,20 @@ model_all_data <- lm(
 
 summary(model_all_data)
 
-## ==== 4. Map ====
+## ==== 4.10 Map ====
 
 ggplot(
   cells_big,
-  aes(x = x, y = y, fill = factor(q_dist_capped))
+  aes(x = x, y = y, fill = factor(q_dist))
 ) +
   geom_tile() +
   coord_equal() +
   scale_fill_viridis_d(
-    name = "Queen distance\n(capped at 5)",
+    name = "Queen distance",
     direction = -1
   ) +
   theme_minimal() +
   theme(panel.grid = element_blank())
+
+
+table(spdep::card(nb_queen))
