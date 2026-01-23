@@ -515,7 +515,7 @@ school_cells <- raw_dist %>%
 cells_big <- cells_big %>%
   mutate(has_school = paste(x,y) %in% paste(school_cells$x, school_cells$y))
 
-## ==== 4.6 Building Queens continguiuty ====
+## ==== 4.6 Building Queens contiguity ====
 coords <- as.matrix(cells_big[, c("x","y")])
 
 stopifnot(!anyNA(coords))   # safety check
@@ -534,18 +534,17 @@ table(spdep::card(nb_queen))
 
 ## ==== 4.7 Compute continguituy ====
 
-stopifnot(
-  length(nb_queen) == nrow(cells_big),
-  length(cells_big$has_school) == nrow(cells_big)
-)
+# Initialize distance vector
+q_dist <- rep(NA_integer_, nrow(cells_big))
 
-
-q_dist <- rep(NA_integer_, length(nb_queen))
+# Distance = 0 for school cells
 q_dist[cells_big$has_school] <- 0
 
+# Start frontier from school cells
 frontier <- which(cells_big$has_school)
 k <- 0
 
+# Breadth-first search
 while (length(frontier) > 0) {
   k <- k + 1
   new_frontier <- integer(0)
@@ -562,15 +561,45 @@ while (length(frontier) > 0) {
   }
   
   frontier <- unique(new_frontier)
-  if (k > 500) break
+  
+  # safety brake (should never trigger now)
+  if (k > 200) break
 }
 
 cells_big$q_dist <- q_dist
-cells_big$q_dist_capped <- pmin(q_dist, 5)
 
+cells_big$q_dist_capped <- pmin(cells_big$q_dist, 5)
 
+## ==== 4.8 Merge back ====
 
-length(nb_queen)
-nrow(cells_big)
-length(cells_big$has_school)
+df_final <- df_final %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
+  left_join(
+    cells_big %>% select(x, y, q_dist, q_dist_capped),
+    by = c("x","y")
+  )
 
+## ==== 4. Regression ====
+
+model_all_data <- lm(
+  log_price ~ q_dist +
+    log_area + log_plot_area + zimmeranzahl + house_age,
+  data = df_final
+)
+
+summary(model_all_data)
+
+## ==== 4. Map ====
+
+ggplot(
+  cells_big,
+  aes(x = x, y = y, fill = factor(q_dist_capped))
+) +
+  geom_tile() +
+  coord_equal() +
+  scale_fill_viridis_d(
+    name = "Queen distance\n(capped at 5)",
+    direction = -1
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
