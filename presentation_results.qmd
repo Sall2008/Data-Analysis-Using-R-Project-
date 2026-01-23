@@ -150,13 +150,17 @@ school’s social index
 
 
 ## Empirical Framework: Hedonic Price Model
-$$
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
 \log(P_i) = 
 \beta_0 + 
 \beta_1 \text{Dist}_i + 
 X_i' \gamma + 
 \varepsilon_i
-$$
+$
+}
+\end{center}
 
 \vspace{1.5em}
 
@@ -172,13 +176,17 @@ $$
 
 ## Empirical Framework: Hedonic Price Model + Interaction
 
-$$
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
 \log(P_i) = 
 \beta_0 + 
 \beta_1 ( \text{Index}_i \times \text{Dist}_i ) + 
 X_i' \gamma
 + \varepsilon_i
-$$
+$
+}
+\end{center}
 
 \vspace{1.5em}
 
@@ -194,17 +202,27 @@ $$
 
 ## Empirical Framework: Final Model
 
-$$
+
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
+\begin{aligned}
 \log(P_i)
-=
+&=
 \beta_0
 + \beta_1 \text{Dist}_i
-+ \beta_2 \text{Index}_i
++ \beta_2 \text{Index}_i \\
+&\quad
 + \beta_3 \left( \text{Dist}_i \times \text{Index}_i \right)
 + X_i' \gamma
 + \mu_{\ell(i)}
 + \varepsilon_i
-$$
+\end{aligned}
+$
+}
+\end{center}
+
+
 
 - $P_i$ denotes the listing price of house $i$
 \vspace{0.1em}
@@ -232,6 +250,12 @@ This does not work yet... -->
 #| include: true 
 Testplot
 ```
+
+## Limitations
+- **Direct Distance**: The distance is not measured from the houses to the nearest school directly 
+but from the school to the center of the raster cell.
+- **Fragmented Grid**: We do not have data for every grid cell of NRW but only a
+fragmented set of grids containing houses from the available datasets.
 
 ## References {.allowframebreaks}
 
