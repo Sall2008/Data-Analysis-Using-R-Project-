@@ -268,7 +268,6 @@ lm(
 )
 
 # ==== 3. Queen contiguity (distance) =====
-# Distance calculation (might have double steps compared to above)
 
 # Grid (unique raster cells)
 grid <- df_final %>%
@@ -280,6 +279,10 @@ grid <- df_final %>%
   ) %>%
   arrange(x, y)
 
+### Queen cont
+coords <- as.matrix(grid[, c("x", "y")])
+
+# Queen contiguity (8 neighbors)
 nb_queen <- dnearneigh(
   coords,
   d1 = 0,
@@ -313,17 +316,6 @@ grid <- grid %>%
   mutate(
     has_school = paste(x, y) %in% paste(school_cells$x, school_cells$y)
   )
-
-### Queen cont
-coords <- as.matrix(grid[, c("x", "y")])
-
-# Queen contiguity (8 neighbors)
-nb_queen <- dnearneigh(
-  coords,
-  d1 = 0,
-  d2 = sqrt(2),
-  longlat = FALSE
-)
 
 # Higher-order neighbors
 nb_lags <- nblag(nb_queen, maxlag = 15)
@@ -453,5 +445,132 @@ find_school_path(i, nb_lags, grid)
 # Check graph fragmentation: Number of neighbors per cell
 table(spdep::card(nb_queen))
 
+# ==== 4. (All house data) Queen contiguity =====
 
+## ==== 4.1 New Pathes ====
+
+path_sale_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
+path_sale_flats <- "course_data/housing_data/cross_section/CampusFile_WK_2022.csv"
+path_rent_flats <- "course_data/housing_data/cross_section/CampusFile_WM_2022.csv"
+
+## ==== 4.2 Clean Houses for Sale Data ====
+raw_housing_sale <- read_delim(
+  path_sale_housing, 
+  delim = ",", 
+  locale = locale(decimal_mark = "."),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  show_col_types = FALSE
+)
+
+## ==== 4.3 Clean Flats for Sale Data ====
+raw_flats_sale <- read_delim(
+  path_sale_flats, 
+  delim = ",", 
+  locale = locale(decimal_mark = "."),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  show_col_types = FALSE
+)
+
+## ==== 4.4 Clean Flats for Rent Data ====
+raw_flats_rent <- read_delim(
+  path_rent_flats, 
+  delim = ",", 
+  locale = locale(decimal_mark = "."),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  show_col_types = FALSE
+)
+
+## ==== 4.5 NRW Cells Only ====
+raw_housing_sale_NRW <- raw_housing_sale %>% filter(blid == "North Rhine-Westphalia")
+raw_flats_sale_NRW <- raw_flats_sale %>% filter(blid == "North Rhine-Westphalia")
+raw_flats_rent_NRW <- raw_flats_rent %>% filter(blid == "North Rhine-Westphalia")
+
+## ==== 4.5 Building a more comprehensive grid ====
+cells_big <- bind_rows(
+  raw_housing_sale_NRW %>% select(ergg_1km),
+  raw_flats_sale_NRW %>% select(ergg_1km),
+  raw_flats_rent_NRW %>% select(ergg_1km)
+) %>%
+  distinct() %>%
+  filter(!is.na(ergg_1km)) %>%                 
+  separate(
+    ergg_1km,
+    into = c("x","y"),
+    sep = "_",
+    convert = TRUE,
+    remove = TRUE
+  ) %>%
+  filter(!is.na(x), !is.na(y)) %>%              
+  distinct(x, y) %>%
+  arrange(x, y)
+
+## ==== 4.5 Identifying school cells in that grid ====
+school_cells <- raw_dist %>%
+  filter(school_type == "02", nn_order == 1, dist_km <= 0.75) %>%
+  distinct(ergg_1km) %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y)
+
+cells_big <- cells_big %>%
+  mutate(has_school = paste(x,y) %in% paste(school_cells$x, school_cells$y))
+
+## ==== 4.6 Building Queens continguiuty ====
+coords <- as.matrix(cells_big[, c("x","y")])
+
+stopifnot(!anyNA(coords))   # safety check
+
+nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
+
+stopifnot(
+  length(nb_queen) == nrow(cells_big),
+  length(cells_big$has_school) == nrow(cells_big)
+)
+
+### ==== 4.6.1 Diagnostics ====
+summary(card(nb_queen))
+n.comp.nb(nb_queen)$nc
+table(spdep::card(nb_queen))
+
+## ==== 4.7 Compute continguituy ====
+
+stopifnot(
+  length(nb_queen) == nrow(cells_big),
+  length(cells_big$has_school) == nrow(cells_big)
+)
+
+
+q_dist <- rep(NA_integer_, length(nb_queen))
+q_dist[cells_big$has_school] <- 0
+
+frontier <- which(cells_big$has_school)
+k <- 0
+
+while (length(frontier) > 0) {
+  k <- k + 1
+  new_frontier <- integer(0)
+  
+  for (i in frontier) {
+    neigh <- nb_queen[[i]]
+    if (length(neigh) == 0) next
+    
+    to_set <- neigh[is.na(q_dist[neigh])]
+    if (length(to_set) > 0) {
+      q_dist[to_set] <- k
+      new_frontier <- c(new_frontier, to_set)
+    }
+  }
+  
+  frontier <- unique(new_frontier)
+  if (k > 500) break
+}
+
+cells_big$q_dist <- q_dist
+cells_big$q_dist_capped <- pmin(q_dist, 5)
+
+
+
+length(nb_queen)
+nrow(cells_big)
+length(cells_big$has_school)
 
