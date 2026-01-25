@@ -163,297 +163,15 @@ df_final <- df_housing_clean %>%
 # Final check
 cat("Final Dataset Dimensions:", dim(df_final), "\n")
 
-# ==== 2. Queen contiguity (raster only) =====
+# ==== 2. Queen contiguity =====
 
-# Separate numeric coordinates
-df_queen_contiguity <- df_final %>%
-  separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE,
-    remove = FALSE
-  )
-
-grid <- df_queen_contiguity %>%
-  group_by(x, y) %>%
-  summarise(
-    dist_primary_km = min(dist_primary_km, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  arrange(x, y)
-
-coords <- as.matrix(grid[, c("x", "y")])
-n_grid <- nrow(grid)
-
-# Queen contiguity
-nb_queen <- dnearneigh(
-  coords,
-  d1 = 0,
-  d2 = sqrt(2),
-  longlat = FALSE
-)
-
-nb_lags <- spdep::nblag(nb_queen, 3)
-
-nb_1 <- nb_lags[[1]]
-nb_2 <- nb_lags[[2]]
-nb_3 <- nb_lags[[3]]
-
-# sanity check
-stopifnot(
-  length(nb_1) == n_grid,
-  length(nb_2) == n_grid,
-  length(nb_3) == n_grid
-)
-
-# Creating distance based indicators
-grid <- grid %>%
-  mutate(
-    near_q1 = sapply(seq_len(n_grid), function(i) {
-      idx <- nb_1[[i]]
-      length(idx) > 0 && any(dist_primary_km[idx] <= 1)
-    }),
-    
-    near_q2 = sapply(seq_len(n_grid), function(i) {
-      idx <- nb_2[[i]]
-      length(idx) > 0 && any(dist_primary_km[idx] <= 2)
-    }),
-    
-    near_q3 = sapply(seq_len(n_grid), function(i) {
-      idx <- nb_3[[i]]
-      length(idx) > 0 && any(dist_primary_km[idx] <= 3)
-    })
-  )
-
-# Join back
-df_final <- df_queen_contiguity %>%
-  left_join(
-    grid,
-    by = c("x", "y")
-  )
-
-# Drop double distance
-df_final <- df_final %>%
-  rename(dist_primary_km = dist_primary_km.y) %>%
-  select(-dist_primary_km.x)
-
-# Regression (no fixed-effects)
-lm(
-  log_price ~ dist_primary_km + near_q1 + near_q2 + near_q3 +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-# Robustness check
-# Q1
-lm(
-  log_price ~ dist_primary_km + near_q1 +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-# Q2
-lm(
-  log_price ~ dist_primary_km + near_q2 +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-# Q3
-lm(
-  log_price ~ dist_primary_km + near_q3 +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-# ==== 3. Queen contiguity (distance) =====
-
-# Grid (unique raster cells)
-grid <- df_final %>%
-  separate(ergg_1km, into = c("x", "y"), sep = "_", convert = TRUE) %>%
-  group_by(x, y) %>%
-  summarise(
-    dist_primary_km = min(dist_primary_km, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  arrange(x, y)
-
-### Queen cont
-coords <- as.matrix(grid[, c("x", "y")])
-
-# Queen contiguity (8 neighbors)
-nb_queen <- dnearneigh(
-  coords,
-  d1 = 0,
-  d2 = sqrt(2),
-  longlat = FALSE
-)
-
-# Sanity check
-summary(
-  raw_dist %>%
-    filter(
-      school_type == "02",
-      nn_order == 1
-    ) %>%
-    pull(dist_km)
-)
-
-# Identify school cells (from previous step)
-school_cells <- raw_dist %>%
-  filter(
-    school_type == "02",
-    nn_order == 1,
-    dist_km <= 0.75
-  ) %>%
-  select(ergg_1km) %>%
-  distinct() %>%
-  separate(ergg_1km, into = c("x", "y"), sep = "_", convert = TRUE)
-
-# Indicator: does this grid cell contain a school?
-grid <- grid %>%
-  mutate(
-    has_school = paste(x, y) %in% paste(school_cells$x, school_cells$y)
-  )
-
-# Higher-order neighbors
-nb_lags <- nblag(nb_queen, maxlag = 15)
-
-# Compute
-# Initialize distance
-grid$q_dist <- NA_integer_
-
-# Distance 0
-grid$q_dist[grid$has_school] <- 0
-
-# Distances 1+
-for (k in 1:5) {
-  idx <- which(is.na(grid$q_dist))
-  if (length(idx) == 0) break
-  
-  for (i in idx) {
-    neigh <- nb_lags[[k]][[i]]
-    if (length(neigh) > 0 && any(grid$has_school[neigh])) {
-      grid$q_dist[i] <- k
-    }
-  }
-}
-
-# Any remaining → very far
-max_lag <- length(nb_lags)
-grid$q_dist[is.na(grid$q_dist)] <- max_lag + 1
-
-# Distribution check
-table(grid$q_dist)
-
-# Merge back for housing data
-df_final <- df_final %>%
-  separate(ergg_1km, into = c("x", "y"), sep = "_", convert = TRUE) %>%
-  left_join(
-    grid %>% select(x, y, q_dist),
-    by = c("x", "y")
-  )
-
-# Regression
-# Each additional queen-contiguity ring away from a primary school is associated with about a
-# 5.5% lower listing price, holding housing characteristics constant.
-model <- lm(
-  log_price ~ q_dist +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-summary(model)
-
-# Regression: factor distance
-df_final$q_dist_f <- factor(df_final$q_dist)
-
-lm(
-  log_price ~ q_dist_f +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-# Houses in the same raster cell as a primary school are the most expensive
-# Prices drop sharply already in first- and second-order neighbors
-# Effects are non-linear and strongly spatial
-
-## ==== 3.1 Plot ====
-grid_map <- df_final %>%
-  distinct(x, y, q_dist)
-
-ggplot(grid_map, aes(x = x, y = y, fill = factor(q_dist))) +
-  geom_tile(color = NA) +
-  scale_fill_viridis_d(
-    name = "Contiguity distance",
-    option = "C",
-    direction = -1
-  ) +
-  coord_equal() +
-  labs(
-    x = "Grid X coordinate (1 km)",
-    y = "Grid Y coordinate (1 km)",
-    title = "Queen-contiguity distance to nearest primary school"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    legend.position = "right",
-    panel.grid = element_blank()
-  )
-
-## ==== 3.2 Diagnostics ====
-
-# Confirming whether row 6 and 7 in "grid" are actually 6+ steps apart
-
-i <- which(grid$x == 4036 & grid$y == 3108)
-
-k_hit <- which(sapply(seq_along(nb_lags), function(k) {
-  any(grid$has_school[ nb_lags[[k]][[i]] ])
-}))[1]
-
-k_hit  # NA if no school reachable within maxlag
-
-# What would be the first cell to hit a school for row 7
-find_school_path <- function(i, nb_lags, grid) {
-  if (grid$has_school[i]) {
-    return(list(lag = 0, cell = i))
-  }
-  
-  for (k in seq_along(nb_lags)) {
-    neigh_k <- nb_lags[[k]][[i]]
-    
-    if (length(neigh_k) > 0) {
-      hits <- neigh_k[grid$has_school[neigh_k]]
-      
-      if (length(hits) > 0) {
-        return(list(
-          lag = k,
-          cell_index = hits[1],
-          x = grid$x[hits[1]],
-          y = grid$y[hits[1]]
-        ))
-      }
-    }
-  }
-  
-  return(NULL)
-}
-
-find_school_path(i, nb_lags, grid)
-
-# Check graph fragmentation: Number of neighbors per cell
-table(spdep::card(nb_queen))
-
-# ==== 4. (All house data) Queen contiguity =====
-
-## ==== 4.1 New Paths ====
+## ==== 2.1 New Paths ====
 
 path_sale_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_sale_flats <- "course_data/housing_data/cross_section/CampusFile_WK_2022.csv"
 path_rent_flats <- "course_data/housing_data/cross_section/CampusFile_WM_2022.csv"
 
-## ==== 4.2 Clean Houses for Sale Data ====
+## ==== 2.2 Clean Houses for Sale Data ====
 raw_housing_sale <- read_delim(
   path_sale_housing, 
   delim = ",", 
@@ -462,7 +180,7 @@ raw_housing_sale <- read_delim(
   show_col_types = FALSE
 )
 
-## ==== 4.3 Clean Flats for Sale Data ====
+## ==== 2.3 Clean Flats for Sale Data ====
 raw_flats_sale <- read_delim(
   path_sale_flats, 
   delim = ",", 
@@ -471,7 +189,7 @@ raw_flats_sale <- read_delim(
   show_col_types = FALSE
 )
 
-## ==== 4.4 Clean Flats for Rent Data ====
+## ==== 2.4 Clean Flats for Rent Data ====
 raw_flats_rent <- read_delim(
   path_rent_flats, 
   delim = ",", 
@@ -480,12 +198,12 @@ raw_flats_rent <- read_delim(
   show_col_types = FALSE
 )
 
-## ==== 4.5 NRW Cells Only ====
+## ==== 2.5 NRW Cells Only ====
 raw_housing_sale_NRW <- raw_housing_sale %>% filter(blid == "North Rhine-Westphalia")
 raw_flats_sale_NRW <- raw_flats_sale %>% filter(blid == "North Rhine-Westphalia")
 raw_flats_rent_NRW <- raw_flats_rent %>% filter(blid == "North Rhine-Westphalia")
 
-## ==== 4.5 Building a more comprehensive grid ====
+## ==== 2.5 Building a more comprehensive grid ====
 cells_big <- bind_rows(
   raw_housing_sale_NRW %>% select(ergg_1km),
   raw_flats_sale_NRW %>% select(ergg_1km),
@@ -504,7 +222,7 @@ cells_big <- bind_rows(
   distinct(x, y) %>%
   arrange(x, y)
 
-## ==== 4.5 Identifying school cells in that grid ====
+## ==== 2.6 Identifying school cells in that grid ====
 school_cells_primary <- raw_dist %>%
   filter(school_type %in% type_primary, nn_order == 1, dist_km <= 0.75) %>%
   distinct(ergg_1km) %>%
@@ -525,10 +243,27 @@ cells_big <- cells_big %>%
     has_secondary = paste(x,y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
   )
 
-## ==== 4.6 Building Grid ====
+## ==== 2.7 Building Grid ====
 coords <- as.matrix(cells_big[, c("x","y")])
 
 stopifnot(!anyNA(coords))   # safety check
+
+nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
+
+# Drop cells with no neighbors
+
+cells_big <- cells_big %>%
+  mutate(n_neighbors = spdep::card(nb_queen))
+
+cells_big <- cells_big %>%
+  filter(n_neighbors > 0) %>%
+  select(-n_neighbors)
+
+# Rebuild nb_queen
+
+coords <- as.matrix(cells_big[, c("x","y")])
+
+stopifnot(!anyNA(coords))
 
 nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
 
@@ -538,14 +273,14 @@ stopifnot(
   length(cells_big$has_secondary) == nrow(cells_big)
 )
 
-### ==== 4.6.1 Diagnostics ====
+### ==== 2.7.1 Diagnostics ====
 summary(card(nb_queen))
 n.comp.nb(nb_queen)$nc
 table(spdep::card(nb_queen))
 
-## ==== 4.7 Compute Queens contiguity ====
+## ==== 2.8 Compute Queens contiguity ====
 
-### ==== 4.7.1 Define function ====
+### ==== 2.8.1 Define function ====
 
 compute_qdist <- function(nb, has_school, max_steps = 200) {
   stopifnot(length(nb) == length(has_school))
@@ -580,7 +315,7 @@ compute_qdist <- function(nb, has_school, max_steps = 200) {
   q_dist
 }
 
-### ==== 4.7.2 Apply function ====
+### ==== 2.8.2 Apply function ====
 
 cells_big$q_dist_primary <- compute_qdist(
   nb = nb_queen,
@@ -593,7 +328,7 @@ cells_big$q_dist_secondary <- compute_qdist(
 )
 
 
-## ==== 4.8 Merge back ====
+## ==== 2.9 Merge back ====
 
 df_final <- df_final %>%
   separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
@@ -606,9 +341,9 @@ df_final <- df_final %>%
   )
 
 
-## ==== 4.9 Regression ====
+## ==== 2.10 Regression ====
 
-## ==== 4.9.1 Primary Schools ====
+## ==== 2.10.1 Primary Schools ====
 
 model_primary_all <- lm(
   log_price ~ q_dist_primary +
@@ -618,7 +353,7 @@ model_primary_all <- lm(
 
 summary(model_primary_all)
 
-## ==== 4.9.2 Secondary Schools ====
+## ==== 2.10.2 Secondary Schools ====
 
 model_secondary_all <- lm(
   log_price ~ q_dist_secondary +
@@ -628,9 +363,9 @@ model_secondary_all <- lm(
 
 summary(model_secondary_all)
 
-## ==== 4.10 Map ====
+## ==== 2.11 Map ====
 
-## ==== 4.10.1 Primary Schools ====
+## ==== 2.11.1 Primary Schools ====
 
 plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
   labs(
@@ -652,7 +387,7 @@ plot_queens_primary
 
 table(spdep::card(nb_queen))
 
-## ==== 4.10.2 Secondary Schools ====
+## ==== 2.11.2 Secondary Schools ====
 
 plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
   labs(
@@ -672,9 +407,9 @@ plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secon
 
 plot_queens_secondary
 
-# ==== 6. (All house data) + Social Index =====
+# ==== 3. Queen contiguity + Social Index =====
 
-## ==== 6.1 Regression ====
+## ==== 3.1 Regression ====
 
 model_index <- lm(
   log_price ~ q_dist_primary * social_index + q_dist_secondary * social_index +
