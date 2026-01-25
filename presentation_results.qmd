@@ -256,6 +256,7 @@ Testplot
 but from the school to the center of the raster cell.
 - **Fragmented Grid**: We do not have data for every grid cell of NRW but only a
 fragmented set of grids containing houses from the available datasets.
+- **Listing prices**: The prices we have are not transaction but listing prices.
 
 ## References {.allowframebreaks}
 
