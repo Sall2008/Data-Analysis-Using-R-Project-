@@ -447,7 +447,7 @@ table(spdep::card(nb_queen))
 
 # ==== 4. (All house data) Queen contiguity =====
 
-## ==== 4.1 New Pathes ====
+## ==== 4.1 New Paths ====
 
 path_sale_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_sale_flats <- "course_data/housing_data/cross_section/CampusFile_WK_2022.csv"
@@ -505,17 +505,27 @@ cells_big <- bind_rows(
   arrange(x, y)
 
 ## ==== 4.5 Identifying school cells in that grid ====
-school_cells <- raw_dist %>%
-  filter(school_type == "02", nn_order == 1, dist_km <= 0.75) %>%
+school_cells_primary <- raw_dist %>%
+  filter(school_type %in% type_primary, nn_order == 1, dist_km <= 0.75) %>%
+  distinct(ergg_1km) %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y)
+
+school_cells_secondary <- raw_dist %>%
+  filter(school_type %in% type_secondary, nn_order == 1, dist_km <= 0.75) %>%
   distinct(ergg_1km) %>%
   separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
   filter(!is.na(x), !is.na(y)) %>%
   distinct(x, y)
 
 cells_big <- cells_big %>%
-  mutate(has_school = paste(x,y) %in% paste(school_cells$x, school_cells$y))
+  mutate(
+    has_primary = paste(x,y) %in% paste(school_cells_primary$x, school_cells_primary$y),
+    has_secondary = paste(x,y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
+  )
 
-## ==== 4.6 Building Queens contiguity ====
+## ==== 4.6 Building Grid ====
 coords <- as.matrix(cells_big[, c("x","y")])
 
 stopifnot(!anyNA(coords))   # safety check
@@ -524,7 +534,8 @@ nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
 
 stopifnot(
   length(nb_queen) == nrow(cells_big),
-  length(cells_big$has_school) == nrow(cells_big)
+  length(cells_big$has_primary) == nrow(cells_big),
+  length(cells_big$has_secondary) == nrow(cells_big)
 )
 
 ### ==== 4.6.1 Diagnostics ====
@@ -532,77 +543,144 @@ summary(card(nb_queen))
 n.comp.nb(nb_queen)$nc
 table(spdep::card(nb_queen))
 
-## ==== 4.7 Compute contiguity ====
+## ==== 4.7 Compute Queens contiguity ====
 
-# Initialize distance vector
-q_dist <- rep(NA_integer_, nrow(cells_big))
+### ==== 4.7.1 Define function ====
 
-# Distance = 0 for school cells
-q_dist[cells_big$has_school] <- 0
-
-# Start frontier from school cells
-frontier <- which(cells_big$has_school)
-k <- 0
-
-# Breadth-first search
-while (length(frontier) > 0) {
-  k <- k + 1
-  new_frontier <- integer(0)
+compute_qdist <- function(nb, has_school, max_steps = 200) {
+  stopifnot(length(nb) == length(has_school))
   
-  for (i in frontier) {
-    neigh <- nb_queen[[i]]
-    if (length(neigh) == 0) next
+  q_dist <- rep(NA_integer_, length(has_school))
+  q_dist[has_school] <- 0
+  
+  frontier <- which(has_school)
+  k <- 0
+  
+  while (length(frontier) > 0) {
+    k <- k + 1
+    if (k > max_steps) break
     
-    to_set <- neigh[is.na(q_dist[neigh])]
-    if (length(to_set) > 0) {
-      q_dist[to_set] <- k
-      new_frontier <- c(new_frontier, to_set)
+    new_frontier <- integer(0)
+    
+    for (i in frontier) {
+      neigh <- nb[[i]]
+      neigh <- neigh[neigh > 0]
+      if (length(neigh) == 0) next
+      
+      to_set <- neigh[is.na(q_dist[neigh])]
+      if (length(to_set) > 0) {
+        q_dist[to_set] <- k
+        new_frontier <- c(new_frontier, to_set)
+      }
     }
+    
+    frontier <- unique(new_frontier)
   }
   
-  frontier <- unique(new_frontier)
-  
-  # safety brake (should never trigger now)
-  if (k > 200) break
+  q_dist
 }
 
-cells_big$q_dist <- q_dist
+### ==== 4.7.2 Apply function ====
 
-cells_big$q_dist_capped <- pmin(cells_big$q_dist, 5)
+cells_big$q_dist_primary <- compute_qdist(
+  nb = nb_queen,
+  has_school = cells_big$has_primary
+)
+
+cells_big$q_dist_secondary <- compute_qdist(
+  nb = nb_queen,
+  has_school = cells_big$has_secondary
+)
+
 
 ## ==== 4.8 Merge back ====
 
 df_final <- df_final %>%
   separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
   left_join(
-    cells_big %>% select(x, y, q_dist, q_dist_capped),
+    cells_big %>%
+      select(x, y,
+             q_dist_primary,
+             q_dist_secondary),
     by = c("x","y")
   )
 
+
 ## ==== 4.9 Regression ====
 
-model_all_data <- lm(
-  log_price ~ q_dist +
+## ==== 4.9.1 Primary Schools ====
+
+model_primary_all <- lm(
+  log_price ~ q_dist_primary +
     log_area + log_plot_area + zimmeranzahl + house_age,
   data = df_final
 )
 
-summary(model_all_data)
+summary(model_primary_all)
+
+## ==== 4.9.2 Secondary Schools ====
+
+model_secondary_all <- lm(
+  log_price ~ q_dist_secondary +
+    log_area + log_plot_area + zimmeranzahl + house_age,
+  data = df_final
+)
+
+summary(model_secondary_all)
 
 ## ==== 4.10 Map ====
 
-ggplot(
-  cells_big,
-  aes(x = x, y = y, fill = factor(q_dist))
-) +
+## ==== 4.10.1 Primary Schools ====
+
+plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
+  labs(
+    title = "Queens Distance for Primary Schools"
+  ) +
   geom_tile() +
   coord_equal() +
-  scale_fill_viridis_d(
-    name = "Queen distance",
-    direction = -1
+  scale_fill_viridis_c(
+    name = "Distance",
+    option = "C",
+    direction = -1,
+    limits = c(0, 6),      # cap visually
+    oob = scales::squish
   ) +
   theme_minimal() +
   theme(panel.grid = element_blank())
 
+plot_queens_primary
 
 table(spdep::card(nb_queen))
+
+## ==== 4.10.2 Secondary Schools ====
+
+plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
+  labs(
+    title = "Queens Distance for Secondary Schools"
+  ) +
+  geom_tile() +
+  coord_equal() +
+  scale_fill_viridis_c(
+    name = "Distance",
+    option = "C",
+    direction = -1,
+    limits = c(0, 6),      # cap visually
+    oob = scales::squish
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+
+plot_queens_secondary
+
+# ==== 6. (All house data) + Social Index =====
+
+## ==== 6.1 Regression ====
+
+model_index <- lm(
+  log_price ~ q_dist_primary * social_index + q_dist_secondary * social_index +
+    log_area + log_plot_area + zimmeranzahl + house_age,
+  data = df_final
+)
+
+summary(model_index)
+
