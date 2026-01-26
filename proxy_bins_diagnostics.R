@@ -253,7 +253,7 @@ tab_ols_cont <- modelsummary(
   models_cont,
   vcov      = "HC1",
   coef_map  = coef_map_cont,
-  statistic = "(p: {p.value})",
+  statistic = NULL,
   stars     = c("*" = .1, "**" = .05, "***" = .01),
   gof_map   = c("nobs", "r.squared", "adj.r.squared"),
   fmt       = 3,
