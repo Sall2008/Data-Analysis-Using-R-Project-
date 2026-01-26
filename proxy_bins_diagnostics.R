@@ -279,7 +279,7 @@ models_bin <- list(
 tab_ols_bin <- modelsummary(
   models_bin,
   vcov      = "HC1",
-  statistic = "(p: {p.value})",
+  statistic = NULL,
   stars     = c("*" = .1, "**" = .05, "***" = .01),
   gof_map   = c("nobs", "r.squared", "adj.r.squared"),
   fmt       = 3,
@@ -326,10 +326,8 @@ tab_main_compare <- modelsummary(
   models_main_compare,
   vcov      = "HC1",
   coef_map  = coef_map_compare,
-  
   coef_omit = "log_area|log_plot_area|zimmeranzahl|house_age|\\(Intercept\\)",
-  
-  statistic = "(p: {p.value})",
+  statistic = NULL,
   stars     = c("*" = .1, "**" = .05, "***" = .01),
   gof_map   = c("nobs", "r.squared", "adj.r.squared"),
   fmt       = 3,
