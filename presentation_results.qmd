@@ -150,9 +150,17 @@ school’s social index
 
 
 ## Empirical Framework: Hedonic Price Model
-$$
-\log(P_i) = \beta_0 + \beta_1 \text{Dist}_i + \beta_2 X_i + \varepsilon_i
-$$
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
+\log(P_i) = 
+\beta_0 + 
+\beta_1 \text{Dist}_i + 
+X_i' \gamma + 
+\varepsilon_i
+$
+}
+\end{center}
 
 \vspace{1.5em}
 
@@ -162,8 +170,71 @@ $$
 \vspace{0.1em}
 - $X_i$ is a vector of housing characteristics
 \vspace{0.1em}
+- $\gamma$ is a vector of coefficients corresponding to $X_i$
+\vspace{0.1em}
 - $\varepsilon_i$ captures unobserved factors
 
+## Empirical Framework: Hedonic Price Model + Interaction
+
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
+\log(P_i) = 
+\beta_0 + 
+\beta_1 ( \text{Index}_i \times \text{Dist}_i ) + 
+X_i' \gamma
++ \varepsilon_i
+$
+}
+\end{center}
+
+\vspace{1.5em}
+
+- $P_i$ denotes the listing price of house $i$
+\vspace{0.1em}
+- $\text{Index}_i$ is the school social index
+\vspace{0.1em}
+- $\text{Dist}_i$ measures distance to the nearest school
+\vspace{0.1em}
+- $X_i$ is a vector of housing characteristics
+\vspace{0.1em}
+- $\varepsilon_i$ captures unobserved factors
+
+## Empirical Framework: Final Model
+
+
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
+\begin{aligned}
+\log(P_i)
+&=
+\beta_0
++ \beta_1 \text{Dist}_i
++ \beta_2 \text{Index}_i \\
+&\quad
++ \beta_3 \left( \text{Dist}_i \times \text{Index}_i \right)
++ X_i' \gamma
++ \mu_{\ell(i)}
++ \varepsilon_i
+\end{aligned}
+$
+}
+\end{center}
+
+
+
+- $P_i$ denotes the listing price of house $i$
+\vspace{0.1em}
+- $\text{Dist}_i$ measures distance to the nearest school
+\vspace{0.1em}
+- $X_i$ is a vector of housing characteristics
+\vspace{0.1em}
+- $\text{Index}_i$ is the school social index
+\vspace{0.1em}
+- $mu_{\ell(i)}$ are municipality fixed effects
+\vspace{0.1em}
+- $\varepsilon_i$ captures unobserved factors
 
 # Results and Main Findings
 
@@ -171,15 +242,21 @@ $$
 
 <!-- This part has to stay on the last page before the references to indicate
 the end of the presentation for the progress bar defined in the custom 
-theme file. -->
+theme file.
+This does not work yet... -->
 \setcontentend
-
-
 
 ```{r}
 #| include: true 
 Testplot
 ```
+
+## Limitations
+- **Direct Distance**: The distance is not measured from the houses to the nearest school directly 
+but from the school to the center of the raster cell.
+- **Fragmented Grid**: We do not have data for every grid cell of NRW but only a
+fragmented set of grids containing houses from the available datasets.
+- **Listing prices**: The prices we have are not transaction but listing prices.
 
 ## References {.allowframebreaks}
 
