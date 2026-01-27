@@ -470,3 +470,84 @@ df_final3 <- df_final %>%
 
 m_bad_ref <- lm(base_formula, data = df_final3)
 summary(m_bad_ref)
+
+
+# ==== 4. Graphics for presentation ====
+
+## ==== 4.1 Graphics for presentation ====
+
+# This graphic should show our limitation, that even though a house might be
+# close to a school, the distance we used might be far off because we used
+# the distance from the school to the centroid, not to the house
+# Raster cell
+cell <- data.frame(
+  xmin = 0, xmax = 1,
+  ymin = 0, ymax = 1
+)
+
+# Key locations (centriod, school and house)
+centroid <- data.frame(x = 0.5, y = 0.5)
+school   <- data.frame(x = 0.88, y = 0.84)
+house    <- data.frame(x = 0.75, y = 0.80)
+
+# Plot cell
+ggplot() +
+  geom_rect(
+    data = cell,
+    aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+    fill = "grey95",
+    color = "grey40",
+    linewidth = 0.6
+  ) +
+  
+  labs(title = "Single raster cell used for distance computation") +
+  
+  # Add centroid to plot
+  geom_point(data = centroid, aes(x, y), size = 3) +
+  geom_text(
+    data = centroid,
+    aes(x, y, label = "Cell centroid"),
+    vjust = 2.2, size = 3
+  ) +
+  
+  # Add school to plot
+  geom_point(data = school, aes(x, y), size = 3, shape = 17) +
+  geom_text(
+    data = school,
+    aes(x, y, label = "School"),
+    vjust = -1.3, size = 3
+  ) +
+  
+  # Add house to plot 
+  geom_point(data = house, aes(x, y), size = 3, shape = 15) +
+  geom_text(
+    data = house,
+    aes(x, y, label = "House"),
+    vjust = -1.3, size = 3
+  ) +
+  
+  # Measured distance (school → centroid)
+  geom_segment(
+    aes(
+      x = school$x, y = school$y,
+      xend = centroid$x, yend = centroid$y
+    ),
+    linetype = "dashed",
+    linewidth = 0.5
+  ) +
+  
+  # True distance as dotted line (school → house)
+  geom_segment(
+    aes(
+      x = school$x, y = school$y,
+      xend = house$x, yend = house$y
+    ),
+    linewidth = 0.8
+  ) +
+  
+  coord_equal(xlim = c(-0.05, 1.05), ylim = c(-0.05, 1.05)) +
+  theme_void() +
+  theme(
+    plot.title = element_text(size = 11, hjust = 0.5)
+  )
+
