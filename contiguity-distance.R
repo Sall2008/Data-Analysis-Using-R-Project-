@@ -419,3 +419,5 @@ model_index <- lm(
 
 summary(model_index)
 
+
+
