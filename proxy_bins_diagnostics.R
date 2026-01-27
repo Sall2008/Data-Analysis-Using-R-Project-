@@ -14,6 +14,7 @@ library(gt)
 library(lmtest)
 library(sandwich)
 library(car)
+library(readr)
 
 theme_set(
   theme_minimal(base_size = 18) +
@@ -544,24 +545,49 @@ df_bin_mean <- df_bins %>%
   group_by(school_level, dist_bin) %>%
   summarise(
     mean_log_ppsqm = mean(log_ppsqm, na.rm = TRUE),
+    se_log_ppsqm   = sd(log_ppsqm, na.rm = TRUE) / sqrt(n()),
     n = n(),
     .groups = "drop"
   )
+
+# Global y-axis limits for log(price per sqm)
+y_limits <- range(
+  df_main$log_ppsqm,
+  finite = TRUE
+)
+
+y_pad <- 0.05 * diff(y_limits)
+
+y_limits <- c(y_limits[1] - y_pad, y_limits[2] + y_pad)
+
 
 fig_price_gradient <- ggplot(
   df_bin_mean,
   aes(x = dist_bin, y = mean_log_ppsqm, 
       color = school_level, group = school_level)
 ) +
-  geom_line(linewidth = 1.2) +
-  geom_point(size = 3) +
+  geom_line(linewidth = 1.2, alpha = 0.8) +
+  geom_point(size = 3.5, alpha = 0.9) +
+  geom_errorbar(aes(ymin = mean_log_ppsqm - 1.96*se_log_ppsqm, 
+                    ymax = mean_log_ppsqm + 1.96*se_log_ppsqm),
+                width = 0.1, alpha = 0.5) +
   scale_color_manual(values = pal_muted) +
+  scale_y_continuous(limits = y_limits) + 
   labs(
-    x = "Distance bin (km) — wider bins mitigate centroid measurement error",
-    y = "Mean log(price per sqm)",
+    title = "Binned relationship: mean prices by distance categories",
+    x = "Distance bin (km)",
+    y = "Mean Log(price per sqm)", 
     color = NULL
   ) +
-  theme(legend.position = "top")
+  theme_minimal(base_size = 18) + 
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold"),
+    plot.subtitle = element_text(color = "grey35"),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
 
 print(fig_price_gradient)
 
@@ -587,6 +613,7 @@ fig_scatter_combined <- ggplot(
   geom_point(alpha = 0.10) +
   geom_smooth(se = TRUE) +
   scale_color_manual(values = pal_muted) +
+  scale_y_continuous(limits = y_limits) +
   labs(
     x = "Distance to nearest school (km)",
     y = "Log(price per sqm)",
@@ -597,3 +624,149 @@ fig_scatter_combined <- ggplot(
   theme(legend.position = "top")
 
 print(fig_scatter_combined)
+
+### ==== 4.3 Queen contiguity maps (Primary + Secondary) ====
+stopifnot(all(c("ergg_1km", "school_type", "dist_km") 
+              %in% names(raw_dist)))
+# Build a comprehensive NRW grid (only houses sale)
+read_housing_like <- function(path) {
+  read_delim(
+    path,
+    delim = ",",
+    locale = locale(decimal_mark = "."),
+    na = c("-5","-6","-7","-8","-9","-11","NA","","Implausible value","Other missing"),
+    show_col_types = FALSE
+  ) %>%
+    filter(blid == "North Rhine-Westphalia") %>%
+    transmute(ergg_1km = as.character(ergg_1km)) %>%
+    filter(!is.na(ergg_1km))
+}
+
+cells_big <- bind_rows(
+  read_housing_like(path_housing)
+) %>%
+  distinct() %>%
+  separate(
+    ergg_1km,
+    into = c("x", "y"),
+    sep = "_",
+    convert = TRUE,
+    remove = FALSE
+  ) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y) %>%
+  arrange(x, y)
+
+# Identify "school cells" (cells very close to a school)
+filter_nn1 <- function(df) {
+  if ("nn_order" %in% names(df)) df %>% filter(nn_order == 1) else df
+}
+
+school_cells_primary <- raw_dist %>%
+  filter(school_type %in% type_primary) %>%
+  filter_nn1() %>%
+  filter(is.finite(dist_km), dist_km <= 0.75) %>%
+  distinct(ergg_1km) %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y)
+
+school_cells_secondary <- raw_dist %>%
+  filter(school_type %in% type_secondary) %>%
+  filter_nn1() %>%
+  filter(is.finite(dist_km), dist_km <= 0.75) %>%
+  distinct(ergg_1km) %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y)
+
+cells_big <- cells_big %>%
+  mutate(
+    has_primary   = paste(x, y) %in% paste(school_cells_primary$x, school_cells_primary$y),
+    has_secondary = paste(x, y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
+  )
+
+# Queen neighbors (8-neighborhood on 1km grid)
+coords <- as.matrix(cells_big[, c("x", "y")])
+stopifnot(!anyNA(coords))
+
+nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
+
+# Drop isolates (no neighbors), then rebuild nb
+cells_big <- cells_big %>%
+  mutate(n_neighbors = spdep::card(nb_queen)) %>%
+  filter(n_neighbors > 0) %>%
+  select(-n_neighbors)
+
+coords <- as.matrix(cells_big[, c("x", "y")])
+nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
+
+# Queen-distance (BFS)
+compute_qdist <- function(nb, has_school, max_steps = 200) {
+  stopifnot(length(nb) == length(has_school))
+  
+  q_dist <- rep(NA_integer_, length(has_school))
+  q_dist[has_school] <- 0L
+  
+  frontier <- which(has_school)
+  k <- 0L
+  
+  while (length(frontier) > 0) {
+    k <- k + 1L
+    if (k > max_steps) break
+    
+    new_frontier <- integer(0)
+    
+    for (i in frontier) {
+      neigh <- nb[[i]]
+      if (length(neigh) == 0) next
+      
+      to_set <- neigh[is.na(q_dist[neigh])]
+      if (length(to_set) > 0) {
+        q_dist[to_set] <- k
+        new_frontier <- c(new_frontier, to_set)
+      }
+    }
+    
+    frontier <- unique(new_frontier)
+  }
+  
+  q_dist
+}
+
+cells_big <- cells_big %>%
+  mutate(
+    q_dist_primary   = compute_qdist(nb_queen, has_primary),
+    q_dist_secondary = compute_qdist(nb_queen, has_secondary)
+  )
+
+# maps (primay + secondary)
+plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
+  geom_tile() +
+  coord_equal() +
+  scale_fill_viridis_c(
+    name = "Queen steps",
+    option = "C",
+    direction = -1,
+    limits = c(0, 6),
+    oob = scales::squish
+  ) +
+  labs(title = "Queen distance to Primary schools") +
+  theme(panel.grid = element_blank())
+
+plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
+  geom_tile() +
+  coord_equal() +
+  scale_fill_viridis_c(
+    name = "Queen steps",
+    option = "C",
+    direction = -1,
+    limits = c(0, 6),
+    oob = scales::squish
+  ) +
+  labs(title = "Queen distance to Secondary schools") +
+  theme(panel.grid = element_blank())
+
+print(plot_queens_primary)
+print(plot_queens_secondary)
+
