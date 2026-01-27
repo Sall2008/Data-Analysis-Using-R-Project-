@@ -419,5 +419,54 @@ model_index <- lm(
 
 summary(model_index)
 
+## ==== 3.2 Regression on categorized index  ====
+
+### ==== 3.2.1  Creating the categories ====
+
+df_final <- df_final %>% 
+  mutate(
+    school_quality = case_when(
+      social_index %in% 1:2 ~ "good",
+      social_index %in% 3:4 ~ "average",
+      social_index %in% 5:8 ~ "bad",
+      TRUE ~ "unknown"
+    )
+  )
+
+## ==== 3.2.2 Regressions ====
 
 
+# Model basis
+base_formula <- log_price ~
+  q_dist_primary * school_quality +
+  q_dist_secondary* school_quality +
+  log_area + log_plot_area +
+  zimmeranzahl + house_age
+
+
+# Reference school quality good 
+df_final1 <- df_final %>%
+  mutate(school_quality = factor(school_quality),
+         school_quality = relevel(school_quality, ref = "good")
+         )
+
+m_good_ref <- lm(base_formula, data = df_final1)
+summary(m_good_ref)
+
+
+# Reference school quality average  
+df_final2 <- df_final %>%
+  mutate(school_quality = factor(school_quality),
+         school_quality = relevel(school_quality, ref = "average"))
+
+m_avg_ref <- lm(base_formula, data = df_final2)
+summary(m_avg_ref)
+
+
+# Reference school quality bad 
+df_final3 <- df_final %>%
+  mutate(school_quality = factor(school_quality),
+         school_quality = relevel(school_quality, ref = "bad"))
+
+m_bad_ref <- lm(base_formula, data = df_final3)
+summary(m_bad_ref)
