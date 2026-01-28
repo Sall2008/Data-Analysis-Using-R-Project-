@@ -1,6 +1,5 @@
 ## ==== 1. DATA PREPARATION ====
 ### ==== 1.1 Packages & Global Theme ====
-
 library(tidyverse)
 library(readxl)
 library(fs)
@@ -28,7 +27,6 @@ theme_set(
 )
 
 ### ==== 1.2 Define Paths & Constants ====
-
 path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_school  <- "course_data/school_data/2022_social_index.csv"
 path_dist    <- "course_data/school_data/distance_to_schools.csv"
@@ -39,12 +37,11 @@ type_primary   <- c("02")
 type_secondary <- c("04", "10", "14", "15", "20")
 type_all       <- c("02", "04", "10", "14", "15", "20")
 
-# Distance binning (used in descriptive plots AND optionally in regressions)
+# Distance binning
 breaks_km <- c(0, 3, 6, 9, Inf)
 labels_km <- c("0-3", "3-6", "6-9", ">9")
 
 ### ==== 1.3 Load & Clean Housing Data ====
-
 raw_housing <- read_delim(
   path_housing,
   delim = ",",
@@ -95,7 +92,6 @@ df_housing <- raw_housing %>%
   drop_na(kaufpreis, wohnflaeche, ergg_1km)
 
 ### ==== 1.4 Load Distance Data & Nearest-School Helper ====
-
 raw_dist <- read_csv(path_dist, show_col_types = FALSE) %>%
   clean_names() %>%
   mutate(
@@ -129,7 +125,6 @@ df_dist_any       <- get_nearest_school(raw_dist, type_all,
                                         "dist_any_km")
 
 ### ==== 1.5 Merge Housing + Distances + Derived Variables ====
-
 df_main <- df_housing %>%
   left_join(df_dist_primary,   by = "ergg_1km") %>%
   left_join(df_dist_secondary, by = "ergg_1km") %>%
@@ -161,9 +156,7 @@ df_main <- df_housing %>%
 cat("Final dataset dimensions:", dim(df_main), "\n")
 
 ## ==== 2. PROXY - REGRESSIONS ====
-
 ### ==== 2.1 Regression Sample ====
-
 df_reg <- df_main %>%
   drop_na(
     log_price,
@@ -173,9 +166,8 @@ df_reg <- df_main %>%
     zimmeranzahl, house_age
   )
 
-### ==== 2.2 OLS Models (Separate Narratives) ====
-
-# --- Continuous distance specifications ---
+### ==== 2.2 OLS Models ====
+#### ==== 2.2.1 Continuous distance specifications ====
 m1_naive_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km, 
                          data = df_reg)
 
@@ -204,7 +196,7 @@ m5_base_secondary_cont <- lm(
   data = df_reg
 )
 
-# --- Binned distance specifications (factor dummies; baseline = 0-3 km) ---
+#### ==== 2.2.2 Binned distance specifications ====
 m6_naive_both_bin <- lm(log_price ~ dist_primary_bin + dist_secondary_bin, 
                         data = df_reg)
 
@@ -226,8 +218,7 @@ m9_base_secondary_bin <- lm(
   data = df_reg
 )
 
-### ==== 2.3 Output Tables (Separate + Main Model Comparison) ====
-
+### ==== 2.3 Output Tables ====
 # Coefficient labels for continuous terms and controls only
 coef_map_cont <- c(
   "dist_primary_km"        = "Distance to primary school (km)",
@@ -241,7 +232,7 @@ coef_map_cont <- c(
   "(Intercept)"            = "Intercept"
 )
 
-# --- Table 1: Continuous specifications only ---
+#### ==== 2.3.1 Table 1: Continuous specifications only ====
 models_cont <- list(
   "Naive (Both)"        = m1_naive_both_cont,
   "Baseline (Both)"     = m2_base_both_cont,
@@ -269,7 +260,7 @@ tab_ols_cont <- modelsummary(
 
 tab_ols_cont
 
-# --- Table 2: Binned specifications only ---
+#### ==== 2.3.2 Table 2: Binned specifications only ====
 models_bin <- list(
   "Naive (Both)"         = m6_naive_both_bin,
   "Baseline (Both)"      = m7_base_both_bin,
@@ -295,8 +286,7 @@ tab_ols_bin <- modelsummary(
 
 tab_ols_bin
 
-# --- Table 3 (Distance-only focus): Baseline continuous vs baseline binned ---
-
+#### ==== 2.3.3  Table 3: Baseline continuous vs baseline binned ====
 models_main_compare <- list(
   "Baseline (Continuous)" = m2_base_both_cont,
   "Baseline (Binned)"     = m7_base_both_bin
@@ -348,9 +338,7 @@ tab_main_compare <- modelsummary(
 
 tab_main_compare
 
-
-### ==== 2.4 Model comparison (In-sample + 5-fold CV) ====
-
+### ==== 2.4 Model comparison ====
 # In-sample fit
 fit_main <- tibble(
   Model   = c("Baseline (Continuous)", "Baseline (Binned)"),
@@ -448,9 +436,7 @@ tab_compare_all <- compare_all %>%
 
 tab_compare_all
 
-
 ## ==== 3. PROXY - DIAGNOSTICS ====
-
 get_model_diagnostics <- function(model) {
   n <- nobs(model)
   
@@ -506,9 +492,9 @@ tab_robust_checks <- diag_robust %>%
   )
 
 tab_robust_checks
-## ==== 4. PROXY - VISUALISATIONS ====
 
-### ==== 4.1 Binned Price Gradients (Mean by distance bins) ====
+## ==== 4. PROXY - VISUALISATIONS ====
+### ==== 4.1 Binned Price Gradients ====
 pal_muted <- c(
   "Primary"   = "#4C78A8",
   "Secondary" = "#F58518"
@@ -560,7 +546,6 @@ y_pad <- 0.05 * diff(y_limits)
 
 y_limits <- c(y_limits[1] - y_pad, y_limits[2] + y_pad)
 
-
 fig_price_gradient <- ggplot(
   df_bin_mean,
   aes(x = dist_bin, y = mean_log_ppsqm, 
@@ -590,7 +575,6 @@ fig_price_gradient <- ggplot(
   )
 
 print(fig_price_gradient)
-
 
 ### ==== 4.2 Continuous Distance vs Log Price per sqm ====
 df_continuous <- df_main %>%
@@ -624,149 +608,3 @@ fig_scatter_combined <- ggplot(
   theme(legend.position = "top")
 
 print(fig_scatter_combined)
-
-### ==== 4.3 Queen contiguity maps (Primary + Secondary) ====
-stopifnot(all(c("ergg_1km", "school_type", "dist_km") 
-              %in% names(raw_dist)))
-# Build a comprehensive NRW grid (only houses sale)
-read_housing_like <- function(path) {
-  read_delim(
-    path,
-    delim = ",",
-    locale = locale(decimal_mark = "."),
-    na = c("-5","-6","-7","-8","-9","-11","NA","","Implausible value","Other missing"),
-    show_col_types = FALSE
-  ) %>%
-    filter(blid == "North Rhine-Westphalia") %>%
-    transmute(ergg_1km = as.character(ergg_1km)) %>%
-    filter(!is.na(ergg_1km))
-}
-
-cells_big <- bind_rows(
-  read_housing_like(path_housing)
-) %>%
-  distinct() %>%
-  separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE,
-    remove = FALSE
-  ) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y) %>%
-  arrange(x, y)
-
-# Identify "school cells" (cells very close to a school)
-filter_nn1 <- function(df) {
-  if ("nn_order" %in% names(df)) df %>% filter(nn_order == 1) else df
-}
-
-school_cells_primary <- raw_dist %>%
-  filter(school_type %in% type_primary) %>%
-  filter_nn1() %>%
-  filter(is.finite(dist_km), dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
-
-school_cells_secondary <- raw_dist %>%
-  filter(school_type %in% type_secondary) %>%
-  filter_nn1() %>%
-  filter(is.finite(dist_km), dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
-
-cells_big <- cells_big %>%
-  mutate(
-    has_primary   = paste(x, y) %in% paste(school_cells_primary$x, school_cells_primary$y),
-    has_secondary = paste(x, y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
-  )
-
-# Queen neighbors (8-neighborhood on 1km grid)
-coords <- as.matrix(cells_big[, c("x", "y")])
-stopifnot(!anyNA(coords))
-
-nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
-
-# Drop isolates (no neighbors), then rebuild nb
-cells_big <- cells_big %>%
-  mutate(n_neighbors = spdep::card(nb_queen)) %>%
-  filter(n_neighbors > 0) %>%
-  select(-n_neighbors)
-
-coords <- as.matrix(cells_big[, c("x", "y")])
-nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
-
-# Queen-distance (BFS)
-compute_qdist <- function(nb, has_school, max_steps = 200) {
-  stopifnot(length(nb) == length(has_school))
-  
-  q_dist <- rep(NA_integer_, length(has_school))
-  q_dist[has_school] <- 0L
-  
-  frontier <- which(has_school)
-  k <- 0L
-  
-  while (length(frontier) > 0) {
-    k <- k + 1L
-    if (k > max_steps) break
-    
-    new_frontier <- integer(0)
-    
-    for (i in frontier) {
-      neigh <- nb[[i]]
-      if (length(neigh) == 0) next
-      
-      to_set <- neigh[is.na(q_dist[neigh])]
-      if (length(to_set) > 0) {
-        q_dist[to_set] <- k
-        new_frontier <- c(new_frontier, to_set)
-      }
-    }
-    
-    frontier <- unique(new_frontier)
-  }
-  
-  q_dist
-}
-
-cells_big <- cells_big %>%
-  mutate(
-    q_dist_primary   = compute_qdist(nb_queen, has_primary),
-    q_dist_secondary = compute_qdist(nb_queen, has_secondary)
-  )
-
-# maps (primay + secondary)
-plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
-  geom_tile() +
-  coord_equal() +
-  scale_fill_viridis_c(
-    name = "Queen steps",
-    option = "C",
-    direction = -1,
-    limits = c(0, 6),
-    oob = scales::squish
-  ) +
-  labs(title = "Queen distance to Primary schools") +
-  theme(panel.grid = element_blank())
-
-plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
-  geom_tile() +
-  coord_equal() +
-  scale_fill_viridis_c(
-    name = "Queen steps",
-    option = "C",
-    direction = -1,
-    limits = c(0, 6),
-    oob = scales::squish
-  ) +
-  labs(title = "Queen distance to Secondary schools") +
-  theme(panel.grid = element_blank())
-
-print(plot_queens_primary)
-print(plot_queens_secondary)
-
