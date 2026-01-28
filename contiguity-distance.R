@@ -4,6 +4,7 @@
 library(tidyverse)
 library(readxl)
 library(fs)
+library(sf)
 library(scales)
 library(janitor)
 library(modelsummary)
@@ -23,6 +24,7 @@ theme_set(theme_minimal(base_size = 14))
 path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_school  <- "course_data/school_data/2022_social_index.csv"
 path_dist    <- "course_data/school_data/distance_to_schools.csv"
+path_VG250   <- "course_data/VG250/vg250_ebenen_0101/VG250_GEM.shp"
 
 ## ==== 1.3 Clean Housing Data (HK - Houses for Sale) ====
 raw_housing <- read_delim(
@@ -370,7 +372,7 @@ plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary
     name = "Distance",
     option = "C",
     direction = -1,
-    limits = c(0, 6),      # cap visually
+    limits = c(0, 5),      # cap visually
     oob = scales::squish
   ) +
   theme_minimal() +
@@ -391,13 +393,89 @@ plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secon
     name = "Distance",
     option = "C",
     direction = -1,
-    limits = c(0, 6),      # cap visually
+    limits = c(0, 5),      # cap visually
     oob = scales::squish
   ) +
   theme_minimal() +
   theme(panel.grid = element_blank())
 
 plot_queens_secondary
+
+## ==== 2.11.3 Mean districts ====
+
+df_muni_qdist <- df_final %>%
+  filter(
+    !is.na(gid2019),
+    !is.na(q_dist_primary),
+    !is.na(q_dist_secondary)
+  ) %>%
+  group_by(gid2019) %>%
+  summarise(
+    q_dist_primary   = mean(q_dist_primary, na.rm = TRUE),
+    q_dist_secondary = mean(q_dist_secondary, na.rm = TRUE),
+    n_obs            = n(),
+    .groups = "drop"
+  )
+
+gemeinden_sf <- st_read(path_VG250)
+
+gemeinden_nrw <- gemeinden_sf %>%
+  filter(substr(AGS, 1, 2) == "05") %>%
+  mutate(
+    gid2019 = substr(as.character(AGS), 2, nchar(AGS))
+  )
+
+df_muni_qdist <- df_muni_qdist %>%
+  mutate(gid2019 = as.character(gid2019))
+
+map_data <- gemeinden_nrw %>%
+  left_join(df_muni_qdist, by = "gid2019")
+
+### ==== 2.11.3.1 Mean districts plot primary ====
+
+ggplot(map_data) +
+  geom_sf(aes(fill = q_dist_primary), color = "white", linewidth = 0.05) +
+  scale_fill_viridis_c(
+    name = "Queen distance (Primary)",
+    option = "C",
+    direction = -1,
+    limits = c(0, 5),
+    oob = scales::squish,
+    na.value = "grey85"
+  ) +
+  labs(
+    title = "Average Queen Distance to Primary Schools by Municipality",
+    subtitle = "Mean raster-based queen distance within municipalities"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank()
+  )
+
+### ==== 2.11.3.2 Mean districts plot secondary ====
+
+ggplot(map_data) +
+  geom_sf(aes(fill = q_dist_secondary), color = "white", linewidth = 0.05) +
+  scale_fill_viridis_c(
+    name = "Queen distance (Primary)",
+    option = "C",
+    direction = -1,
+    limits = c(0, 5),
+    oob = scales::squish,
+    na.value = "grey85"
+  ) +
+  labs(
+    title = "Average Queen Distance to Primary Schools by Municipality",
+    subtitle = "Mean raster-based queen distance within municipalities"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank()
+  )
 
 # ==== 3. Queen contiguity + Social Index =====
 
@@ -460,6 +538,7 @@ m_bad_ref <- lm(base_formula, data = df_final3)
 summary(m_bad_ref)
 
 # ==== 4. Result tables ====
+
 # Helper: significance stars
 stars <- function(p) {
   case_when(
@@ -542,17 +621,11 @@ reg_table <- reg_table_print %>%
   )
 
 
-
-
 # ==== 5. Graphics for presentation ====
 
 ## ==== 5.1 Graphics for presentation ====
 
 ### ==== 5.1.1 Limitation: Distances ====
-# This graphic should show our limitation, that even though a house might be
-# close to a school, the distance we used might be far off because we used
-# the distance from the school to the centroid, not to the house
-# Raster cell
 cell <- data.frame(
   xmin = 0, xmax = 1,
   ymin = 0, ymax = 1
@@ -675,8 +748,6 @@ ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) +
   )
 
 ### ==== 5.1.2.2 Method: Exploratory queens distance on a bigger scale ====
-
-# 15x15 raster
 grid_15 <- expand.grid(
   x = 1:15,
   y = 1:15
