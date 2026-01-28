@@ -1,5 +1,6 @@
 ---
-title: "The Effects of School Proximity and the School Social Index on Housing Prices" 
+title: "The Effects of School Proximity and the School Social Index on Housing
+Prices" 
 subtitle: "\\presentationdate"
 author: 
   - name: Yanyi Ji
@@ -47,42 +48,66 @@ source("contiguity-distance.R")
 
 ## Motivation
 
--   **Personal Interest**: Analyzing the real estate market's reaction to various factors is particularly interesting from an economic standpoint, as it offers insights into market dynamics. Additionally, the topic is personally intriguing, adding an extra layer of motivation to explore it further.
+-   **Personal Interest**: Analyzing the real estate market's reaction to 
+various factors is particularly interesting from an economic standpoint, as it 
+offers insights into market dynamics. Additionally, the topic is personally 
+intriguing, adding an extra layer of motivation to explore it further.
 
--   **Academic and Practical Relevance**: Housing markets are influenced by various social and economic factors, and school quality is also cited as a underestimated determinant of property values, especially in research [@Seo_Simons_2009].
+-   **Academic and Practical Relevance**: Housing markets are influenced by 
+various social and economic factors, and school quality is also cited as a 
+underestimated determinant of property values, especially in research 
+[@Seo_Simons_2009].
 
 ## Motivation
 
-Understanding the relationship between school distance, school quality and property prices can provide valuable insights for researchers and individuals interested in the real estate market.
+Understanding the relationship between school distance, school quality and 
+property prices can provide valuable insights for researchers and individuals 
+interested in the real estate market.
 
 ## Related Literature Background
 
-Several papers have examined the effect of proximity to schools on housing prices:
+Several papers have examined the effect of proximity to schools on housing 
+prices:
 
--   **Empirical Strategies**: While hedonic models are the dominant approach to estimating housing price effects, alternative empirical strategies have also been proposed [see @Black_Machin_2011]
+-   **Empirical Strategies**: While hedonic models are the dominant approach to
+estimating housing price effects, alternative empirical strategies have also 
+been proposed [see @Black_Machin_2011]
 
--   **Findings**: Empirical evidence suggests that proximity to schools positively affects housing prices [@Rosiers_Lagana_Theriault_2001; @Huang_Hess_2018]
+-   **Findings**: Empirical evidence suggests that proximity to schools 
+positively affects housing prices [@Rosiers_Lagana_Theriault_2001; 
+@Huang_Hess_2018]
 
 ## Related Literature Background
 
--   **Other Factors**: Related work also documents capitalization effects of school reputation [@Chin_Foong_2006], differences between public and private schools [@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; @Metz_2015]
+-   **Other Factors**: Related work also documents capitalization effects of 
+school reputation [@Chin_Foong_2006], differences between public and private 
+schools [@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; 
+@Metz_2015]
 
--   **Environment of studies**: Much of the literature focuses on settings with binding school catchment areas and measures school quality primarily through test scores rather than demographic composition.
+-   **Environment of studies**: Much of the literature focuses on settings with 
+binding school catchment areas and measures school quality primarily through 
+test scores rather than demographic composition.
 
 ## Research Question
 
-We study a setting *without binding school catchment areas* (NRW, Germany) and assess whether both *school proximity* and a *demographically based school* *social index* are capitalized into housing prices.
+We study a setting *without binding school catchment areas* (NRW, Germany) and 
+assess whether both *school proximity* and a *demographically based school* 
+*social index* are capitalized into housing prices.
 
 ## Research Question
 
-**Research Question:** How do school proximity and school social indices affect the prices of detached houses, and do these effects differ between primary and secondary schools in North Rhine–Westphalia?
+**Research Question:** How do school proximity and school social indices affect 
+the prices of detached houses, and do these effects differ between primary and 
+secondary schools in North Rhine–Westphalia?
 
 # Data & Methodology
 
 ## Data
 
--   **Housing Data**: Cross-section dataset for houses for sale published by the Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
--   **School Data**: School social index dataset from North Rhine-Westphalias Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
+-   **Housing Data**: Cross-section dataset for houses for sale published by 
+the Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
+-   **School Data**: School social index dataset from North Rhine-Westphalias 
+Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
 
 \footnotetext{Data used from both datasets refer to the year 2022.}
 
@@ -252,8 +277,8 @@ reg_table
 ```
 
 ## Limitations
-- **Direct Distance**: The distance is not measured from the houses to the nearest school directly 
-but from the school to the center of the raster cell.
+- **Direct Distance**: The distance is not measured from the houses to the 
+nearest school directly but from the school to the center of the raster cell.
 - **Fragmented Grid**: We do not have data for every grid cell of NRW but only a
 fragmented set of grids containing houses from the available datasets.
 - **Listing prices**: The prices we have are not transaction but listing prices.
