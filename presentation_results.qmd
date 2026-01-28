@@ -1,6 +1,5 @@
 ---
-title: "The Effects of School Proximity and the School Social Index on Housing
-Prices" 
+title: "The Effects of School Proximity and the School Social Index on Housing Prices"
 subtitle: "\\presentationdate"
 author: 
   - name: Yanyi Ji
@@ -19,7 +18,7 @@ editor:
 
 ```{r}
 #| include: false
-source("contiguity-distance.R")
+source("Code_Final.R")
 ```
 
 ## Agenda
