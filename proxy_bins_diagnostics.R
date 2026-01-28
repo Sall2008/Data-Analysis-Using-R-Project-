@@ -319,7 +319,7 @@ cv_main <- bind_rows(
     R2_oos = round(R2_oos, 3)
   )
 
-### ==== 2.5 Output Tables ====
+### ==== 2.5 Tables ====
 #### ==== 2.5.1 Table 1: Continuous specifications only ====
 # Coefficient labels for continuous terms and controls only
 coef_map_cont <- c(
@@ -531,7 +531,7 @@ tab_robust_checks <- diag_robust %>%
 
 tab_robust_checks
 
-### ==== 2.6. PROXY - VISUALISATIONS ====
+### ==== 2.6 Visualisation ====
 #### ==== 2.6.1 Binned Price Gradients ====
 pal_muted <- c(
   "Primary"   = "#4C78A8",
