@@ -404,6 +404,7 @@ cv_main <- bind_rows(
     R2_oos = round(R2_oos, 3)
   )
 
+#### ==== 2.4.1  Table 4: Model comparison ====
 # Combined comparison table
 compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
@@ -412,12 +413,14 @@ compare_all <- fit_main %>%
 tab_compare_all <- compare_all %>%
   gt() %>%
   tab_header(
-    title    = 
-      "Model comparison: In-sample fit and 5-fold out-of-sample performance",
-    subtitle = 
-      "In-sample: higher R²/Adj. R² is better; lower AIC/BIC is better. 
-    Out-of-sample: lower RMSE/MAE is better; higher R² is better."
-  ) %>%
+    title    = "Table 4. Model comparison",
+    subtitle = "In-sample fit and 5-fold out-of-sample performance"
+  )%>%
+  tab_source_note(
+    md("**In-sample:** higher R²/Adj. R² is better; lower AIC/BIC is better.  
+       **Out-of-sample (5-fold CV):** lower RMSE/MAE is better; 
+       higher R² is better.")
+  )%>%
   cols_label(
     Model  = "Model",
     N      = "N",
@@ -437,6 +440,7 @@ tab_compare_all <- compare_all %>%
 tab_compare_all
 
 ## ==== 3. PROXY - DIAGNOSTICS ====
+### ==== 3.1  Table 5: Robustness checks ====
 get_model_diagnostics <- function(model) {
   n <- nobs(model)
   
@@ -472,23 +476,55 @@ diag_robust <- bind_rows(
   )
 
 tab_robust_checks <- diag_robust %>%
+  mutate(
+    BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
+                        if_else(BP_pvalue < 0.001, "<0.001", 
+                                sprintf("%.3f", BP_pvalue))),
+    Max_VIF   = if_else(is.na(Max_VIF), NA_character_, 
+                        sprintf("%.2f", Max_VIF)),
+    Cook_max  = if_else(is.na(Cook_max), NA_character_, 
+                        sprintf("%.3f", Cook_max)),
+    Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
+  ) %>%
   gt() %>%
   tab_header(
-    title = "Robustness checks (main models)",
-    subtitle = "HC1 robust SE used for inference; 
-    diagnostics shown for heteroskedasticity, 
-    multicollinearity, and influential points."
+    title    = "Table 5. Robustness checks (main models)",
+    subtitle = "Diagnostics summary 
+    (heteroskedasticity, multicollinearity, influence)"
+  ) %>%
+  tab_source_note(
+    md("Inference uses **HC1 robust SE**.  
+       Lower BP p-values indicate heteroskedasticity; 
+       higher VIF indicates collinearity; 
+       larger Cook's D indicates influential points.")
   ) %>%
   cols_label(
     Model        = "Model",
-    BP_pvalue    = "Breusch–Pagan p",
+    BP_pvalue    = "BP p-value",
     Max_VIF      = "Max VIF",
-    Cook_n_gt_4n = "# Influential (Cook's D > 4/n)",
+    Cook_n_gt_4n = "Influential (D>4/n)",
     Cook_max     = "Max Cook's D"
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = Model
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = c(BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = Model)
+  ) %>%
+  tab_style(
+    style = cell_text(color = "grey35"),
+    locations = cells_body(columns = 
+                             c(BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max))
   ) %>%
   tab_options(
     table.font.size  = gt::px(14),
-    data_row.padding = gt::px(4)
+    data_row.padding = gt::px(5)
   )
 
 tab_robust_checks
