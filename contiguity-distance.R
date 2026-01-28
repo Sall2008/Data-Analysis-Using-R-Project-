@@ -11,7 +11,10 @@ library(spdep)
 library(dplyr)
 library(tidyr)
 library(RANN)
-library(ggplot2) 
+library(ggplot2)
+library(broom)
+library(knitr)
+library(kableExtra)
 
 # Set global theme
 theme_set(theme_minimal(base_size = 14))
@@ -77,7 +80,6 @@ df_housing_clean <- raw_housing %>%
   drop_na(kaufpreis, wohnflaeche, ergg_1km)
 
 ## ==== 1.4 Clean School & Distance Data ====
-
 # Define types: 02=Primary; 04,10,15,20=Secondary
 type_primary   <- c("02") 
 type_secondary <- c("04", "10", "15", "20")
@@ -133,7 +135,6 @@ df_dist_any <- raw_dist %>%
   select(ergg_1km, dist_any_km = dist_km)
 
 ## ==== 1.5 Merging ====
-
 df_final <- df_housing_clean %>%
   # Inner join Primary (must have primary school data)
   inner_join(df_dist_primary, by = "ergg_1km") %>%
@@ -166,7 +167,6 @@ cat("Final Dataset Dimensions:", dim(df_final), "\n")
 # ==== 2. Queen contiguity =====
 
 ## ==== 2.1 New Paths ====
-
 path_sale_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_sale_flats <- "course_data/housing_data/cross_section/CampusFile_WK_2022.csv"
 path_rent_flats <- "course_data/housing_data/cross_section/CampusFile_WM_2022.csv"
@@ -260,7 +260,6 @@ cells_big <- cells_big %>%
   select(-n_neighbors)
 
 # Rebuild nb_queen
-
 coords <- as.matrix(cells_big[, c("x","y")])
 
 stopifnot(!anyNA(coords))
@@ -281,7 +280,6 @@ table(spdep::card(nb_queen))
 ## ==== 2.8 Compute Queens contiguity ====
 
 ### ==== 2.8.1 Define function ====
-
 compute_qdist <- function(nb, has_school, max_steps = 200) {
   stopifnot(length(nb) == length(has_school))
   
@@ -316,7 +314,6 @@ compute_qdist <- function(nb, has_school, max_steps = 200) {
 }
 
 ### ==== 2.8.2 Apply function ====
-
 cells_big$q_dist_primary <- compute_qdist(
   nb = nb_queen,
   has_school = cells_big$has_primary
@@ -329,7 +326,6 @@ cells_big$q_dist_secondary <- compute_qdist(
 
 
 ## ==== 2.9 Merge back ====
-
 df_final <- df_final %>%
   separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
   left_join(
@@ -344,7 +340,6 @@ df_final <- df_final %>%
 ## ==== 2.10 Regression ====
 
 ## ==== 2.10.1 Primary Schools ====
-
 model_primary_all <- lm(
   log_price ~ q_dist_primary +
     log_area + log_plot_area + zimmeranzahl + house_age,
@@ -354,7 +349,6 @@ model_primary_all <- lm(
 summary(model_primary_all)
 
 ## ==== 2.10.2 Secondary Schools ====
-
 model_secondary_all <- lm(
   log_price ~ q_dist_secondary +
     log_area + log_plot_area + zimmeranzahl + house_age,
@@ -366,7 +360,6 @@ summary(model_secondary_all)
 ## ==== 2.11 Map ====
 
 ## ==== 2.11.1 Primary Schools ====
-
 plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
   labs(
     title = "Queens Distance for Primary Schools"
@@ -388,7 +381,6 @@ plot_queens_primary
 table(spdep::card(nb_queen))
 
 ## ==== 2.11.2 Secondary Schools ====
-
 plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
   labs(
     title = "Queens Distance for Secondary Schools"
@@ -410,7 +402,6 @@ plot_queens_secondary
 # ==== 3. Queen contiguity + Social Index =====
 
 ## ==== 3.1 Regression ====
-
 model_index <- lm(
   log_price ~ q_dist_primary * social_index + q_dist_secondary * social_index +
     log_area + log_plot_area + zimmeranzahl + house_age,
@@ -422,19 +413,16 @@ summary(model_index)
 ## ==== 3.2 Regression on categorized index  ====
 
 ### ==== 3.2.1  Creating the categories ====
-
 df_final <- df_final %>% 
   mutate(
     school_quality = case_when(
       social_index %in% 1:2 ~ "good",
       social_index %in% 3:4 ~ "average",
       social_index %in% 5:8 ~ "bad",
-      TRUE ~ "unknown"
     )
   )
 
 ## ==== 3.2.2 Regressions ====
-
 
 # Model basis
 base_formula <- log_price ~
@@ -471,11 +459,96 @@ df_final3 <- df_final %>%
 m_bad_ref <- lm(base_formula, data = df_final3)
 summary(m_bad_ref)
 
+# ==== 4. Result tables ====
+# Helper: significance stars
+stars <- function(p) {
+  case_when(
+    p < 0.01 ~ "***",
+    p < 0.05 ~ "**",
+    p < 0.1  ~ "*",
+    TRUE     ~ ""
+  )
+}
 
-# ==== 4. Graphics for presentation ====
+## ==== 4.1 Regression Distance only ====
 
-## ==== 4.1 Graphics for presentation ====
+# Extract only the distance coefficients
+reg_table <- bind_rows(
+  tidy(model_primary_all) %>%
+    filter(term == "q_dist_primary") %>%
+    mutate(
+      Model = "Primary Schools",
+      coef  = paste0(round(estimate, 3), stars(p.value)),
+      se    = paste0("(", round(std.error, 3), ")")
+    ),
+  
+  tidy(model_secondary_all) %>%
+    filter(term == "q_dist_secondary") %>%
+    mutate(
+      Model = "Secondary Schools",
+      coef  = paste0(round(estimate, 3), stars(p.value)),
+      se    = paste0("(", round(std.error, 3), ")")
+    )
+) %>%
+  select(Model, coef, se) %>%
+  pivot_wider(
+    names_from = Model,
+    values_from = c(coef, se)
+  )
 
+# Add row label and order columns
+reg_table_print <- reg_table %>%
+  mutate(Variable = "Queen distance") %>%
+  select(
+    Variable,
+    `coef_Primary Schools`,
+    `se_Primary Schools`,
+    `coef_Secondary Schools`,
+    `se_Secondary Schools`
+  )
+
+# Print table
+reg_table <- reg_table_print %>%
+  kbl(
+    caption = "Table 1: Regression Results: Queen Distance to Schools",
+    booktabs = TRUE,
+    align = "c"
+  ) %>%
+  add_header_above(
+    c(
+      " " = 1,
+      "Primary Schools" = 2,
+      "Secondary Schools" = 2
+    ),
+    bold = TRUE
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    font_size = 16,
+    latex_options = c("hold_position"),
+    stripe_color = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%        # column headers
+  row_spec(1, extra_css = "border-bottom: 2px solid #2C3E50;") %>%
+  footnote(
+    general = c(
+      "Dependent variable: log house price.",
+      "Control variables included but not shown.",
+      "*** p<0.01, ** p<0.05, * p<0.1"
+    ),
+    general_title = "Note:",
+    footnote_as_chunk = TRUE
+  )
+
+
+
+
+# ==== 5. Graphics for presentation ====
+
+## ==== 5.1 Graphics for presentation ====
+
+### ==== 5.1.1 Limitation: Distances ====
 # This graphic should show our limitation, that even though a house might be
 # close to a school, the distance we used might be far off because we used
 # the distance from the school to the centroid, not to the house
@@ -503,27 +576,27 @@ ggplot() +
   labs(title = "Single raster cell used for distance computation") +
   
   # Add centroid to plot
-  geom_point(data = centroid, aes(x, y), size = 3) +
+  geom_point(data = centroid, aes(x, y), size = 4) +
   geom_text(
     data = centroid,
     aes(x, y, label = "Cell centroid"),
-    vjust = 2.2, size = 3
+    vjust = 2.2, size = 4
   ) +
   
   # Add school to plot
-  geom_point(data = school, aes(x, y), size = 3, shape = 17) +
+  geom_point(data = school, aes(x, y), size = 4, shape = 17) +
   geom_text(
     data = school,
     aes(x, y, label = "School"),
-    vjust = -1.3, size = 3
+    vjust = -1.3, size = 4
   ) +
   
   # Add house to plot 
-  geom_point(data = house, aes(x, y), size = 3, shape = 15) +
+  geom_point(data = house, aes(x, y), size = 4, shape = 15) +
   geom_text(
     data = house,
     aes(x, y, label = "House"),
-    vjust = -1.3, size = 3
+    vjust = -1.3, size = 4
   ) +
   
   # Measured distance (school → centroid)
@@ -551,3 +624,115 @@ ggplot() +
     plot.title = element_text(size = 11, hjust = 0.5)
   )
 
+### ==== 5.1.2 Method: Queens Distance ====
+
+### ==== 5.1.2.1 Method: Introduction Queens Distance ====
+queen_grid_5 <- expand.grid(
+  x = 1:5,
+  y = 1:5
+) %>%
+  mutate(
+    q_dist = pmax(abs(x - 3), abs(y - 3))
+  )
+
+ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  
+  # Mark school cell
+  geom_point(
+    data = subset(queen_grid_5, x == 3 & y == 3),
+    aes(x, y),
+    shape = 17,
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  
+  scale_fill_manual(
+    values = c(
+      "0" = "#252525",
+      "1" = "#969696",
+      "2" = "#cccccc",
+      "3" = "#f0f0f0"
+    ),
+    name = "Queen distance"
+  ) +
+  
+  coord_equal() +
+  scale_x_continuous(breaks = 1:5) +
+  scale_y_continuous(breaks = 1:5) +
+  
+  labs(
+    title = "Queen distance on a 5×5 raster grid",
+    x = NULL,
+    y = NULL
+  ) +
+  
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+### ==== 5.1.2.2 Method: Exploratory queens distance on a bigger scale ====
+
+# 15x15 raster
+grid_15 <- expand.grid(
+  x = 1:15,
+  y = 1:15
+)
+
+# Define multiple school cells
+schools <- tibble(
+  school_id = 1:3,
+  sx = c(4, 8, 12),
+  sy = c(11, 4, 10)
+)
+
+# Compute Queen distance to each school, then take minimum
+queen_15 <- grid_15 %>%
+  crossing(schools) %>%
+  mutate(
+    q_dist = pmax(abs(x - sx), abs(y - sy))
+  ) %>%
+  group_by(x, y) %>%
+  summarise(
+    q_dist = min(q_dist),
+    .groups = "drop"
+  )
+
+ggplot(queen_15, aes(x = x, y = y, fill = factor(q_dist))) +
+  geom_tile(color = "white", linewidth = 0.15) +
+  
+  # Overlay school locations
+  geom_point(
+    data = schools,
+    aes(x = sx, y = sy),
+    shape = 17,
+    size = 3,
+    color = "black",
+    inherit.aes = FALSE
+  ) +
+  
+  scale_fill_viridis_d(
+    name = "Queen distance",
+    direction = -1
+  ) +
+  
+  coord_equal() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  
+  labs(
+    title = "Queen distance to nearest school on a 15×15 raster grid",
+    x = NULL,
+    y = NULL
+  ) +
+  
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "right"
+  )
