@@ -17,7 +17,7 @@ editor_options:
 
 ```{r}
 #| include: false
-source("proxy_bins_diagnostics.R")
+source("Proxy_final_version.R")
 ```
 
 ## Distance to Schools and House Prices: Hypotheses & Regression Strategy {.smaller}

@@ -18,7 +18,7 @@ editor:
 
 ```{r}
 #| include: false
-source("Final Model mit Fragen.R")
+source("contiguity-distance.R")
 ```
 
 ## Agenda
@@ -248,7 +248,7 @@ This does not work yet... -->
 
 ```{r}
 #| include: true 
-Testplot
+reg_table
 ```
 
 ## Limitations

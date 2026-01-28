@@ -1,6 +1,5 @@
-## ==== 1. DATA PREPARATION ====
-### ==== 1.1 Packages & Global Theme ====
-
+# ==== 1. DATA PREPARATION ====
+## ==== 1.1 Packages & Global Theme ====
 library(tidyverse)
 library(readxl)
 library(fs)
@@ -27,8 +26,7 @@ theme_set(
     )
 )
 
-### ==== 1.2 Define Paths & Constants ====
-
+## ==== 1.2 Define Paths & Constants ====
 path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_school  <- "course_data/school_data/2022_social_index.csv"
 path_dist    <- "course_data/school_data/distance_to_schools.csv"
@@ -39,12 +37,11 @@ type_primary   <- c("02")
 type_secondary <- c("04", "10", "14", "15", "20")
 type_all       <- c("02", "04", "10", "14", "15", "20")
 
-# Distance binning (used in descriptive plots AND optionally in regressions)
+# Distance binning
 breaks_km <- c(0, 3, 6, 9, Inf)
 labels_km <- c("0-3", "3-6", "6-9", ">9")
 
-### ==== 1.3 Load & Clean Housing Data ====
-
+## ==== 1.3 Load & Clean Housing Data ====
 raw_housing <- read_delim(
   path_housing,
   delim = ",",
@@ -94,8 +91,7 @@ df_housing <- raw_housing %>%
   ) %>%
   drop_na(kaufpreis, wohnflaeche, ergg_1km)
 
-### ==== 1.4 Load Distance Data & Nearest-School Helper ====
-
+## ==== 1.4 Load Distance Data & Nearest-School Helper ====
 raw_dist <- read_csv(path_dist, show_col_types = FALSE) %>%
   clean_names() %>%
   mutate(
@@ -128,8 +124,7 @@ df_dist_any       <- get_nearest_school(raw_dist, type_all,
                                         "school_id_any",       
                                         "dist_any_km")
 
-### ==== 1.5 Merge Housing + Distances + Derived Variables ====
-
+## ==== 1.5 Merge Housing + Distances + Derived Variables ====
 df_main <- df_housing %>%
   left_join(df_dist_primary,   by = "ergg_1km") %>%
   left_join(df_dist_secondary, by = "ergg_1km") %>%
@@ -160,10 +155,9 @@ df_main <- df_housing %>%
 
 cat("Final dataset dimensions:", dim(df_main), "\n")
 
-## ==== 2. PROXY - REGRESSIONS ====
-
-### ==== 2.1 Regression Sample ====
-
+# ==== 2. Analysis ====
+## ==== 2.1 Distance ====
+### ==== 2.1.1 Regression Sample ====
 df_reg <- df_main %>%
   drop_na(
     log_price,
@@ -173,9 +167,8 @@ df_reg <- df_main %>%
     zimmeranzahl, house_age
   )
 
-### ==== 2.2 OLS Models (Separate Narratives) ====
-
-# --- Continuous distance specifications ---
+### ==== 2.1.2 OLS Models ====
+#### ==== 2.1.2.1 Continuous distance specifications ====
 m1_naive_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km, 
                          data = df_reg)
 
@@ -204,7 +197,7 @@ m5_base_secondary_cont <- lm(
   data = df_reg
 )
 
-# --- Binned distance specifications (factor dummies; baseline = 0-3 km) ---
+#### ==== 2.1.2.2 Binned distance specifications ====
 m6_naive_both_bin <- lm(log_price ~ dist_primary_bin + dist_secondary_bin, 
                         data = df_reg)
 
@@ -226,131 +219,42 @@ m9_base_secondary_bin <- lm(
   data = df_reg
 )
 
-### ==== 2.3 Output Tables (Separate + Main Model Comparison) ====
-
-# Coefficient labels for continuous terms and controls only
-coef_map_cont <- c(
-  "dist_primary_km"        = "Distance to primary school (km)",
-  "I(dist_primary_km^2)"   = "Distance to primary school (km)^2",
-  "dist_secondary_km"      = "Distance to secondary school (km)",
-  "I(dist_secondary_km^2)" = "Distance to secondary school (km)^2",
-  "log_area"               = "Log living area",
-  "log_plot_area"          = "Log plot area",
-  "zimmeranzahl"           = "Rooms",
-  "house_age"              = "House age",
-  "(Intercept)"            = "Intercept"
-)
-
-# --- Table 1: Continuous specifications only ---
-models_cont <- list(
-  "Naive (Both)"        = m1_naive_both_cont,
-  "Baseline (Both)"     = m2_base_both_cont,
-  "Polynomial (Both)"   = m3_poly_both_cont,
-  "Baseline (Primary)"  = m4_base_primary_cont,
-  "Baseline (Secondary)"= m5_base_secondary_cont
-)
-
-tab_ols_cont <- modelsummary(
-  models_cont,
-  vcov      = "HC1",
-  coef_map  = coef_map_cont,
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "gt",
-  title     = "Table 1. OLS regressions (log house price): 
-  Continuous distance specifications"
-) %>%
-  gt::tab_options(
-    table.font.size   = gt::px(14),
-    data_row.padding  = gt::px(4)
-  )
-
-tab_ols_cont
-
-# --- Table 2: Binned specifications only ---
-models_bin <- list(
-  "Naive (Both)"         = m6_naive_both_bin,
-  "Baseline (Both)"      = m7_base_both_bin,
-  "Baseline (Primary)"   = m8_base_primary_bin,
-  "Baseline (Secondary)" = m9_base_secondary_bin
-)
-
-tab_ols_bin <- modelsummary(
-  models_bin,
-  vcov      = "HC1",
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "gt",
-  title     = "Table 2. OLS regressions (log house price): 
-  Binned distance specifications (ref: 0–3 km)"
-) %>%
-  gt::tab_options(
-    table.font.size   = gt::px(14),
-    data_row.padding  = gt::px(4)
-  )
-
-tab_ols_bin
-
-# --- Table 3 (Distance-only focus): Baseline continuous vs baseline binned ---
-
-models_main_compare <- list(
-  "Baseline (Continuous)" = m2_base_both_cont,
-  "Baseline (Binned)"     = m7_base_both_bin
-)
-
-coef_map_bin <- c(
-  # Primary bins (ref = 0-3)
-  "dist_primary_bin3-6" = "Primary: 3–6 km (ref: 0–3)",
-  "dist_primary_bin6-9" = "Primary: 6–9 km (ref: 0–3)",
-  "dist_primary_bin>9"  = "Primary: >9 km (ref: 0–3)",
+### ==== 2.1.3 Diagnostics ====
+get_model_diagnostics <- function(model) {
+  n <- nobs(model)
   
-  # Secondary bins (ref = 0-3)
-  "dist_secondary_bin3-6" = "Secondary: 3–6 km (ref: 0–3)",
-  "dist_secondary_bin6-9" = "Secondary: 6–9 km (ref: 0–3)",
-  "dist_secondary_bin>9"  = "Secondary: >9 km (ref: 0–3)"
-)
-
-coef_map_compare <- c(
-  # continuous terms
-  "dist_primary_km"   = "Distance to primary school (km)",
-  "dist_secondary_km" = "Distance to secondary school (km)",
+  bp_p <- bptest(model)$p.value
   
-  # binned dummies
-  coef_map_bin
-)
+  vif_max <- tryCatch(
+    max(as.numeric(car::vif(model)), na.rm = TRUE),
+    error = function(e) NA_real_
+  )
+  
+  cook <- cooks.distance(model)
+  cook_thr <- 4 / n
+  
+  tibble(
+    BP_pvalue    = bp_p,
+    Max_VIF      = vif_max,
+    Cook_n_gt_4n = sum(cook > cook_thr, na.rm = TRUE),
+    Cook_max     = max(cook, na.rm = TRUE)
+  )
+}
 
-tab_main_compare <- modelsummary(
-  models_main_compare,
-  vcov      = "HC1",
-  coef_map  = coef_map_compare,
-  coef_omit = "log_area|log_plot_area|zimmeranzahl|house_age|\\(Intercept\\)",
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "gt",
-  title     = 
-    "Table 3. Main comparison (distance effects only): Continuous vs binned"
+diag_robust <- bind_rows(
+  get_model_diagnostics(m2_base_both_cont) %>% 
+    mutate(Model = "Baseline (Continuous)"),
+  get_model_diagnostics(m7_base_both_bin)  %>% 
+    mutate(Model = "Baseline (Binned)")
 ) %>%
-  gt::tab_options(
-    table.font.size  = gt::px(14),
-    data_row.padding = gt::px(4)
-  ) %>%
-  gt::tab_source_note(
-    gt::md("Binned coefficients are relative to the reference group: 
-           0–3 km. Controls are included in the regression but omitted 
-           from display.")
+  select(Model, everything()) %>%
+  mutate(
+    BP_pvalue = signif(BP_pvalue, 3),
+    Max_VIF   = round(Max_VIF, 2),
+    Cook_max  = signif(Cook_max, 3)
   )
 
-tab_main_compare
-
-
-### ==== 2.4 Model comparison (In-sample + 5-fold CV) ====
-
+### ==== 2.1.4 Model comparison ====
 # In-sample fit
 fit_main <- tibble(
   Model   = c("Baseline (Continuous)", "Baseline (Binned)"),
@@ -416,6 +320,130 @@ cv_main <- bind_rows(
     R2_oos = round(R2_oos, 3)
   )
 
+# ==== 3. Result ====
+## ==== 3.1 Tables ====
+### ==== 3.1.1 (Distance) Table 1: Continuous specifications only ====
+# Coefficient labels for continuous terms and controls only
+coef_map_cont <- c(
+  "dist_primary_km"        = "Distance to primary school (km)",
+  "I(dist_primary_km^2)"   = "Distance to primary school (km)^2",
+  "dist_secondary_km"      = "Distance to secondary school (km)",
+  "I(dist_secondary_km^2)" = "Distance to secondary school (km)^2",
+  "log_area"               = "Log living area",
+  "log_plot_area"          = "Log plot area",
+  "zimmeranzahl"           = "Rooms",
+  "house_age"              = "House age",
+  "(Intercept)"            = "Intercept"
+)
+
+models_cont <- list(
+  "Naive (Both)"        = m1_naive_both_cont,
+  "Baseline (Both)"     = m2_base_both_cont,
+  "Polynomial (Both)"   = m3_poly_both_cont,
+  "Baseline (Primary)"  = m4_base_primary_cont,
+  "Baseline (Secondary)"= m5_base_secondary_cont
+)
+
+tab_ols_cont <- modelsummary(
+  models_cont,
+  vcov      = "HC1",
+  coef_map  = coef_map_cont,
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "gt",
+  title     = "Table 1. OLS regressions (log house price): 
+  Continuous distance specifications"
+) %>%
+  gt::tab_options(
+    table.font.size   = gt::px(14),
+    data_row.padding  = gt::px(4)
+  )
+
+tab_ols_cont
+
+### ==== 3.1.2 (Distance) Table 2: Binned specifications only ====
+models_bin <- list(
+  "Naive (Both)"         = m6_naive_both_bin,
+  "Baseline (Both)"      = m7_base_both_bin,
+  "Baseline (Primary)"   = m8_base_primary_bin,
+  "Baseline (Secondary)" = m9_base_secondary_bin
+)
+
+tab_ols_bin <- modelsummary(
+  models_bin,
+  vcov      = "HC1",
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "gt",
+  title     = "Table 2. OLS regressions (log house price): 
+  Binned distance specifications (ref: 0–3 km)"
+) %>%
+  gt::tab_options(
+    table.font.size   = gt::px(14),
+    data_row.padding  = gt::px(4)
+  )
+
+tab_ols_bin
+
+### ==== 3.1.3 (Distance)  Table 3: Baseline continuous vs baseline binned ====
+models_main_compare <- list(
+  "Baseline (Continuous)" = m2_base_both_cont,
+  "Baseline (Binned)"     = m7_base_both_bin
+)
+
+coef_map_bin <- c(
+  # Primary bins (ref = 0-3)
+  "dist_primary_bin3-6" = "Primary: 3–6 km (ref: 0–3)",
+  "dist_primary_bin6-9" = "Primary: 6–9 km (ref: 0–3)",
+  "dist_primary_bin>9"  = "Primary: >9 km (ref: 0–3)",
+  
+  # Secondary bins (ref = 0-3)
+  "dist_secondary_bin3-6" = "Secondary: 3–6 km (ref: 0–3)",
+  "dist_secondary_bin6-9" = "Secondary: 6–9 km (ref: 0–3)",
+  "dist_secondary_bin>9"  = "Secondary: >9 km (ref: 0–3)"
+)
+
+coef_map_compare <- c(
+  # continuous terms
+  "dist_primary_km"   = "Distance to primary school (km)",
+  "dist_secondary_km" = "Distance to secondary school (km)",
+  
+  # binned dummies
+  coef_map_bin
+)
+
+tab_main_compare <- modelsummary(
+  models_main_compare,
+  vcov      = "HC1",
+  coef_map  = coef_map_compare,
+  coef_omit = "log_area|log_plot_area|zimmeranzahl|house_age|\\(Intercept\\)",
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "gt",
+  title     = 
+    "Table 3. Main comparison (distance effects only): Continuous vs binned"
+) %>%
+  gt::tab_options(
+    table.font.size  = gt::px(14),
+    data_row.padding = gt::px(4)
+  ) %>%
+  gt::tab_source_note(
+    gt::md("Binned coefficients are relative to the reference group: 
+           0–3 km. Controls are included in the regression but omitted 
+           from display.")
+  )
+
+tab_main_compare
+
+
+
+### ==== 3.1.4  (Distance) Table 4: Model comparison ====
 # Combined comparison table
 compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
@@ -424,12 +452,14 @@ compare_all <- fit_main %>%
 tab_compare_all <- compare_all %>%
   gt() %>%
   tab_header(
-    title    = 
-      "Model comparison: In-sample fit and 5-fold out-of-sample performance",
-    subtitle = 
-      "In-sample: higher R²/Adj. R² is better; lower AIC/BIC is better. 
-    Out-of-sample: lower RMSE/MAE is better; higher R² is better."
-  ) %>%
+    title    = "Table 4. Model comparison",
+    subtitle = "In-sample fit and 5-fold out-of-sample performance"
+  )%>%
+  tab_source_note(
+    md("**In-sample:** higher R²/Adj. R² is better; lower AIC/BIC is better.  
+       **Out-of-sample (5-fold CV):** lower RMSE/MAE is better; 
+       higher R² is better.")
+  )%>%
   cols_label(
     Model  = "Model",
     N      = "N",
@@ -448,67 +478,63 @@ tab_compare_all <- compare_all %>%
 
 tab_compare_all
 
-
-## ==== 3. PROXY - DIAGNOSTICS ====
-
-get_model_diagnostics <- function(model) {
-  n <- nobs(model)
-  
-  bp_p <- bptest(model)$p.value
-  
-  vif_max <- tryCatch(
-    max(as.numeric(car::vif(model)), na.rm = TRUE),
-    error = function(e) NA_real_
-  )
-  
-  cook <- cooks.distance(model)
-  cook_thr <- 4 / n
-  
-  tibble(
-    BP_pvalue    = bp_p,
-    Max_VIF      = vif_max,
-    Cook_n_gt_4n = sum(cook > cook_thr, na.rm = TRUE),
-    Cook_max     = max(cook, na.rm = TRUE)
-  )
-}
-
-diag_robust <- bind_rows(
-  get_model_diagnostics(m2_base_both_cont) %>% 
-    mutate(Model = "Baseline (Continuous)"),
-  get_model_diagnostics(m7_base_both_bin)  %>% 
-    mutate(Model = "Baseline (Binned)")
-) %>%
-  select(Model, everything()) %>%
-  mutate(
-    BP_pvalue = signif(BP_pvalue, 3),
-    Max_VIF   = round(Max_VIF, 2),
-    Cook_max  = signif(Cook_max, 3)
-  )
-
+### ==== 3.1.5  (Distance) Table 5: Robustness checks ====
 tab_robust_checks <- diag_robust %>%
+  mutate(
+    BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
+                        if_else(BP_pvalue < 0.001, "<0.001", 
+                                sprintf("%.3f", BP_pvalue))),
+    Max_VIF   = if_else(is.na(Max_VIF), NA_character_, 
+                        sprintf("%.2f", Max_VIF)),
+    Cook_max  = if_else(is.na(Cook_max), NA_character_, 
+                        sprintf("%.3f", Cook_max)),
+    Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
+  ) %>%
   gt() %>%
   tab_header(
-    title = "Robustness checks (main models)",
-    subtitle = "HC1 robust SE used for inference; 
-    diagnostics shown for heteroskedasticity, 
-    multicollinearity, and influential points."
+    title    = "Table 5. Robustness checks (main models)",
+    subtitle = "Diagnostics summary 
+    (heteroskedasticity, multicollinearity, influence)"
+  ) %>%
+  tab_source_note(
+    md("Inference uses **HC1 robust SE**.  
+       Lower BP p-values indicate heteroskedasticity; 
+       higher VIF indicates collinearity; 
+       larger Cook's D indicates influential points.")
   ) %>%
   cols_label(
     Model        = "Model",
-    BP_pvalue    = "Breusch–Pagan p",
+    BP_pvalue    = "BP p-value",
     Max_VIF      = "Max VIF",
-    Cook_n_gt_4n = "# Influential (Cook's D > 4/n)",
+    Cook_n_gt_4n = "Influential (D>4/n)",
     Cook_max     = "Max Cook's D"
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = Model
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = c(BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = Model)
+  ) %>%
+  tab_style(
+    style = cell_text(color = "grey35"),
+    locations = cells_body(columns = 
+                             c(BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max))
   ) %>%
   tab_options(
     table.font.size  = gt::px(14),
-    data_row.padding = gt::px(4)
+    data_row.padding = gt::px(5)
   )
 
 tab_robust_checks
-## ==== 4. PROXY - VISUALISATIONS ====
 
-### ==== 4.1 Binned Price Gradients (Mean by distance bins) ====
+## ==== 3.2 Visualisation ====
+#### ==== 3.2.1 (Distance) Figure 1: Binned Price Gradients ====
 pal_muted <- c(
   "Primary"   = "#4C78A8",
   "Secondary" = "#F58518"
@@ -560,7 +586,6 @@ y_pad <- 0.05 * diff(y_limits)
 
 y_limits <- c(y_limits[1] - y_pad, y_limits[2] + y_pad)
 
-
 fig_price_gradient <- ggplot(
   df_bin_mean,
   aes(x = dist_bin, y = mean_log_ppsqm, 
@@ -591,8 +616,7 @@ fig_price_gradient <- ggplot(
 
 print(fig_price_gradient)
 
-
-### ==== 4.2 Continuous Distance vs Log Price per sqm ====
+### === 3.2.2 (Distance) Figure 2:Continuous Distance vs Log Price per sqm ====
 df_continuous <- df_main %>%
   transmute(
     log_ppsqm,
@@ -624,149 +648,3 @@ fig_scatter_combined <- ggplot(
   theme(legend.position = "top")
 
 print(fig_scatter_combined)
-
-### ==== 4.3 Queen contiguity maps (Primary + Secondary) ====
-stopifnot(all(c("ergg_1km", "school_type", "dist_km") 
-              %in% names(raw_dist)))
-# Build a comprehensive NRW grid (only houses sale)
-read_housing_like <- function(path) {
-  read_delim(
-    path,
-    delim = ",",
-    locale = locale(decimal_mark = "."),
-    na = c("-5","-6","-7","-8","-9","-11","NA","","Implausible value","Other missing"),
-    show_col_types = FALSE
-  ) %>%
-    filter(blid == "North Rhine-Westphalia") %>%
-    transmute(ergg_1km = as.character(ergg_1km)) %>%
-    filter(!is.na(ergg_1km))
-}
-
-cells_big <- bind_rows(
-  read_housing_like(path_housing)
-) %>%
-  distinct() %>%
-  separate(
-    ergg_1km,
-    into = c("x", "y"),
-    sep = "_",
-    convert = TRUE,
-    remove = FALSE
-  ) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y) %>%
-  arrange(x, y)
-
-# Identify "school cells" (cells very close to a school)
-filter_nn1 <- function(df) {
-  if ("nn_order" %in% names(df)) df %>% filter(nn_order == 1) else df
-}
-
-school_cells_primary <- raw_dist %>%
-  filter(school_type %in% type_primary) %>%
-  filter_nn1() %>%
-  filter(is.finite(dist_km), dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
-
-school_cells_secondary <- raw_dist %>%
-  filter(school_type %in% type_secondary) %>%
-  filter_nn1() %>%
-  filter(is.finite(dist_km), dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
-
-cells_big <- cells_big %>%
-  mutate(
-    has_primary   = paste(x, y) %in% paste(school_cells_primary$x, school_cells_primary$y),
-    has_secondary = paste(x, y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
-  )
-
-# Queen neighbors (8-neighborhood on 1km grid)
-coords <- as.matrix(cells_big[, c("x", "y")])
-stopifnot(!anyNA(coords))
-
-nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
-
-# Drop isolates (no neighbors), then rebuild nb
-cells_big <- cells_big %>%
-  mutate(n_neighbors = spdep::card(nb_queen)) %>%
-  filter(n_neighbors > 0) %>%
-  select(-n_neighbors)
-
-coords <- as.matrix(cells_big[, c("x", "y")])
-nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
-
-# Queen-distance (BFS)
-compute_qdist <- function(nb, has_school, max_steps = 200) {
-  stopifnot(length(nb) == length(has_school))
-  
-  q_dist <- rep(NA_integer_, length(has_school))
-  q_dist[has_school] <- 0L
-  
-  frontier <- which(has_school)
-  k <- 0L
-  
-  while (length(frontier) > 0) {
-    k <- k + 1L
-    if (k > max_steps) break
-    
-    new_frontier <- integer(0)
-    
-    for (i in frontier) {
-      neigh <- nb[[i]]
-      if (length(neigh) == 0) next
-      
-      to_set <- neigh[is.na(q_dist[neigh])]
-      if (length(to_set) > 0) {
-        q_dist[to_set] <- k
-        new_frontier <- c(new_frontier, to_set)
-      }
-    }
-    
-    frontier <- unique(new_frontier)
-  }
-  
-  q_dist
-}
-
-cells_big <- cells_big %>%
-  mutate(
-    q_dist_primary   = compute_qdist(nb_queen, has_primary),
-    q_dist_secondary = compute_qdist(nb_queen, has_secondary)
-  )
-
-# maps (primay + secondary)
-plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
-  geom_tile() +
-  coord_equal() +
-  scale_fill_viridis_c(
-    name = "Queen steps",
-    option = "C",
-    direction = -1,
-    limits = c(0, 6),
-    oob = scales::squish
-  ) +
-  labs(title = "Queen distance to Primary schools") +
-  theme(panel.grid = element_blank())
-
-plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
-  geom_tile() +
-  coord_equal() +
-  scale_fill_viridis_c(
-    name = "Queen steps",
-    option = "C",
-    direction = -1,
-    limits = c(0, 6),
-    oob = scales::squish
-  ) +
-  labs(title = "Queen distance to Secondary schools") +
-  theme(panel.grid = element_blank())
-
-print(plot_queens_primary)
-print(plot_queens_secondary)
-
