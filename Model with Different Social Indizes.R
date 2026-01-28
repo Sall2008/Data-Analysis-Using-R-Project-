@@ -13,6 +13,9 @@ library(broom)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(kableExtra)
+library(knitr)
+library(interactions)
 
 # Set global plotting theme
 theme_set(theme_minimal(base_size = 14))
@@ -243,7 +246,7 @@ Base_Model_Social_Index <- lm(
   data = df_final_with_social
 )
 
-summary(m_si_extended)
+summary(Base_Model_Social_Index)
 
 
 
@@ -253,6 +256,10 @@ base_formula <- log_price ~
   dist_secondary_km * school_quality +
   log_area + log_plot_area +
   zimmeranzahl + house_age
+
+# Sicherstellen, dass school_quality ein Faktor ist
+df_reg <- df_final_with_social %>%
+  mutate(school_quality = factor(school_quality, levels = c("good", "average", "bad"))) 
 
 
 # Referenz Schulqualität good 
@@ -277,6 +284,10 @@ df_reg3 <- df_reg %>%
 
 m_bad_ref <- lm(base_formula, data = df_reg3)
 summary(m_bad_ref)
+
+
+
+
 
 
 
@@ -441,6 +452,108 @@ ggplot(df_secondary_schools, aes(x = dist_secondary_km, y = log_price, color = s
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Regressionen mit Distanzen auf 5km 
+
+# Setze alle Distanzen auf maximal 5 km
+df_reg <- df_reg %>%
+  mutate(
+    dist_primary_km = if_else(dist_primary_km > 5, 5, dist_primary_km),
+    dist_secondary_km = if_else(dist_secondary_km > 5, 5, dist_secondary_km)
+  )
+
+# Jetzt führe die Regressionen erneut aus, indem du den gleichen Prozess wie vorher verwendest
+# Modell mit good als Referenz
+df_reg1 <- df_reg %>%
+  mutate(school_quality = relevel(school_quality, ref = "good"))
+
+m_good_ref <- lm(base_formula, data = df_reg1)
+summary(m_good_ref)
+
+# Modell mit average als Referenz
+df_reg2 <- df_reg %>%
+  mutate(school_quality = relevel(school_quality, ref = "average"))
+
+m_avg_ref <- lm(base_formula, data = df_reg2)
+summary(m_avg_ref)
+
+# Modell mit bad als Referenz
+df_reg3 <- df_reg %>%
+  mutate(school_quality = relevel(school_quality, ref = "bad"))
+
+m_bad_ref <- lm(base_formula, data = df_reg3)
+summary(m_bad_ref)
+
+
+
+
+# Simple Slopes Analyse für dist_primary_km
+library(interactions)
+
+interact_plot(m_good_ref, 
+              pred = dist_primary_km, 
+              modx = school_quality, 
+              modx.values = c("good", "average", "bad"),
+              plot.points = TRUE,
+              main.title = "Simple Slopes Analysis for `dist_primary_km` by School Quality")
+
+
+# Simple Slopes Analyse für dist_secondary_km
+interact_plot(m_good_ref, 
+              pred = dist_secondary_km, 
+              modx = school_quality, 
+              modx.values = c("good", "average", "bad"),
+              plot.points = TRUE,
+              main.title = "Simple Slopes Analysis for `dist_secondary_km` by School Quality")
+
+
+
+
+
+
+
+# Interaktion plot erstellen für das Modell mit "good" als Referenz
+interact_plot(m_good_ref, 
+              pred = dist_primary_km,    # Unabhängige Variable: Distanz zur Primarschule
+              modx = school_quality,     # Interaktionsvariable: Schulqualität
+              plot.points = TRUE,        # Zeigt Punkte an, um Daten sichtbar zu machen
+              interval = TRUE,           # Zeigt Konfidenzintervalle
+              colors = c("blue", "green", "red"))  # Farben für die Schulqualitäten
+
+
+
+# Interaktion plot erstellen für das Modell mit "good" als Referenz für dist_secondary_km
+interact_plot(m_good_ref, 
+              pred = dist_secondary_km,  # Unabhängige Variable: Distanz zur Sekundarschule
+              modx = school_quality,     # Interaktionsvariable: Schulqualität
+              plot.points = TRUE,        # Zeigt Punkte an, um Daten sichtbar zu machen
+              interval = TRUE,           # Zeigt Konfidenzintervalle
+              colors = c("blue", "green", "red"))  # Farben für die Schulqualitäten
 
 
 
