@@ -558,6 +558,23 @@ tab_ols_cont <- modelsummary(
 
 tab_ols_cont
 
+# Quarto version
+tab_ols_cont2 <- modelsummary(
+  models_cont,
+  vcov      = "HC1",
+  coef_map  = coef_map_cont,
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "kableExtra",
+  title     = "Table 1. OLS regressions (log house price): 
+  Continuous distance specifications"
+) %>%
+  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position"))
+
+tab_ols_cont2
+
 #### ==== 2.5.2 Table 2: Binned specifications only ====
 models_bin <- list(
   "Naive (Both)"         = m6_naive_both_bin,
