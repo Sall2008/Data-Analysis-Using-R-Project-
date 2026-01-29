@@ -1,48 +1,66 @@
 ---
-title: "Distance to Schools and House Prices"
-subtitle: "Hypotheses & Regression Strategy"
-author: "Your Name"
-format:
-  revealjs:
-    theme: simple
-    slide-number: true
-    transition: fade
-    show-notes: false
-    center: true
-    width: 1600
-    height: 900
+title: "The Effects of School Proximity and the School Social Index on Housing Prices"
+subtitle: "\\presentationdate"
+author: 
+  - name: Yanyi Ji
+  - name: Daniel Tobien
+  - name: Luc Wichtmann
+format: 
+  beamer:
+    theme: "metropolis"
+    colortheme: "seahorse"
+    slide-level: 2
+    aspectratio: 169
+    keep-tex: false
+    pdf-engine: xelatex
+    include-in-header:
+      text: |
+        \input{custom_theme.tex}
+        \usepackage{booktabs}
+        \usepackage{graphicx}
+        \usepackage{float}
+        \usepackage{amsmath}
+        \usepackage{bm}
+bibliography: references_results.bib
+editor: 
+  markdown: 
+    wrap: 72
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r}
 #| include: false
-source("Proxy_final_version.R")
+source("Code_Final_Clean.R")
 ```
 
-## Distance to Schools and House Prices: Hypotheses & Regression Strategy {.smaller}
+# Results and Main Findings
 
-::: {.callout-note appearance="minimal"}
-### H1: House prices are higher related to schools
+## Distance to Schools and House Prices: Hypothesis
 
-*(Expected: Negative coefficients on distance variables)*
-:::
+\medskip
+\fcolorbox{blue!60}{white}{
+\parbox{\linewidth}{
+\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\emph{Expected: Negative coefficients on distance variables}
+}}
+\medskip
 
-**Empirical Framework:**
+**Empirical Framework**
 
--   **Outcome:** **Log house price**
--   **Key variables:** Distance to nearest **primary** school, Distance to nearest **secondary** school
--   **Modeling Strategy:** Models use **continuous, quadratic, and binned** specs for flexible gradients.
+-   **Outcome**: Log house price
+-   **Key variables**: Distance to nearest *primary* school, distance to
+    nearest *secondary* school
+-   **Modeling Strategy**: Continuous, quadratic, and binned
+    specifications
 
-<br>
+## Distance to Schools and House Prices: Regression Strategy
 
-:::::: columns
-::: {.column width="48%"}
+::::: columns
+::: {.column width="50%"}
 ### Baseline OLS Controls
 
-*Standardizing housing attributes*
-
-------------------------------------------------------------------------
+#### Standardizing housing attributes
 
 -   Living area
 -   Plot area
@@ -50,102 +68,106 @@ source("Proxy_final_version.R")
 -   House age
 :::
 
-::: {.column width="4%"}
-:::
-
-::: {.column width="48%"}
+::: {.column width="50%"}
 ### Two Distance Designs
 
-*Alternative specifications*
+#### Alternative Specifications
 
-------------------------------------------------------------------------
-
-**1. Continuous**
+1.  Continuous
 
 -   quadratic ($km^2$)
 
-**2. Binned**
+2.  Binned
 
 -   0–3 km, 3–6 km, 6–9 km, \>9 km
 :::
-::::::
-
-## Regression Specifications: Continuous Distance
-
-::::::::: columns
-::::: {.column width="50%"}
-::: {.callout-note appearance="minimal"}
-### 1. Naive Specification (Unconditional)
-
-*Raw price gradient without controls* $$\ln(P) = \alpha + \beta_1 D^{prim} + \beta_2 D^{sec} + \varepsilon$$
-
--   **Goal:** Establish raw spatial correlation.
-
--   **Risk:** High Omitted Variable Bias (OVB).
-:::
-
-::: {.callout-tip appearance="default"}
-### 2. Baseline Model (Preferred)
-
-*Conditional on attributes (*$\mathbf{X}$) $$\ln(P) = \alpha + \mathbf{\beta D} + \mathbf{\gamma X} + \varepsilon$$
-
--   $\mathbf{X}$: Area, Plot size, Rooms, Age.
-
--   **Assumption:** $E[\varepsilon|\mathbf{D}, \mathbf{X}] = 0$.
-
--   **Hypothesis:** $\beta < 0$ (Negative semi-elasticity).
-:::
 :::::
 
-::::: {.column width="50%"}
-::: {.callout-note appearance="minimal"}
-### 3. Polynomial (Non-Linearity)
+## Regression Specifications {.smaller}
 
-*Testing for convex/concave decay* $$\ln(P) = \text{Baseline} \dots + \delta_1 (D^{prim})^2 + \dots$$
+\footnotesize
+\vspace{-0.2cm}
 
--   **Test:** $\delta \neq 0$ implies marginal willingness to pay varies with distance.
+::::: columns
+::: {.column width="49%"}
+\begin{block}{(1) Naive (Unconditional)}
+    \vspace{-0.2cm}
+    $$\ln(P) = \alpha + \beta_1 D^{prim} + \beta_2 D^{sec} + \varepsilon$$
+    \vspace{-0.2cm}
+    \begin{itemize}
+      \item \textbf{Goal:} Establish raw spatial correlation.
+      \item \textbf{Risk:} High Omitted Variable Bias (OVB).
+    \end{itemize}
+  \end{block}
+
+\vspace{0.2cm}
+
+\begin{exampleblock}{(2) Baseline (Preferred)}
+    \vspace{-0.2cm}
+    $$\ln(P) = \alpha + \mathbf{\beta D} + \mathbf{\gamma X} + \varepsilon$$
+    \vspace{-0.2cm}
+    \begin{itemize}
+      \item \textbf{Controls:} Area, Plot, Rooms, Age.
+      \item \textbf{Hypothesis:} $\beta < 0$ (Negative semi-elasticity).
+    \end{itemize}
+  \end{exampleblock}
 :::
 
-::: {.callout-note appearance="minimal"}
-### 4 & 5. Single-Type Robustness
+::: {.column width="49%"}
+\begin{block}{(3) Non-Linearity (Polynomial)}
+    \vspace{-0.2cm}
+    $$\ln(P) = \dots + \delta_1 (D^{prim})^2 + \dots$$
+    \vspace{-0.2cm}
+    \begin{itemize}
+      \item \textbf{Test:} $\delta \neq 0$ implies varying MWTP.
+      \item \textbf{Logic:} Test for convex/concave decay.
+    \end{itemize}
+  \end{block}
 
-*Addressing multicollinearity* $$\ln(P) = \alpha + \beta_{k} D^{k} + \mathbf{\gamma X} + \varepsilon$$
+\vspace{0.2cm}
 
--   **Method:** Estimate $D^{prim}$ and $D^{sec}$ separately.
-
--   **Check:** Ensure $\hat{\beta}$ signs remain stable when isolated.
+\begin{block}{(4--5) Robustness (Single Type)}
+    \vspace{-0.2cm}
+    $$\ln(P) = \alpha + \beta_k D^k + \mathbf{\gamma X} + \varepsilon$$
+    \vspace{-0.2cm}
+    \begin{itemize}
+      \item \textbf{Idea:} Estimate primary / secondary separately.
+      \item \textbf{Check:} Stability against multicollinearity.
+    \end{itemize}
+  \end{block}
 :::
 :::::
-:::::::::
 
 ## Descriptive Evidence: Price-Distance Gradient
 
-::::::: {style="font-size: 0.8em; margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;"}
+\vspace{-0.3cm}
+
+\footnotesize
+
 :::::: columns
-::: {.column width="33%"}
-### 📉 Negative Slope (H1)
-
-Clear decay in prices as distance increases across both specifications.
+::: {.column width="32%"}
+\begin{block}{Negative Slope (H1)}
+    Clear decay in prices as distance increases across specifications.
+  \end{block}
 :::
 
-::: {.column width="33%"}
-### 📐 Non-Linearity
-
-Steeper drop in the first 3-6 km, flattening afterwards.
+::: {.column width="32%"}
+\begin{block}{Non-Linearity}
+    Steeper drop in the first \textbf{3--6 km}, flattening afterwards.
+  \end{block}
 :::
 
-::: {.column width="33%"}
-### 🏫 School Heterogeneity
-
-Primary schools (Blue) show a visibly steeper gradient than Secondary schools.
+::: {.column width="32%"}
+\begin{block}{Heterogeneity}
+    \textbf{Primary schools} show a visibly steeper gradient than Secondary.
+  \end{block}
 :::
 ::::::
-:::::::
 
 ```{r}
 #| echo: false
 #| fig-width: 14
-#| fig-height: 5
+#| fig-height: 4.5
 #| fig-align: center
 #| warning: false
 #| message: false
@@ -153,11 +175,11 @@ Primary schools (Blue) show a visibly steeper gradient than Secondary schools.
 library(ggplot2)
 library(patchwork)
 
-p_left <- fig_scatter_combined +
+p_left <- fig_2_scatter_combined +
   labs(title = "Fig 1. Continuous Trend (Raw Scatter)") +
   theme(plot.title = element_text(size = 14, face = "bold"))
 
-p_right <- fig_price_gradient +
+p_right <- fig_1_price_gradient +
   labs(title = "Fig 2. Discrete Gradient (Binned Means)") +
   theme(plot.title = element_text(size = 14, face = "bold"),
         axis.title.y = element_blank())
@@ -171,101 +193,196 @@ p_combined <- p_left + p_right +
 print(p_combined)
 ```
 
-## Main Results: Continuous vs Binned
+## Main Results: Continuous Model {.smaller}
 
-::: panel-tabset
-### Continuous Model
+```{r}
+#| echo: false
+#| results: asis
+
+modelsummary(
+  models_cont,
+  vcov      = "HC1",
+  coef_map  = coef_map_cont,
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "kableExtra"
+) |>
+  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position"))
+```
+
+## Main Results: Binned Model {.smaller}
+
+```{r}
+#| echo: false
+#| results: asis
+
+modelsummary(
+  models_bin,
+  vcov      = "HC1",
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "kableExtra"
+) |>
+  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position"))
+```
+
+## Compare: Continuous vs Binned {.smaller}
+
+```{r}
+#| echo: false
+#| results: asis
+
+modelsummary(
+  models_main_compare,
+  vcov      = "HC1",
+  coef_map  = coef_map_compare,
+  coef_omit = "log_area|log_plot_area|zimmeranzahl|house_age|\\(Intercept\\)",
+  statistic = NULL,
+  stars     = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
+  fmt       = 3,
+  output    = "kableExtra"
+) |>
+  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position")) |>
+  kableExtra::footnote(general = "Binned coefficients are relative to the reference group: 0-3 km. Controls included but omitted from display.")
+```
+
+## Model comparison (main models)
+
+-   Continuous fits slightly better.
+
+### In-sample fit and 5-fold out-of-sample performance
 
 ```{r}
 #| echo: false
 
-tab_ols_cont
+tab_4_compare_all <- compare_all %>%
+  setNames(c("Model", "N", "$R^2$", "Adj. $R^2$", "AIC", "BIC", 
+             "CV RMSE", "CV MAE", "CV $R^2$")) %>%
+  knitr::kable(
+    format = "latex",
+    digits = 3,                  
+    booktabs = TRUE,            
+    escape = FALSE,               
+    linesep = ""                 
+  ) %>%
+  
+  kableExtra::kable_styling(
+    font_size = 7, 
+    latex_options = c("scale_down", "hold_position")
+  ) %>%
+  
+  kableExtra::footnote(
+    general = "In-sample: higher $R^2$/Adj. $R^2$ is better; 
+    lower AIC/BIC is better. 
+    Out-of-sample (5-fold CV): lower RMSE/MAE is better; 
+    higher $R^2$ is better.",
+    general_title = "Note: ",
+    threeparttable = TRUE,
+    escape = FALSE 
+  )
+
+tab_4_compare_all
+
 ```
 
-### Binned Model
+## Robustness checks (main models)
+
+-   Binned is slightly more robust to influential points.
+
+### Diagnostics summary (heteroskedasticity, multicollinearity, influence)
 
 ```{r}
 #| echo: false
+tab_5_robust_checks <- diag_robust %>%
+  mutate(
+    BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
+                        if_else(BP_pvalue < 0.001, "<0.001", 
+                                sprintf("%.3f", BP_pvalue))),
+    Max_VIF   = if_else(is.na(Max_VIF), NA_character_, 
+                        sprintf("%.2f", Max_VIF)),
+    Cook_max  = if_else(is.na(Cook_max), NA_character_, 
+                        sprintf("%.3f", Cook_max)),
+    Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
+  ) %>%
+  select(Model, BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max) %>%
+  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", "Max Cook's $D$")) %>%
+  knitr::kable(
+    format = "latex",
+    booktabs = TRUE,
+    escape = FALSE,  
+    linesep = "",
+    align = "lcccc"
+  ) %>%
+  kableExtra::kable_styling(
+    font_size = 7, 
+    latex_options = c("scale_down", "hold_position")
+  ) %>%
+  kableExtra::column_spec(1, bold = TRUE) %>%
+  kableExtra::footnote(
+    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values indicate heteroskedasticity; higher VIF indicates collinearity; larger Cook's $D$ indicates influential points.",
+    general_title = "Note: ",
+    threeparttable = TRUE,
+    escape = FALSE
+  )
 
-tab_ols_bin
+tab_5_robust_checks
 ```
 
-### Compare: Continuous vs Binned
+## Economic Mechanisms & Interpretations
 
-```{r}
-#| echo: false
+\footnotesize
+\vspace{-0.3cm}
 
-tab_main_compare
-```
+::: columns
+
+::: {.column width="32%"}
+  \begin{block}{1. Capitalization}
+    \vspace{0.1cm}
+    \centering
+    \textit{Why closer = expensive?}
+    \vspace{0.1cm}
+    \begin{itemize}
+      \item \textbf{Convenience Premium:} \\
+      Time savings $\to$ Capitalized into property values.
+      \item \textbf{Sorting:} \\
+      Families cluster $\to$ Higher local demand.
+    \end{itemize}
+  \end{block}
 :::
 
-## Model comparison & robustness (main models)
-
-Continuous fits slightly better;
-
-binned is slightly more robust to influential points.
-
-::: panel-tabset
-### Model comparison
-
-```{r}
-#| echo: false
-
-tab_compare_all
-```
-
-### Robustness checks
-
-```{r}
-#| echo: false
-
-tab_robust_checks
-```
+::: {.column width="32%"}
+  \begin{exampleblock}{2. Primary vs Secondary}
+    \vspace{0.1cm}
+    \centering
+    \textit{Why primary is stronger?}
+    \vspace{0.1cm}
+    \begin{itemize}
+      \item \textbf{Age Constraints:} \\
+      Young kids need escorting (Inelastic demand).
+      \item \textbf{Micro-Neighborhoods:} \\
+      Primary schools anchor local community ties.
+    \end{itemize}
+  \end{exampleblock}
 :::
 
-## Interpreting the Results: Economic Mechanisms
+::: {.column width="32%"}
+  \begin{alertblock}{3. Non-Linearity}
+    \vspace{0.1cm}
+    \centering
+    \textit{Why gradient flattens?}
+    \vspace{0.1cm}
+    \begin{itemize}
+      \item \textbf{Walkability Limit:} \\
+      Premium vanishes after \textbf{3km}.
+      \item \textbf{Substitution:} \\
+      Driving $\to$ Public transit at longer distances.
+    \end{itemize}
+  \end{alertblock}
+:::
 
-::: panel-tabset
-
-### 1. Capitalization
-**Why are houses closer to schools more expensive?**
-
-* **Commuting Costs & Convenience**
-    * Time saved on daily school runs is directly capitalized into housing values.
-    * Particularly critical for dual-income households with tight schedules.
-
-* **Residential Sorting**
-    * Families with children self-select into these areas.
-    * This clustering increases local demand and price pressure compared to non-school areas.
-
-### 2. Primary vs Secondary
-**Why is the effect stronger for primary schools?**
-
-* **Age-Related Mobility Constraints**
-    * Young children cannot commute independently; parents *must* escort them.
-    * This makes proximity a "non-negotiable" constraint for primary school parents.
-
-* **Neighborhood Definition**
-    * Primary schools act as the center of the local "micro-neighborhood."
-    * Secondary schools serve larger regions, and older students use public transport, reducing the premium on immediate proximity.
-
-### 3. Non-Linearity
-**Why does the price gradient flatten out?**
-
-* **Diminishing Returns (Threshold Effects)**
-    * The "Walkability Premium" exists only within the first few kilometers.
-    * Once driving is required, the marginal difference between 5km and 8km is negligible.
-
-* **Substitution Effects**
-    * At larger distances, alternative transport modes (school buses, public transit) replace parental driving, flattening the cost curve.
-
-### 4. Limitation
-**What is missing from a distance-only perspective?**
-
-* **Distance $\neq$ Desirability**
-    * Proximity captures *accessibility*, but not *quality*.
-    * Living next to a poorly-performing school may actually be a disamenity (noise, traffic) without the educational benefit.
-
-* **The "Social" Omitted Variable**
-    * We need to control for **Social Index/Composition** to distinguish between "access to any school" and "access to a *good* school."
 :::
