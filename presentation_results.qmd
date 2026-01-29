@@ -47,66 +47,71 @@ source("Code_Final.R")
 
 ## Motivation
 
--   **Personal Interest**: Analyzing the real estate market's reaction to 
-various factors is particularly interesting from an economic standpoint, as it 
-offers insights into market dynamics. Additionally, the topic is personally 
-intriguing, adding an extra layer of motivation to explore it further.
+-   **Personal Interest**: Analyzing the real estate market's reaction
+    to various factors is particularly interesting from an economic
+    standpoint, as it offers insights into market dynamics.
+    Additionally, the topic is personally intriguing, adding an extra
+    layer of motivation to explore it further.
 
--   **Academic and Practical Relevance**: Housing markets are influenced by 
-various social and economic factors, and school quality is also cited as a 
-underestimated determinant of property values, especially in research 
-[@Seo_Simons_2009].
+-   **Academic and Practical Relevance**: Housing markets are influenced
+    by various social and economic factors, and school quality is also
+    cited as a underestimated determinant of property values, especially
+    in research [@Seo_Simons_2009].
 
 ## Motivation
 
-Understanding the relationship between school distance, school quality and 
-property prices can provide valuable insights for researchers and individuals 
-interested in the real estate market.
+Understanding the relationship between school distance, school quality
+and property prices can provide valuable insights for researchers and
+individuals interested in the real estate market.
 
 ## Related Literature Background
 
-Several papers have examined the effect of proximity to schools on housing 
-prices:
+Several papers have examined the effect of proximity to schools on
+housing prices:
 
--   **Empirical Strategies**: While hedonic models are the dominant approach to
-estimating housing price effects, alternative empirical strategies have also 
-been proposed [see @Black_Machin_2011]
+-   **Empirical Strategies**: While hedonic models are the dominant
+    approach to estimating housing price effects, alternative empirical
+    strategies have also been proposed [see @Black_Machin_2011]
 
--   **Findings**: Empirical evidence suggests that proximity to schools 
-positively affects housing prices [@Rosiers_Lagana_Theriault_2001; 
-@Huang_Hess_2018]
+-   **Findings**: Empirical evidence suggests that proximity to schools
+    positively affects housing prices [@Rosiers_Lagana_Theriault_2001;
+    @Huang_Hess_2018]
 
 ## Related Literature Background
 
--   **Other Factors**: Related work also documents capitalization effects of 
-school reputation [@Chin_Foong_2006], differences between public and private 
-schools [@Sah_Conroy_Narwold_2016] and school quality [@Edusei_Espey_Lin_2007; 
-@Metz_2015]
+-   **Other Factors**: Related work also documents capitalization
+    effects of school reputation [@Chin_Foong_2006], differences between
+    public and private schools [@Sah_Conroy_Narwold_2016] and school
+    quality [@Edusei_Espey_Lin_2007; @Metz_2015]
 
--   **Environment of studies**: Much of the literature focuses on settings with 
-binding school catchment areas and measures school quality primarily through 
-test scores rather than demographic composition.
-
-## Research Question
-
-We study a setting *without binding school catchment areas* (NRW, Germany) and 
-assess whether both *school proximity* and a *demographically based school* 
-*social index* are capitalized into housing prices.
+-   **Environment of studies**: Much of the literature focuses on
+    settings with binding school catchment areas and measures school
+    quality primarily through test scores rather than demographic
+    composition.
 
 ## Research Question
 
-**Research Question:** How do school proximity and school social indices affect 
-the prices of detached houses, and do these effects differ between primary and 
-secondary schools in North Rhine–Westphalia?
+We study a setting *without binding school catchment areas* (NRW,
+Germany) and assess whether both *school proximity* and a
+*demographically based school* *social index* are capitalized into
+housing prices.
+
+## Research Question
+
+**Research Question:** How do school proximity and school social indices
+affect the prices of detached houses, and do these effects differ
+between primary and secondary schools in North Rhine–Westphalia?
 
 # Data & Methodology
 
 ## Data
 
--   **Housing Data**: Cross-section dataset for houses for sale published by 
-the Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023].
--   **School Data**: School social index dataset from North Rhine-Westphalias 
-Ministry of Schools and Education [@MSB_NRW_Schulsozialindex].
+-   **Housing Data**: Cross-section dataset for houses for sale
+    published by the Research Data Center Ruhr (FDZ Ruhr)
+    [@RWI_ImmobilienScout24_2023].
+-   **School Data**: School social index dataset from North
+    Rhine-Westphalias Ministry of Schools and Education
+    [@MSB_NRW_Schulsozialindex].
 
 \footnotetext{Data used from both datasets refer to the year 2022.}
 
@@ -165,15 +170,16 @@ stateDiagram-v2
 :::
 
 ## Empirical Framework
-We estimate regression-based hedonic models to 
 
-- examine how school proximity and school characteristics are capitalized into 
-housing prices and
-- whether the impact of school proximity on housing prices differs by the 
-school’s social index
+We estimate regression-based hedonic models to
 
+-   examine how school proximity and school characteristics are
+    capitalized into housing prices and
+-   whether the impact of school proximity on housing prices differs by
+    the school’s social index
 
 ## Empirical Framework: Hedonic Price Model
+
 \begin{center}
 \colorbox{blue!10}{
 $\displaystyle
@@ -188,15 +194,13 @@ $
 
 \vspace{1.5em}
 
-- $P_i$ denotes the listing price of house $i$
-\vspace{0.1em}
-- $\text{Dist}_i$ measures distance to the nearest school
-\vspace{0.1em}
-- $X_i$ is a vector of housing characteristics
-\vspace{0.1em}
-- $\gamma$ is a vector of coefficients corresponding to $X_i$
-\vspace{0.1em}
-- $\varepsilon_i$ captures unobserved factors
+-   $P_i$ denotes the listing price of house $i$ \vspace{0.1em}
+-   $\text{Dist}_i$ measures distance to the nearest school
+    \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics \vspace{0.1em}
+-   $\gamma$ is a vector of coefficients corresponding to $X_i$
+    \vspace{0.1em}
+-   $\varepsilon_i$ captures unobserved factors
 
 ## Empirical Framework: Hedonic Price Model + Interaction
 
@@ -214,18 +218,14 @@ $
 
 \vspace{1.5em}
 
-- $P_i$ denotes the listing price of house $i$
-\vspace{0.1em}
-- $\text{Index}_i$ is the school social index
-\vspace{0.1em}
-- $\text{Dist}_i$ measures distance to the nearest school
-\vspace{0.1em}
-- $X_i$ is a vector of housing characteristics
-\vspace{0.1em}
-- $\varepsilon_i$ captures unobserved factors
+-   $P_i$ denotes the listing price of house $i$ \vspace{0.1em}
+-   $\text{Index}_i$ is the school social index \vspace{0.1em}
+-   $\text{Dist}_i$ measures distance to the nearest school
+    \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics \vspace{0.1em}
+-   $\varepsilon_i$ captures unobserved factors
 
 ## Empirical Framework: Final Model
-
 
 \begin{center}
 \colorbox{blue!10}{
@@ -246,41 +246,182 @@ $
 }
 \end{center}
 
-
-
-- $P_i$ denotes the listing price of house $i$
-\vspace{0.1em}
-- $\text{Dist}_i$ measures distance to the nearest school
-\vspace{0.1em}
-- $X_i$ is a vector of housing characteristics
-\vspace{0.1em}
-- $\text{Index}_i$ is the school social index
-\vspace{0.1em}
-- $mu_{\ell(i)}$ are municipality fixed effects
-\vspace{0.1em}
-- $\varepsilon_i$ captures unobserved factors
+-   $P_i$ denotes the listing price of house $i$ \vspace{0.1em}
+-   $\text{Dist}_i$ measures distance to the nearest school
+    \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics \vspace{0.1em}
+-   $\text{Index}_i$ is the school social index \vspace{0.1em}
+-   $mu_{\ell(i)}$ are municipality fixed effects \vspace{0.1em}
+-   $\varepsilon_i$ captures unobserved factors
 
 # Results and Main Findings
 
-## Visualization for Distance to Primary School
+## Distance to Schools and House Prices: Hypothesis
 
+\medskip
+\fcolorbox{blue!60}{white}{
+\parbox{\linewidth}{
+\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\emph{Expected: Negative coefficients on distance variables}
+}}
+\medskip
+
+**Empirical Framework**
+
+-   **Outcome**: Log house price
+-   **Key variables**: Distance to nearest *primary* school, distance to nearest 
+*secondary* school
+-   **Modeling Strategy**: Continuous, quadratic, and binned specifications
+
+## Distance to Schools and House Prices: Regression Strategy
+
+:::: {.columns}
+::: {.column width="50%"}
+
+### Baseline OLS Controls
+
+#### Standardizing housing attributes
+
+- Living area
+- Plot area
+- Number of rooms
+- House age
+
+:::
+::: {.column width="50%"}
+
+###  Two Distance Designs
+
+#### Alternative Specifications
+
+1. Continuous
+
+-   quadratic ($km^2$)
+
+2. Binned
+
+-   0–3 km, 3–6 km, 6–9 km, \>9 km
+
+:::
+::::
+
+
+
+## Exploring the Social Index Impact on House Prices
+
+\medskip
+\fcolorbox{blue!60}{white}{
+\parbox{\linewidth}{
+\textbf{H2: Social index moderates the effect of school proximity on house prices}\\[-2pt]
+\emph{Expected: Better schools leading to stronger price premiums}
+}}
+\medskip
+
+-   **Key Finding from Distance Analysis:** We’ve already established that *households are willing to pay a premium* for proximity to schools
+-   **Next Question:** Now, we investigate *whether this price premium is driven by school quality*, measured through the *Social Index*
+
+
+## What is the Social Index?
+
+**Definition**: The Social Index is a measure that shows the socio-economic and demographic background of a schools students.
+  
+**Components of the social index are**:
+
+-   Parental Education 
+-   Socio-economic Status of the Family 
+-   Migration Background
+-   Single-Parent Household
+-   Unemployment in the Family 
+-   Housing Situation 
+  
+--> It provides insights into the **social environment** that might influence housing prices in that area.
+
+
+## Categorization of the Social Index
+
+**Social Index Classification:**
+
+-   **Good Schools**: Social Index 1-2
+-   **Average Schools**: Social Index 3-4
+-   **Bad Schools**: Social Index 5-8
+
+
+-    **Skewed Distribution**: The Social Index classes are heavily skewed, with many schools falling into classes 1, 2 & 3. We excluded class 9 for our analysis because of too less observations
+  
+
+## Categorization of the Social Index: Bar Chart
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "90%"
+bar_chart_index
+```
+
+**Graph**: Distribution of Social Index values across schools showing the skewed nature of the data.
+
+## Spatial Distribution of School Social Index in NRW
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "90%"
+spa_dis
+```
+
+## Hedonic Regression Model for Social Index 
+
+### Model Specification:
+
+
+## Social Index: Regression Results
+
+```{r}
+#| include: true
+tab_ols
+```
+
+## Social Index: Interpretaition of the Results
+### Primary School Proximity
+
+-   *Distance to primary school* is still *significant* and negatively affects house prices.
+-   Interaction Effect: The effect is *stronger for average schools* (Estimate = -0.041, p = 0.009), suggesting that the price drop is greater when the school quality is average.
+-   *No significant effect* for bad schools (p = 0.2996).
+  
+## Social Index: Interpretaition of the Results
+### Secondary School Proximity
+
+-   *Distance to secondary school* is also still *significant* and negatively impacts house prices.
+-   The effect is *stronger for average schools* (Estimate = 0.0307, p = 0.0096), meaning proximity to secondary schools is more impactful in areas with average school quality.
+-   *No significant effect* for bad schools (p = 0.7414).
+
+```{r}
+#| include: true 
+```
+
+## Limitations
+
+-   **Direct Distance**: The distance is not measured from the houses to
+    the nearest school directly but from the school to the center of the
+    raster cell.
+-   **Fragmented Grid**: We do not have data for every grid cell of NRW
+    but only a fragmented set of grids containing houses from the
+    available datasets.
+-   **Listing prices**: The prices we have are not transaction but
+    listing prices.
+
+
+```{=html}
 <!-- This part has to stay on the last page before the references to indicate
 the end of the presentation for the progress bar defined in the custom 
 theme file.
 This does not work yet... -->
-\setcontentend
-
-```{r}
-#| include: true 
-reg_table
 ```
 
-## Limitations
-- **Direct Distance**: The distance is not measured from the houses to the 
-nearest school directly but from the school to the center of the raster cell.
-- **Fragmented Grid**: We do not have data for every grid cell of NRW but only a
-fragmented set of grids containing houses from the available datasets.
-- **Listing prices**: The prices we have are not transaction but listing prices.
+\setcontentend
+
 
 ## References {.allowframebreaks}
 
