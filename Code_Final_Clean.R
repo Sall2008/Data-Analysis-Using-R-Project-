@@ -225,6 +225,120 @@ cat("Duplicates (if any):", nrow(duplicates_check), "\n")
 # Adding another variable
 df_final <- df_final_with_social
 
+## ==== 1.7 Queens Distance Preparation  ====
+
+# Adding other datasets
+path_sale_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
+path_sale_flats <- "course_data/housing_data/cross_section/CampusFile_WK_2022.csv"
+path_rent_flats <- "course_data/housing_data/cross_section/CampusFile_WM_2022.csv"
+
+# Clean Houses for Sale Data 
+raw_housing_sale <- read_delim(
+  path_sale_housing, 
+  delim = ",", 
+  locale = locale(decimal_mark = "."),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  show_col_types = FALSE
+)
+
+# Clean Flats for Sale Data
+raw_flats_sale <- read_delim(
+  path_sale_flats, 
+  delim = ",", 
+  locale = locale(decimal_mark = "."),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  show_col_types = FALSE
+)
+
+# Clean Flats for Rent Data
+raw_flats_rent <- read_delim(
+  path_rent_flats, 
+  delim = ",", 
+  locale = locale(decimal_mark = "."),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  show_col_types = FALSE
+)
+
+# NRW Cells Only
+raw_housing_sale_NRW <- raw_housing_sale %>% filter(blid == "North Rhine-Westphalia")
+raw_flats_sale_NRW <- raw_flats_sale %>% filter(blid == "North Rhine-Westphalia")
+raw_flats_rent_NRW <- raw_flats_rent %>% filter(blid == "North Rhine-Westphalia")
+
+# Building a more comprehensive grid
+cells_big <- bind_rows(
+  raw_housing_sale_NRW %>% select(ergg_1km),
+  raw_flats_sale_NRW %>% select(ergg_1km),
+  raw_flats_rent_NRW %>% select(ergg_1km)
+) %>%
+  distinct() %>%
+  filter(!is.na(ergg_1km)) %>%                 
+  separate(
+    ergg_1km,
+    into = c("x","y"),
+    sep = "_",
+    convert = TRUE,
+    remove = TRUE
+  ) %>%
+  filter(!is.na(x), !is.na(y)) %>%              
+  distinct(x, y) %>%
+  arrange(x, y)
+
+# Identifying school cells in that grid
+school_cells_primary <- raw_dist %>%
+  filter(school_type %in% type_primary, nn_order == 1, dist_km <= 0.75) %>%
+  distinct(ergg_1km) %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y)
+
+school_cells_secondary <- raw_dist %>%
+  filter(school_type %in% type_secondary, nn_order == 1, dist_km <= 0.75) %>%
+  distinct(ergg_1km) %>%
+  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
+  filter(!is.na(x), !is.na(y)) %>%
+  distinct(x, y)
+
+cells_big <- cells_big %>%
+  mutate(
+    has_primary = paste(x,y) %in% paste(school_cells_primary$x, school_cells_primary$y),
+    has_secondary = paste(x,y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
+  )
+
+# 2.3.8 Building Grid
+coords <- as.matrix(cells_big[, c("x","y")])
+
+stopifnot(!anyNA(coords))   # safety check
+
+nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
+
+# Drop cells with no neighbors
+
+cells_big <- cells_big %>%
+  mutate(n_neighbors = spdep::card(nb_queen))
+
+cells_big <- cells_big %>%
+  filter(n_neighbors > 0) %>%
+  select(-n_neighbors)
+
+# Rebuild nb_queen
+coords <- as.matrix(cells_big[, c("x","y")])
+
+stopifnot(!anyNA(coords))
+
+nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
+
+stopifnot(
+  length(nb_queen) == nrow(cells_big),
+  length(cells_big$has_primary) == nrow(cells_big),
+  length(cells_big$has_secondary) == nrow(cells_big)
+)
+
+### ==== 1.7.1 Diagnostics ====
+
+summary(card(nb_queen))
+n.comp.nb(nb_queen)$nc
+table(spdep::card(nb_queen))
+
 # ==== 2. Analysis ====
 
 df_reg_dist <- df_main %>%
@@ -483,125 +597,9 @@ print(diag_robust)
 
 
 
-
-
 ## ==== 2.3 Queens Distance ====
 
-### ==== 2.3.1 Data Cleaning ====
-
-# Adding other datasets
-path_sale_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
-path_sale_flats <- "course_data/housing_data/cross_section/CampusFile_WK_2022.csv"
-path_rent_flats <- "course_data/housing_data/cross_section/CampusFile_WM_2022.csv"
-
-# Clean Houses for Sale Data 
-raw_housing_sale <- read_delim(
-  path_sale_housing, 
-  delim = ",", 
-  locale = locale(decimal_mark = "."),
-  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
-  show_col_types = FALSE
-)
-
-# Clean Flats for Sale Data
-raw_flats_sale <- read_delim(
-  path_sale_flats, 
-  delim = ",", 
-  locale = locale(decimal_mark = "."),
-  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
-  show_col_types = FALSE
-)
-
-# Clean Flats for Rent Data
-raw_flats_rent <- read_delim(
-  path_rent_flats, 
-  delim = ",", 
-  locale = locale(decimal_mark = "."),
-  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
-  show_col_types = FALSE
-)
-
-# NRW Cells Only
-raw_housing_sale_NRW <- raw_housing_sale %>% filter(blid == "North Rhine-Westphalia")
-raw_flats_sale_NRW <- raw_flats_sale %>% filter(blid == "North Rhine-Westphalia")
-raw_flats_rent_NRW <- raw_flats_rent %>% filter(blid == "North Rhine-Westphalia")
-
-# Building a more comprehensive grid
-cells_big <- bind_rows(
-  raw_housing_sale_NRW %>% select(ergg_1km),
-  raw_flats_sale_NRW %>% select(ergg_1km),
-  raw_flats_rent_NRW %>% select(ergg_1km)
-) %>%
-  distinct() %>%
-  filter(!is.na(ergg_1km)) %>%                 
-  separate(
-    ergg_1km,
-    into = c("x","y"),
-    sep = "_",
-    convert = TRUE,
-    remove = TRUE
-  ) %>%
-  filter(!is.na(x), !is.na(y)) %>%              
-  distinct(x, y) %>%
-  arrange(x, y)
-
-# Identifying school cells in that grid
-school_cells_primary <- raw_dist %>%
-  filter(school_type %in% type_primary, nn_order == 1, dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
-
-school_cells_secondary <- raw_dist %>%
-  filter(school_type %in% type_secondary, nn_order == 1, dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
-  filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
-
-cells_big <- cells_big %>%
-  mutate(
-    has_primary = paste(x,y) %in% paste(school_cells_primary$x, school_cells_primary$y),
-    has_secondary = paste(x,y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
-  )
-
-# 2.3.8 Building Grid
-coords <- as.matrix(cells_big[, c("x","y")])
-
-stopifnot(!anyNA(coords))   # safety check
-
-nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
-
-# Drop cells with no neighbors
-
-cells_big <- cells_big %>%
-  mutate(n_neighbors = spdep::card(nb_queen))
-
-cells_big <- cells_big %>%
-  filter(n_neighbors > 0) %>%
-  select(-n_neighbors)
-
-# Rebuild nb_queen
-coords <- as.matrix(cells_big[, c("x","y")])
-
-stopifnot(!anyNA(coords))
-
-nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
-
-stopifnot(
-  length(nb_queen) == nrow(cells_big),
-  length(cells_big$has_primary) == nrow(cells_big),
-  length(cells_big$has_secondary) == nrow(cells_big)
-)
-
-### ==== 2.3.2 Diagnostics ====
-
-summary(card(nb_queen))
-n.comp.nb(nb_queen)$nc
-table(spdep::card(nb_queen))
-
-### ==== 2.3.3 Compute Queens contiguity ====
+### ==== 2.3.1 Compute Queens contiguity ====
 
 # Define function
 compute_qdist <- function(nb, has_school, max_steps = 200) {
@@ -648,7 +646,6 @@ cells_big$q_dist_secondary <- compute_qdist(
   has_school = cells_big$has_secondary
 )
 
-
 # Merge back
 df_final <- df_final %>%
   separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
@@ -660,9 +657,9 @@ df_final <- df_final %>%
     by = c("x","y")
   )
 
-### ==== 2.3.4 Regressions ====
+### ==== 2.3.2 Regressions ====
 
-#### ==== 2.3.4.1 Distance ====
+#### ==== 2.3.2.1 Distance ====
 
 # Primary Schools
 model_primary_all <- lm(
@@ -682,7 +679,7 @@ model_secondary_all <- lm(
 
 summary(model_secondary_all)
 
-#### ==== 2.3.4.2 Social Index ====
+#### ==== 2.3.2.2 Social Index ====
 
 # Continuous Regression
 model_index <- lm(
