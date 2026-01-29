@@ -285,26 +285,71 @@ cells_big <- bind_rows(
 
 # Identifying school cells in that grid
 school_cells_primary <- raw_dist %>%
-  filter(school_type %in% type_primary, nn_order == 1, dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
+  filter(
+    school_type %in% type_primary,
+    nn_order == 1,
+    dist_km <= 0.75
+  ) %>%
+  distinct(ergg_1km, school_id) %>% 
+  separate(
+    ergg_1km,
+    into = c("x","y"),
+    sep = "_",
+    convert = TRUE
+  ) %>%
   filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
+  mutate(school_level = "primary")
 
 school_cells_secondary <- raw_dist %>%
-  filter(school_type %in% type_secondary, nn_order == 1, dist_km <= 0.75) %>%
-  distinct(ergg_1km) %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE) %>%
+  filter(
+    school_type %in% type_secondary,
+    nn_order == 1,
+    dist_km <= 0.75
+  ) %>%
+  distinct(ergg_1km, school_id) %>% 
+  separate(
+    ergg_1km,
+    into = c("x","y"),
+    sep = "_",
+    convert = TRUE
+  ) %>%
   filter(!is.na(x), !is.na(y)) %>%
-  distinct(x, y)
+  mutate(school_level = "secondary")
 
+# Combine primary and secondary
+school_cells_all <- bind_rows(
+  school_cells_primary,
+  school_cells_secondary
+)
+
+# Create cells
 cells_big <- cells_big %>%
   mutate(
-    has_primary = paste(x,y) %in% paste(school_cells_primary$x, school_cells_primary$y),
-    has_secondary = paste(x,y) %in% paste(school_cells_secondary$x, school_cells_secondary$y)
+    has_primary = paste(x,y) %in%
+      paste(
+        school_cells_primary$x,
+        school_cells_primary$y
+      ),
+    has_secondary = paste(x,y) %in%
+      paste(
+        school_cells_secondary$x,
+        school_cells_secondary$y
+      )
   )
 
-# 2.3.8 Building Grid
+# Sanity check 
+# How many schools per cell?
+school_cells_all %>%
+  count(x, y) %>%
+  summarise(
+    max_schools_per_cell = max(n),
+    mean_schools_per_cell = mean(n)
+  )
+
+# Any missing IDs?
+stopifnot(!anyNA(school_cells_all$school_id))
+
+# Building Grid
 coords <- as.matrix(cells_big[, c("x","y")])
 
 stopifnot(!anyNA(coords))   # safety check
@@ -332,6 +377,22 @@ stopifnot(
   length(cells_big$has_primary) == nrow(cells_big),
   length(cells_big$has_secondary) == nrow(cells_big)
 )
+
+# FINAL cell IDs 
+cells_big <- cells_big %>%
+  mutate(cell_id = row_number())
+
+# FINAL school sources
+school_sources <- cells_big %>%
+  inner_join(
+    school_cells_all,
+    by = c("x","y")
+  ) %>%
+  select(cell_id, school_id, school_level)
+
+# Hard safety checks
+stopifnot(length(nb_queen) == nrow(cells_big))
+stopifnot(max(school_sources$cell_id) <= nrow(cells_big))
 
 ### ==== 1.7.1 Diagnostics ====
 
@@ -601,30 +662,36 @@ print(diag_robust)
 
 ### ==== 2.3.1 Compute Queens contiguity ====
 
+school_sources_primary <- school_sources %>%
+  filter(school_level == "primary")
+
+school_sources_secondary <- school_sources %>%
+  filter(school_level == "secondary")
+
+
 # Define function
-compute_qdist <- function(nb, has_school, max_steps = 200) {
-  stopifnot(length(nb) == length(has_school))
+compute_qdist_school_level <- function(nb, school_sources, n_cells) {
   
-  q_dist <- rep(NA_integer_, length(has_school))
-  q_dist[has_school] <- 0
+  q_dist  <- rep(NA_integer_, n_cells)
+  ref_sid <- rep(NA_integer_, n_cells)
   
-  frontier <- which(has_school)
+  frontier <- school_sources$cell_id
+  q_dist[frontier]  <- 0
+  ref_sid[frontier] <- school_sources$school_id
+  
   k <- 0
   
   while (length(frontier) > 0) {
     k <- k + 1
-    if (k > max_steps) break
-    
     new_frontier <- integer(0)
     
     for (i in frontier) {
       neigh <- nb[[i]]
-      neigh <- neigh[neigh > 0]
-      if (length(neigh) == 0) next
-      
       to_set <- neigh[is.na(q_dist[neigh])]
+      
       if (length(to_set) > 0) {
-        q_dist[to_set] <- k
+        q_dist[to_set]  <- k
+        ref_sid[to_set] <- ref_sid[i]
         new_frontier <- c(new_frontier, to_set)
       }
     }
@@ -632,30 +699,90 @@ compute_qdist <- function(nb, has_school, max_steps = 200) {
     frontier <- unique(new_frontier)
   }
   
-  q_dist
+  tibble(
+    cell_id = seq_len(n_cells),
+    q_dist = q_dist,
+    ref_school_id = ref_sid
+  )
 }
 
-# Apply function
-cells_big$q_dist_primary <- compute_qdist(
-  nb = nb_queen,
-  has_school = cells_big$has_primary
-)
 
-cells_big$q_dist_secondary <- compute_qdist(
+# Apply function for primary schools
+qdist_primary <- compute_qdist_school_level(
   nb = nb_queen,
-  has_school = cells_big$has_secondary
-)
+  school_sources = school_sources_primary,
+  n_cells = nrow(cells_big)
+) %>%
+  rename(
+    q_dist_primary = q_dist,
+    ref_school_primary = ref_school_id
+  )
+
+# Apply function for secondary schools
+qdist_secondary <- compute_qdist_school_level(
+  nb = nb_queen,
+  school_sources = school_sources_secondary,
+  n_cells = nrow(cells_big)
+) %>%
+  rename(
+    q_dist_secondary = q_dist,
+    ref_school_secondary = ref_school_id
+  )
+
+cells_big <- cells_big %>%
+  left_join(qdist_primary,  by = "cell_id") %>%
+  left_join(qdist_secondary, by = "cell_id")
+
+# Merge back
+cells_big <- cells_big %>%
+  left_join(
+    df_school_meta %>%
+      select(school_id, social_index),
+    by = c("ref_school_primary" = "school_id")
+  ) %>%
+  rename(social_index_primary = social_index)
+
+cells_big <- cells_big %>%
+  left_join(
+    df_school_meta %>%
+      select(school_id, social_index),
+    by = c("ref_school_secondary" = "school_id")
+  ) %>%
+  rename(social_index_secondary = social_index)
+
 
 # Merge back
 df_final <- df_final %>%
-  separate(ergg_1km, into = c("x","y"), sep = "_", convert = TRUE, remove = FALSE) %>%
+  # 1) strip old school-related variables
+  select(
+    -matches("^q_dist"),
+    -matches("^social_index"),
+    -matches("^school_quality")
+  ) %>%
+  
+  # 2) ensure x,y exist
+  separate(
+    ergg_1km,
+    into = c("x","y"),
+    sep = "_",
+    convert = TRUE,
+    remove = FALSE
+  ) %>%
+  
+  # 3) clean merge (no duplication possible)
   left_join(
     cells_big %>%
-      select(x, y,
-             q_dist_primary,
-             q_dist_secondary),
+      select(
+        x, y,
+        q_dist_primary,
+        q_dist_secondary,
+        social_index_primary,
+        social_index_secondary
+      ),
     by = c("x","y")
   )
+
+names(df_final)[grepl("index|quality|q_dist", names(df_final))]
 
 ### ==== 2.3.2 Regressions ====
 
@@ -683,7 +810,9 @@ summary(model_secondary_all)
 
 # Continuous Regression
 model_index <- lm(
-  log_price ~ q_dist_primary * social_index + q_dist_secondary * social_index +
+  log_price ~
+    q_dist_primary * social_index_primary +
+    q_dist_secondary * social_index_secondary +
     log_area + log_plot_area + zimmeranzahl + house_age,
   data = df_final
 )
@@ -693,22 +822,28 @@ summary(model_index)
 # Regression on categorized index 
 
 # Creating the categories
-df_final <- df_final %>% 
+df_final <- df_final %>%
   mutate(
-    school_quality = case_when(
-      social_index %in% 1:2 ~ "good",
-      social_index %in% 3:4 ~ "average",
-      social_index %in% 5:8 ~ "bad",
+    school_quality_primary = case_when(
+      social_index_primary %in% 1:2 ~ "good",
+      social_index_primary %in% 3:4 ~ "average",
+      social_index_primary %in% 5:8 ~ "bad",
+      TRUE ~ NA_character_
+    ),
+    school_quality_secondary = case_when(
+      social_index_secondary %in% 1:2 ~ "good",
+      social_index_secondary %in% 3:4 ~ "average",
+      social_index_secondary %in% 5:8 ~ "bad",
+      TRUE ~ NA_character_
     )
   )
 
 # Model basis
 base_formula_qc <- log_price ~
-  q_dist_primary * school_quality +
-  q_dist_secondary* school_quality +
+  q_dist_primary * school_quality_primary +
+  q_dist_secondary * school_quality_secondary +
   log_area + log_plot_area +
   zimmeranzahl + house_age
-
 
 # Reference school quality good 
 df_final1 <- df_final %>%
@@ -718,7 +853,6 @@ df_final1 <- df_final %>%
 
 m_good_ref <- lm(base_formula_qc, data = df_final1)
 summary(m_good_ref)
-
 
 # Reference school quality average  
 df_final2 <- df_final %>%
