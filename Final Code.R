@@ -944,13 +944,13 @@ ggplot(df_grid, aes(x = lon, y = lat)) +
 
 ### ==== 2.6.4 Bar chart Social Index ====
 
-df_school_meta %>%
+bar_chart_index <- df_school_meta %>%
   ggplot(aes(x = factor(social_index))) +
   geom_bar() +
   labs(x = "Social Index (1–9)", y = "Number of schools")
 
 
-
+bar_chart_index
 
 
 ### ==== 2.6.5 Simple Slopes for Primary & Secondary Schools ====

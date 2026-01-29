@@ -931,7 +931,7 @@ df_grid <- df_final_with_social %>%
 
 head(df_grid)
 
-ggplot(df_grid, aes(x = lon, y = lat)) +
+spa_dis <- ggplot(df_grid, aes(x = lon, y = lat)) +
   geom_point(aes(color = social_index), size = 0.8, alpha = 0.8) +
   scale_color_viridis_c(name = "Social Index") +
   coord_equal() +
@@ -944,7 +944,7 @@ ggplot(df_grid, aes(x = lon, y = lat)) +
 
 ### ==== 2.6.4 Bar chart Social Index ====
 
-df_school_meta %>%
+bar_chart_index <- df_school_meta %>%
   ggplot(aes(x = factor(social_index))) +
   geom_bar() +
   labs(x = "Social Index (1–9)", y = "Number of schools")
