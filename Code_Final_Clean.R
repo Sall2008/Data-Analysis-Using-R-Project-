@@ -597,7 +597,6 @@ Base_Model_Social_Index <- lm(
 )
 summary(Base_Model_Social_Index)
 
-
 # Model with Reference "good"
 df_reg1 <- df_reg %>%
   mutate(school_quality = relevel(school_quality, ref = "good"))
@@ -656,8 +655,6 @@ diag_robust <- bind_rows(
 
 print(diag_robust)
 
-
-
 ## ==== 2.3 Queens Distance ====
 
 ### ==== 2.3.1 Compute Queens contiguity ====
@@ -706,7 +703,6 @@ compute_qdist_school_level <- function(nb, school_sources, n_cells) {
   )
 }
 
-
 # Apply function for primary schools
 qdist_primary <- compute_qdist_school_level(
   nb = nb_queen,
@@ -750,17 +746,13 @@ cells_big <- cells_big %>%
   ) %>%
   rename(social_index_secondary = social_index)
 
-
 # Merge back
 df_final <- df_final %>%
-  # 1) strip old school-related variables
   select(
     -matches("^q_dist"),
     -matches("^social_index"),
     -matches("^school_quality")
   ) %>%
-  
-  # 2) ensure x,y exist
   separate(
     ergg_1km,
     into = c("x","y"),
@@ -768,8 +760,6 @@ df_final <- df_final %>%
     convert = TRUE,
     remove = FALSE
   ) %>%
-  
-  # 3) clean merge (no duplication possible)
   left_join(
     cells_big %>%
       select(
@@ -783,6 +773,8 @@ df_final <- df_final %>%
   )
 
 names(df_final)[grepl("index|quality|q_dist", names(df_final))]
+
+
 
 ### ==== 2.3.2 Regressions ====
 
@@ -840,12 +832,12 @@ df_final <- df_final %>%
 
 # Model basis
 base_formula_qc <- log_price ~
-  q_dist_primary * school_quality_primary +
-  q_dist_secondary * school_quality_secondary +
+  q_dist_primary * school_index_primary +
+  q_dist_secondary * school_index_secondary +
   log_area + log_plot_area +
   zimmeranzahl + house_age
 
-# Reference school quality good 
+# Reference school quality good
 df_final1 <- df_final %>%
   mutate(school_quality = factor(school_quality),
          school_quality = relevel(school_quality, ref = "good")
@@ -870,6 +862,55 @@ df_final3 <- df_final %>%
 
 m_bad_ref <- lm(base_formula_qc, data = df_final3)
 summary(m_bad_ref)
+
+### ==== 2.3.3 Diagnostics ====
+
+# Check if the correct social index is used (primary)
+check_ref_primary <- cells_big %>%
+  select(
+    cell_id,
+    x, y,
+    q_dist_primary,
+    ref_school_primary,
+    social_index_primary
+  ) %>%
+  left_join(
+    df_school_meta %>%
+      select(school_id, social_index),
+    by = c("ref_school_primary" = "school_id")
+  ) %>%
+  rename(
+    social_index_from_meta = social_index
+  )
+
+
+summary(
+  check_ref_primary$social_index_primary ==
+    check_ref_primary$social_index_from_meta
+)
+
+# Check if the correct social index is used (secondary)
+check_ref_secondary <- cells_big %>%
+  select(
+    cell_id,
+    x, y,
+    q_dist_secondary,
+    ref_school_secondary,
+    social_index_secondary
+  ) %>%
+  left_join(
+    df_school_meta %>%
+      select(school_id, social_index),
+    by = c("ref_school_secondary" = "school_id")
+  ) %>%
+  rename(
+    social_index_from_meta = social_index
+  )
+
+summary(
+  check_ref_secondary$social_index_secondary ==
+    check_ref_secondary$social_index_from_meta
+)
 
 
 ## ==== 3. Results ====
