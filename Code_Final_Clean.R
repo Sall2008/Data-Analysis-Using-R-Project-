@@ -597,6 +597,7 @@ Base_Model_Social_Index <- lm(
 )
 summary(Base_Model_Social_Index)
 
+
 # Model with Reference "good"
 df_reg1 <- df_reg %>%
   mutate(school_quality = relevel(school_quality, ref = "good"))
@@ -655,6 +656,8 @@ diag_robust <- bind_rows(
 
 print(diag_robust)
 
+
+
 ## ==== 2.3 Queens Distance ====
 
 ### ==== 2.3.1 Compute Queens contiguity ====
@@ -703,6 +706,7 @@ compute_qdist_school_level <- function(nb, school_sources, n_cells) {
   )
 }
 
+
 # Apply function for primary schools
 qdist_primary <- compute_qdist_school_level(
   nb = nb_queen,
@@ -746,13 +750,17 @@ cells_big <- cells_big %>%
   ) %>%
   rename(social_index_secondary = social_index)
 
+
 # Merge back
 df_final <- df_final %>%
+  # 1) strip old school-related variables
   select(
     -matches("^q_dist"),
     -matches("^social_index"),
     -matches("^school_quality")
   ) %>%
+  
+  # 2) ensure x,y exist
   separate(
     ergg_1km,
     into = c("x","y"),
@@ -760,6 +768,8 @@ df_final <- df_final %>%
     convert = TRUE,
     remove = FALSE
   ) %>%
+  
+  # 3) clean merge (no duplication possible)
   left_join(
     cells_big %>%
       select(
@@ -773,8 +783,6 @@ df_final <- df_final %>%
   )
 
 names(df_final)[grepl("index|quality|q_dist", names(df_final))]
-
-
 
 ### ==== 2.3.2 Regressions ====
 
@@ -832,12 +840,12 @@ df_final <- df_final %>%
 
 # Model basis
 base_formula_qc <- log_price ~
-  q_dist_primary * school_index_primary +
-  q_dist_secondary * school_index_secondary +
+  q_dist_primary * school_quality_primary +
+  q_dist_secondary * school_quality_secondary +
   log_area + log_plot_area +
   zimmeranzahl + house_age
 
-# Reference school quality good
+# Reference school quality good 
 df_final1 <- df_final %>%
   mutate(school_quality = factor(school_quality),
          school_quality = relevel(school_quality, ref = "good")
@@ -862,55 +870,6 @@ df_final3 <- df_final %>%
 
 m_bad_ref <- lm(base_formula_qc, data = df_final3)
 summary(m_bad_ref)
-
-### ==== 2.3.3 Diagnostics ====
-
-# Check if the correct social index is used (primary)
-check_ref_primary <- cells_big %>%
-  select(
-    cell_id,
-    x, y,
-    q_dist_primary,
-    ref_school_primary,
-    social_index_primary
-  ) %>%
-  left_join(
-    df_school_meta %>%
-      select(school_id, social_index),
-    by = c("ref_school_primary" = "school_id")
-  ) %>%
-  rename(
-    social_index_from_meta = social_index
-  )
-
-
-summary(
-  check_ref_primary$social_index_primary ==
-    check_ref_primary$social_index_from_meta
-)
-
-# Check if the correct social index is used (secondary)
-check_ref_secondary <- cells_big %>%
-  select(
-    cell_id,
-    x, y,
-    q_dist_secondary,
-    ref_school_secondary,
-    social_index_secondary
-  ) %>%
-  left_join(
-    df_school_meta %>%
-      select(school_id, social_index),
-    by = c("ref_school_secondary" = "school_id")
-  ) %>%
-  rename(
-    social_index_from_meta = social_index
-  )
-
-summary(
-  check_ref_secondary$social_index_secondary ==
-    check_ref_secondary$social_index_from_meta
-)
 
 
 ## ==== 3. Results ====
@@ -939,27 +898,8 @@ models_cont <- list(
   "Baseline (Secondary)"= m5_base_secondary_cont
 )
 
-tab_ols_cont <- modelsummary(
-  models_cont,
-  vcov      = "HC1",
-  coef_map  = coef_map_cont,
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "gt",
-  title     = "Table 1. OLS regressions (log house price): 
-  Continuous distance specifications"
-) %>%
-  gt::tab_options(
-    table.font.size   = gt::px(14),
-    data_row.padding  = gt::px(4)
-  )
-
-tab_ols_cont
-
 # Quarto version
-tab_ols_cont2 <- modelsummary(
+tab_1_ols_cont <- modelsummary(
   models_cont,
   vcov      = "HC1",
   coef_map  = coef_map_cont,
@@ -971,9 +911,10 @@ tab_ols_cont2 <- modelsummary(
   title     = "Table 1. OLS regressions (log house price): 
   Continuous distance specifications"
 ) %>%
-  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position"))
+  kableExtra::kable_styling(font_size = 7, 
+                            latex_options = c("scale_down", "hold_position"))
 
-tab_ols_cont2
+tab_1_ols_cont
 
 #### ==== 3.1.2 Table 2: Binned specifications only ====
 models_bin <- list(
@@ -983,23 +924,22 @@ models_bin <- list(
   "Baseline (Secondary)" = m9_base_secondary_bin
 )
 
-tab_ols_bin <- modelsummary(
+tab_2_ols_bin <- modelsummary(
   models_bin,
   vcov      = "HC1",
   statistic = NULL,
   stars     = c("*" = .1, "**" = .05, "***" = .01),
   gof_map   = c("nobs", "r.squared", "adj.r.squared"),
   fmt       = 3,
-  output    = "gt",
+  output    = "kableExtra",
   title     = "Table 2. OLS regressions (log house price): 
   Binned distance specifications (ref: 0–3 km)"
 ) %>%
-  gt::tab_options(
-    table.font.size   = gt::px(14),
-    data_row.padding  = gt::px(4)
-  )
+  kableExtra::kable_styling(font_size = 7, latex_options = 
+                              c("scale_down", "hold_position"))
 
-tab_ols_bin
+
+tab_2_ols_bin
 
 #### ==== 3.1.3  Table 3: Baseline continuous vs baseline binned ====
 models_main_compare <- list(
@@ -1028,7 +968,7 @@ coef_map_compare <- c(
   coef_map_bin
 )
 
-tab_main_compare <- modelsummary(
+tab_3_main_compare <- modelsummary(
   models_main_compare,
   vcov      = "HC1",
   coef_map  = coef_map_compare,
@@ -1037,21 +977,20 @@ tab_main_compare <- modelsummary(
   stars     = c("*" = .1, "**" = .05, "***" = .01),
   gof_map   = c("nobs", "r.squared", "adj.r.squared"),
   fmt       = 3,
-  output    = "gt",
+  output    = "kableExtra",
   title     = 
     "Table 3. Main comparison (distance effects only): Continuous vs binned"
 ) %>%
-  gt::tab_options(
-    table.font.size  = gt::px(14),
-    data_row.padding = gt::px(4)
-  ) %>%
-  gt::tab_source_note(
-    gt::md("Binned coefficients are relative to the reference group: 
-           0–3 km. Controls are included in the regression but omitted 
-           from display.")
+  kableExtra::kable_styling(
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position")
+  )%>%
+  kableExtra::footnote(
+    general = "Binned coefficients are relative to the reference group: 0–3 km. Controls are included in the regression but omitted from display.",
+    threeparttable = TRUE
   )
 
-tab_main_compare
+tab_3_main_compare
 
 
 #### ==== 3.1.4  Table 4: Model comparison ====
@@ -1060,7 +999,7 @@ compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
   select(Model, N, R2, Adj_R2, AIC, BIC, RMSE, MAE, R2_oos)
 
-tab_compare_all <- compare_all %>%
+tab_4_compare_all <- compare_all %>%
   gt() %>%
   tab_header(
     title    = "Table 4. Model comparison",
@@ -1087,10 +1026,10 @@ tab_compare_all <- compare_all %>%
     data_row.padding = gt::px(4)
   )
 
-tab_compare_all
+tab_4_compare_all
 
 #### ==== 3.1.5  Table 5: Robustness checks ====
-tab_robust_checks <- diag_robust %>%
+tab_5_robust_checks <- diag_robust %>%
   mutate(
     BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
                         if_else(BP_pvalue < 0.001, "<0.001", 
@@ -1142,7 +1081,7 @@ tab_robust_checks <- diag_robust %>%
     data_row.padding = gt::px(5)
   )
 
-tab_robust_checks
+tab_5_robust_checks
 
 #### ==== 3.1.6 Plot 1: Binned Price Gradients ====
 pal_muted <- c(
@@ -1196,7 +1135,7 @@ y_pad <- 0.05 * diff(y_limits)
 
 y_limits <- c(y_limits[1] - y_pad, y_limits[2] + y_pad)
 
-fig_price_gradient <- ggplot(
+fig_1_price_gradient <- ggplot(
   df_bin_mean,
   aes(x = dist_bin, y = mean_log_ppsqm, 
       color = school_level, group = school_level)
@@ -1224,7 +1163,7 @@ fig_price_gradient <- ggplot(
     panel.grid.major.x = element_blank()
   )
 
-print(fig_price_gradient)
+print(fig_1_price_gradient)
 
 #### ==== 3.1.7 Plot 2: Continuous Distance vs Log Price per sqm ====
 df_continuous <- df_main %>%
@@ -1240,7 +1179,7 @@ df_continuous <- df_main %>%
   ) %>%
   filter(is.finite(log_ppsqm), is.finite(dist_km))
 
-fig_scatter_combined <- ggplot(
+fig_2_scatter_combined <- ggplot(
   df_continuous,
   aes(x = dist_km, y = log_ppsqm, color = school_level)
 ) +
@@ -1257,9 +1196,7 @@ fig_scatter_combined <- ggplot(
   ) +
   theme(legend.position = "top")
 
-print(fig_scatter_combined)
-
-
+print(fig_2_scatter_combined)
 
 ### ==== 3.2 Social Index Graphics and Tables ====
 
@@ -1753,3 +1690,4 @@ ggplot(queen_15, aes(x = x, y = y, fill = factor(q_dist))) +
     plot.title = element_text(hjust = 0.5),
     legend.position = "right"
   )
+
