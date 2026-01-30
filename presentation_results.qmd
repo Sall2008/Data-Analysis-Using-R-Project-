@@ -708,6 +708,16 @@ bar_chart_index
 spa_dis
 ```
 
+## Spatial Distribution of School Social Index in NRW
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "90%"
+plot_social_muni
+```
+
 ## Hedonic Regression Model for Social Index 
 
 ### Model Specification:
