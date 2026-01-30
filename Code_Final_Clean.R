@@ -1898,3 +1898,73 @@ plot_met_qc_2 <- ggplot(queen_15, aes(x = x, y = y, fill = factor(q_dist))) +
     legend.position = "right"
   )
 
+##### ==== 4.1.4.1 Limitation: Adding fragments ====
+
+queen_15_frag <- queen_15 %>%
+  filter(
+    # --- keep the islands themselves ---
+    
+    # 1-cell island (upper right)
+    (x == 13 & y == 13) |
+      
+      # 2-cell island (lower left)
+      (x %in% 3:4 & y == 3) |
+      
+      # 4-cell island (lower right, 2x2)
+      (x %in% 11:12 & y %in% 3:4) |
+      
+      # --- keep everything else EXCEPT their Queen neighbors ---
+      !(
+        # neighbors of 1-cell island
+        (x %in% 12:14 & y %in% 12:14) |
+          
+          # neighbors of 2-cell island
+          (x %in% 2:5 & y %in% 2:4) |
+          
+          # neighbors of 4-cell island
+          (x %in% 10:13 & y %in% 2:5)
+      )
+  )
+
+
+
+plot_lim_qc <- ggplot(queen_15_frag, aes(x = x, y = y, fill = factor(q_dist))) +
+  geom_tile(color = "white", linewidth = 0.15) +
+  
+  # Overlay school locations
+  geom_point(
+    data = schools,
+    aes(x = sx, y = sy),
+    shape = 17,
+    size = 3,
+    color = "black",
+    inherit.aes = FALSE
+  ) +
+  
+  scale_fill_viridis_d(
+    name = "Queen distance",
+    direction = -1
+  ) +
+  
+  coord_equal() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  
+  labs(
+    title = "Queen distance to nearest school on a 15×15 raster grid",
+    x = NULL,
+    y = NULL
+  ) +
+  
+  theme_classic(base_size = 11) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "right"
+  ) + 
+  theme(
+    plot.background  = element_rect(fill = "transparent", color = NA),
+    panel.background = element_rect(fill = "transparent", color = NA)
+  )
+
