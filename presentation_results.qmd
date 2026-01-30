@@ -269,8 +269,6 @@ $
 
 # Results and Main Findings
 
-# Results and Main Findings
-
 ## Distance to Schools and House Prices: Hypothesis
 
 \medskip
@@ -568,6 +566,15 @@ tab_5_robust_checks <- diag_robust %>%
 tab_5_robust_checks
 ```
 
+## Robustness check: Queen contiguity (Distance)
+
+```{r}
+#| echo: false
+#| results: asis
+#| include: true
+table_qc_dist
+```
+
 ## Economic Mechanisms & Interpretations
 
 \footnotesize
@@ -660,7 +667,6 @@ tab_5_robust_checks
 -   **Average Schools**: Social Index 3-4
 -   **Bad Schools**: Social Index 5-8
 
-
 -    **Skewed Distribution**: The Social Index classes are heavily skewed, with many schools falling into classes 1, 2 & 3. We excluded class 9 for our analysis because of too less observations
   
 
@@ -702,6 +708,15 @@ spa_dis
 tab_ols
 ```
 
+## Robustness check: Queen contiguity (Social Index)
+
+```{r}
+#| echo: false
+#| results: asis
+#| include: true
+table_qc_index
+```
+
 ## Social Index: Interpretaition of the Results
 ### Primary School Proximity
 
@@ -718,8 +733,6 @@ tab_ols
 
 # Limitations and Concluding Thoughts
 
-## Limitations
-
 -   **Direct Distance**: The distance is not measured from the houses to
     the nearest school directly but from the school to the center of the
     raster cell.
@@ -729,6 +742,37 @@ tab_ols
 -   **Listing prices**: The prices we have are not transaction but
     listing prices.
 
+## Limitation: Direct Distance
+
+::::: {.columns align=center .onlytextwidth}
+::: {.column width="35%"}
+The distance is not measured from the houses to the nearest school directly but
+from the school to the center of the raster cell.
+:::
+::: {.column width="65%"}
+```{r}
+#| echo: false
+#| include: true
+plot_lim_dist
+```
+:::
+:::::
+
+## Limitation: Fragmented Grid
+
+::::: {.columns align=center .onlytextwidth}
+::: {.column width="35%"}
+We do not have data for every grid cell of NRW but only a fragmented set of grids containing houses from the available datasets.
+:::
+::: {.column width="65%"}
+```{r}
+#| echo: false
+#| include: true
+
+```
+
+:::
+:::::
 
 ```{=html}
 <!-- This part has to stay on the last page before the references to indicate
