@@ -809,67 +809,67 @@ summary(model_secondary_all)
 #### ==== 2.3.2.2 Social Index ====
 
 # Continuous Regression
-model_index <- lm(
-  log_price ~
-    q_dist_primary * social_index_primary +
-    q_dist_secondary * social_index_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_final
-)
-
-summary(model_index)
+# model_index <- lm(
+#   log_price ~
+#     q_dist_primary * social_index_primary +
+#     q_dist_secondary * social_index_secondary +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_final
+# )
+# 
+# summary(model_index)
 
 # Regression on categorized index 
 
 # Creating the categories
-df_final <- df_final %>%
-  mutate(
-    school_quality_primary = case_when(
-      social_index_primary %in% 1:2 ~ "good",
-      social_index_primary %in% 3:4 ~ "average",
-      social_index_primary %in% 5:8 ~ "bad",
-      TRUE ~ NA_character_
-    ),
-    school_quality_secondary = case_when(
-      social_index_secondary %in% 1:2 ~ "good",
-      social_index_secondary %in% 3:4 ~ "average",
-      social_index_secondary %in% 5:8 ~ "bad",
-      TRUE ~ NA_character_
-    )
-  )
+# df_final <- df_final %>%
+#   mutate(
+#     school_quality_primary = case_when(
+#       social_index_primary %in% 1:2 ~ "good",
+#       social_index_primary %in% 3:4 ~ "average",
+#       social_index_primary %in% 5:8 ~ "bad",
+#       TRUE ~ NA_character_
+#     ),
+#     school_quality_secondary = case_when(
+#       social_index_secondary %in% 1:2 ~ "good",
+#       social_index_secondary %in% 3:4 ~ "average",
+#       social_index_secondary %in% 5:8 ~ "bad",
+#       TRUE ~ NA_character_
+#     )
+#   )
 
 # Model basis
-base_formula_qc <- log_price ~
-  q_dist_primary * school_quality_primary +
-  q_dist_secondary * school_quality_secondary +
-  log_area + log_plot_area +
-  zimmeranzahl + house_age
+# base_formula_qc <- log_price ~
+#   q_dist_primary * school_quality_primary +
+#   q_dist_secondary * school_quality_secondary +
+#   log_area + log_plot_area +
+#   zimmeranzahl + house_age
 
 # Reference school quality good 
-df_final1 <- df_final %>%
-  mutate(school_quality = factor(school_quality),
-         school_quality = relevel(school_quality, ref = "good")
-  )
+# df_final1 <- df_final %>%
+#   mutate(school_quality = factor(school_quality),
+#          school_quality = relevel(school_quality, ref = "good")
+#   )
 
-m_good_ref <- lm(base_formula_qc, data = df_final1)
-summary(m_good_ref)
+# m_good_ref <- lm(base_formula_qc, data = df_final1)
+# summary(m_good_ref)
 
 # Reference school quality average  
-df_final2 <- df_final %>%
-  mutate(school_quality = factor(school_quality),
-         school_quality = relevel(school_quality, ref = "average"))
-
-m_avg_ref <- lm(base_formula_qc, data = df_final2)
-summary(m_avg_ref)
+# df_final2 <- df_final %>%
+#   mutate(school_quality = factor(school_quality),
+#          school_quality = relevel(school_quality, ref = "average"))
+# 
+# m_avg_ref <- lm(base_formula_qc, data = df_final2)
+# summary(m_avg_ref)
 
 
 # Reference school quality bad 
-df_final3 <- df_final %>%
-  mutate(school_quality = factor(school_quality),
-         school_quality = relevel(school_quality, ref = "bad"))
-
-m_bad_ref <- lm(base_formula_qc, data = df_final3)
-summary(m_bad_ref)
+# df_final3 <- df_final %>%
+#   mutate(school_quality = factor(school_quality),
+#          school_quality = relevel(school_quality, ref = "bad"))
+# 
+# m_bad_ref <- lm(base_formula_qc, data = df_final3)
+# summary(m_bad_ref)
 
 
 ## ==== 3. Results ====
