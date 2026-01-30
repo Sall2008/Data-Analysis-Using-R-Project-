@@ -22,6 +22,7 @@ library(knitr)
 library(interactions)
 library(emmeans)
 
+
 theme_set(
   theme_minimal(base_size = 18) +
     theme(
@@ -399,6 +400,16 @@ stopifnot(max(school_sources$cell_id) <= nrow(cells_big))
 summary(card(nb_queen))
 n.comp.nb(nb_queen)$nc
 table(spdep::card(nb_queen))
+
+## ==== 1.9 Municipality Data Prep  ====
+
+gemeinden_sf <- st_read(path_VG250)
+
+gemeinden_nrw <- gemeinden_sf %>%
+  filter(substr(AGS, 1, 2) == "05") %>%
+  mutate(
+    gid2019 = substr(as.character(AGS), 2, nchar(AGS))
+  )
 
 # ==== 2. Analysis ====
 
@@ -1222,6 +1233,70 @@ fig_2_scatter_combined <- ggplot(
 
 print(fig_2_scatter_combined)
 
+#### ==== 3.1.8 Plot: Average distance to primary schools by VG ====
+
+df_muni_dist <- df_reg_dist %>%
+  filter(
+    !is.na(gid2019),
+    !is.na(dist_primary_km),
+    !is.na(dist_secondary_km)
+  ) %>%
+  group_by(gid2019) %>%
+  summarise(
+    dist_primary_km   = mean(dist_primary_km, na.rm = TRUE),
+    dist_secondary_km = mean(dist_secondary_km, na.rm = TRUE),
+    n_obs             = n(),
+    .groups = "drop"
+  ) %>%
+  mutate(gid2019 = as.character(gid2019))
+
+map_data_dist <- gemeinden_nrw %>%
+  left_join(df_muni_dist, by = "gid2019")
+
+plot_dist_muni_pri <- ggplot(map_data_dist) +
+  geom_sf(aes(fill = dist_primary_km),
+          color = "white", linewidth = 0.05) +
+  scale_fill_viridis_c(
+    name = "Avg. distance to primary schools (km)",
+    option = "C",
+    direction = -1,
+    na.value = "grey85"
+  ) +
+  labs(
+    title = "Average Distance to Primary Schools by Municipality",
+    subtitle = "Mean direct distance within municipalities"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid  = element_blank(),
+    axis.text   = element_blank(),
+    axis.title  = element_blank()
+  )
+
+#### ==== 3.1.9 Plot: Average distance to secondary schools by VG ====
+
+plot_dist_muni_sec <- ggplot(map_data_dist) +
+  geom_sf(aes(fill = dist_secondary_km),
+          color = "white", linewidth = 0.05) +
+  scale_fill_viridis_c(
+    name = "Avg. distance to secondary schools (km)",
+    option = "C",
+    direction = -1,
+    na.value = "grey85"
+  ) +
+  labs(
+    title = "Average Distance to Secondary Schools by Municipality",
+    subtitle = "Mean direct distance within municipalities"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid  = element_blank(),
+    axis.text   = element_blank(),
+    axis.title  = element_blank()
+  )
+
+
+
 ### ==== 3.2 Social Index Graphics and Tables ====
 
 #### ==== 3.2.1  Table 6: Social Index Regression (5km) ====
@@ -1330,6 +1405,47 @@ interact_plot(m_good_ref,
               plot.points = TRUE,
               main.title = "Simple Slopes Analysis for `dist_secondary_km` by School Quality")
 
+#### ==== 3.2.5 Plot: Average School Social Index by VG ====
+
+df_muni_social <- df_final_with_social %>%
+  filter(
+    !is.na(gid2019),
+    !is.na(social_index)
+  ) %>%
+  group_by(gid2019) %>%
+  summarise(
+    social_index = mean(social_index, na.rm = TRUE),
+    n_obs        = n(),
+    .groups = "drop"
+  ) %>%
+  mutate(gid2019 = as.character(gid2019))
+
+map_data_social <- gemeinden_nrw %>%
+  left_join(df_muni_social, by = "gid2019")
+
+plot_social_muni <- ggplot(map_data_social) +
+  geom_sf(aes(fill = social_index),
+          color = "white", linewidth = 0.05) +
+  scale_fill_viridis_c(
+    name = "Average social index",
+    option = "C",
+    direction = -1,
+    na.value = "grey85"
+  ) +
+  labs(
+    title = "Average Social Index by Municipality",
+    subtitle = "Mean household social index within municipalities"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text  = element_blank(),
+    axis.title = element_blank()
+  ) + 
+  theme(
+    plot.background  = element_rect(fill = "transparent", color = NA),
+    panel.background = element_rect(fill = "transparent", color = NA)
+  )
 
 
 ### ==== 3.3 Queens Distance Graphics and Tables ====
@@ -1466,7 +1582,7 @@ plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secon
 plot_queens_secondary
 
 
-#### ==== 3.3.4 Plot 8: Mean districts plot primary ====
+#### ==== 3.3.4 Plot 8: Mean distance districts plot primary ====
 
 df_muni_qdist <- df_final %>%
   filter(
@@ -1482,14 +1598,6 @@ df_muni_qdist <- df_final %>%
     .groups = "drop"
   )
 
-gemeinden_sf <- st_read(path_VG250)
-
-gemeinden_nrw <- gemeinden_sf %>%
-  filter(substr(AGS, 1, 2) == "05") %>%
-  mutate(
-    gid2019 = substr(as.character(AGS), 2, nchar(AGS))
-  )
-
 df_muni_qdist <- df_muni_qdist %>%
   mutate(gid2019 = as.character(gid2019))
 
@@ -1497,7 +1605,7 @@ map_data <- gemeinden_nrw %>%
   left_join(df_muni_qdist, by = "gid2019")
 
 
-ggplot(map_data) +
+plot_qc_dist_muni_pri <- ggplot(map_data) +
   geom_sf(aes(fill = q_dist_primary), color = "white", linewidth = 0.05) +
   scale_fill_viridis_c(
     name = "Queen distance (Primary)",
@@ -1518,9 +1626,9 @@ ggplot(map_data) +
     axis.title = element_blank()
   )
 
-#### ==== 3.3.5 Plot 9: Mean districts plot secondary ====
+#### ==== 3.3.5 Plot 9: Mean distance districts plot secondary ====
 
-ggplot(map_data) +
+plot_qc_dist_muni_sec <- ggplot(map_data) +
   geom_sf(aes(fill = q_dist_secondary), color = "white", linewidth = 0.05) +
   scale_fill_viridis_c(
     name = "Queen distance (Secondary)",
@@ -1531,7 +1639,7 @@ ggplot(map_data) +
     na.value = "grey85"
   ) +
   labs(
-    title = "Average Queen Distance to Primary Schools by Municipality",
+    title = "Average Queen Distance to Secondary Schools by Municipality",
     subtitle = "Mean raster-based queen distance within municipalities"
   ) +
   theme_minimal() +
@@ -1678,7 +1786,10 @@ plot_lim_dist <- ggplot() +
     plot.title = element_text(size = 11, hjust = 0.5)
   )
 
-#### ==== 4.1.2 Method: Introduction Queens Distance ====
+#### ==== 4.1.2 Limitation: Fragmented Grid ====
+
+
+#### ==== 4.1.3 Method: Introduction Queens Distance ====
 queen_grid_5 <- expand.grid(
   x = 1:5,
   y = 1:5
@@ -1726,7 +1837,7 @@ plot_met_qc_1 <- ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) 
     plot.title = element_text(hjust = 0.5)
   )
 
-#### ==== 4.1.3 Mehtod: Queens distance on a bigger scale ====
+#### ==== 4.1.4 Method: Queens distance on a bigger scale ====
 grid_15 <- expand.grid(
   x = 1:15,
   y = 1:15
