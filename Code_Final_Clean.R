@@ -809,68 +809,92 @@ summary(model_secondary_all)
 #### ==== 2.3.2.2 Social Index ====
 
 # Continuous Regression
-# model_index <- lm(
-#   log_price ~
-#     q_dist_primary * social_index_primary +
-#     q_dist_secondary * social_index_secondary +
-#     log_area + log_plot_area + zimmeranzahl + house_age,
-#   data = df_final
-# )
-# 
-# summary(model_index)
+model_index_qc <- lm(
+  log_price ~
+    q_dist_primary + social_index_primary +
+    q_dist_secondary + social_index_secondary +
+    log_area + log_plot_area + zimmeranzahl + house_age,
+  data = df_final
+)
+
+summary(model_index_qc)
+
+# Continuous Regression with interaction
+model_index_qc_int <- lm(
+  log_price ~
+    q_dist_primary * social_index_primary +
+    q_dist_secondary * social_index_secondary +
+    log_area + log_plot_area + zimmeranzahl + house_age,
+  data = df_final
+)
+
+summary(model_index_qc_int)
 
 # Regression on categorized index 
 
 # Creating the categories
-# df_final <- df_final %>%
-#   mutate(
-#     school_quality_primary = case_when(
-#       social_index_primary %in% 1:2 ~ "good",
-#       social_index_primary %in% 3:4 ~ "average",
-#       social_index_primary %in% 5:8 ~ "bad",
-#       TRUE ~ NA_character_
-#     ),
-#     school_quality_secondary = case_when(
-#       social_index_secondary %in% 1:2 ~ "good",
-#       social_index_secondary %in% 3:4 ~ "average",
-#       social_index_secondary %in% 5:8 ~ "bad",
-#       TRUE ~ NA_character_
-#     )
-#   )
+df_final <- df_final %>%
+  mutate(
+    school_quality_primary = case_when(
+      social_index_primary %in% 1:2 ~ "good",
+      social_index_primary %in% 3:4 ~ "average",
+      social_index_primary %in% 5:8 ~ "bad",
+      TRUE ~ NA_character_
+    ),
+    school_quality_secondary = case_when(
+      social_index_secondary %in% 1:2 ~ "good",
+      social_index_secondary %in% 3:4 ~ "average",
+      social_index_secondary %in% 5:8 ~ "bad",
+      TRUE ~ NA_character_
+    )
+  )
 
 # Model basis
-# base_formula_qc <- log_price ~
-#   q_dist_primary * school_quality_primary +
-#   q_dist_secondary * school_quality_secondary +
-#   log_area + log_plot_area +
-#   zimmeranzahl + house_age
+base_formula_qc <- log_price ~
+  q_dist_primary * school_quality_primary +
+  q_dist_secondary * school_quality_secondary +
+  log_area + log_plot_area +
+  zimmeranzahl + house_age
 
 # Reference school quality good 
-# df_final1 <- df_final %>%
-#   mutate(school_quality = factor(school_quality),
-#          school_quality = relevel(school_quality, ref = "good")
-#   )
+df_final_refgood <- df_final %>%
+  mutate(
+    school_quality_primary = factor(school_quality_primary),
+    school_quality_secondary = factor(school_quality_secondary),
+    
+    school_quality_primary = relevel(school_quality_primary, ref = "good"),
+    school_quality_secondary = relevel(school_quality_secondary, ref = "good")
+  )
 
-# m_good_ref <- lm(base_formula_qc, data = df_final1)
-# summary(m_good_ref)
+m_good_ref <- lm(base_formula_qc, data = df_final_refgood)
+summary(m_good_ref)
 
 # Reference school quality average  
-# df_final2 <- df_final %>%
-#   mutate(school_quality = factor(school_quality),
-#          school_quality = relevel(school_quality, ref = "average"))
-# 
-# m_avg_ref <- lm(base_formula_qc, data = df_final2)
-# summary(m_avg_ref)
+df_final_refavg <- df_final %>%
+  mutate(
+    school_quality_primary   = factor(school_quality_primary),
+    school_quality_secondary = factor(school_quality_secondary),
+    
+    school_quality_primary   = relevel(school_quality_primary, ref = "average"),
+    school_quality_secondary = relevel(school_quality_secondary, ref = "average")
+  )
+
+m_avg_ref <- lm(base_formula_qc, data = df_final_refavg)
+summary(m_avg_ref)
 
 
 # Reference school quality bad 
-# df_final3 <- df_final %>%
-#   mutate(school_quality = factor(school_quality),
-#          school_quality = relevel(school_quality, ref = "bad"))
-# 
-# m_bad_ref <- lm(base_formula_qc, data = df_final3)
-# summary(m_bad_ref)
+df_final_refbad <- df_final %>%
+  mutate(
+    school_quality_primary   = factor(school_quality_primary),
+    school_quality_secondary = factor(school_quality_secondary),
+    
+    school_quality_primary   = relevel(school_quality_primary, ref = "bad"),
+    school_quality_secondary = relevel(school_quality_secondary, ref = "bad")
+  )
 
+m_bad_ref <- lm(base_formula_qc, data = df_final_refbad)
+summary(m_bad_ref)
 
 ## ==== 3. Results ====
 
@@ -1358,11 +1382,18 @@ reg_table_print <- reg_table %>%
   )
 
 # Print table
-reg_table <- reg_table_print %>%
+table_qc_dist <- reg_table_print %>%
   kbl(
-    caption = "Table 1: Regression Results: Queen Distance to Schools",
     booktabs = TRUE,
-    align = "c"
+    escape = FALSE, 
+    align = "c",
+    col.names = c(
+      "Variable",
+      "Coefficient",
+      "Standard Error",
+      "Coefficient",
+      "Standard Error"
+    )
   ) %>%
   add_header_above(
     c(
@@ -1375,20 +1406,23 @@ reg_table <- reg_table_print %>%
   kable_styling(
     full_width = FALSE,
     position = "center",
-    font_size = 16,
-    latex_options = c("hold_position"),
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position"),
     stripe_color = "gray!12"
   ) %>%
-  row_spec(0, bold = TRUE) %>%        # column headers
+  row_spec(0, bold = TRUE) %>%
   row_spec(1, extra_css = "border-bottom: 2px solid #2C3E50;") %>%
+  column_spec(1, bold = TRUE) %>% 
   footnote(
     general = c(
-      "Dependent variable: log house price.",
-      "Control variables included but not shown.",
+      "Dependent variable: log house price, control variables included 
+      but not shown.",
       "*** p<0.01, ** p<0.05, * p<0.1"
     ),
     general_title = "Note:",
-    footnote_as_chunk = TRUE
+    threeparttable = TRUE,
+    escape = FALSE,
+    footnote_as_chunk = FALSE
   )
 
 #### ==== 3.3.2 Plot: 6 Map Primary Schools ====
@@ -1430,6 +1464,7 @@ plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secon
   theme(panel.grid = element_blank())
 
 plot_queens_secondary
+
 
 #### ==== 3.3.4 Plot 8: Mean districts plot primary ====
 
@@ -1488,7 +1523,7 @@ ggplot(map_data) +
 ggplot(map_data) +
   geom_sf(aes(fill = q_dist_secondary), color = "white", linewidth = 0.05) +
   scale_fill_viridis_c(
-    name = "Queen distance (Primary)",
+    name = "Queen distance (Secondary)",
     option = "C",
     direction = -1,
     limits = c(0, 5),
@@ -1504,6 +1539,67 @@ ggplot(map_data) +
     panel.grid = element_blank(),
     axis.text = element_blank(),
     axis.title = element_blank()
+  )
+
+#### ==== 3.3.6 Table 8: Queen distance and Social Index ====
+
+table_qc_index <- bind_rows(
+  tidy(model_index_qc) %>%
+    mutate(model = "No interaction"),
+  tidy(model_index_qc_int) %>%
+    mutate(model = "With interaction")
+) %>%
+  filter(term %in% c(
+    "social_index_primary",
+    "social_index_secondary",
+    "q_dist_primary:social_index_primary",
+    "q_dist_secondary:social_index_secondary"
+  )) %>%
+  mutate(
+    school = ifelse(grepl("primary", term), "Primary", "Secondary"),
+    variable = ifelse(grepl("^social_index_", term),
+                      "Social index",
+                      "Social index × Queen distance"),
+    value = paste0(round(estimate, 3), stars(p.value)),
+    column = paste(model, school)
+  ) %>%
+  select(variable, column, value) %>%
+  pivot_wider(
+    names_from  = column,
+    values_from = value
+  ) %>%
+  arrange(match(
+    variable,
+    c("Social index", "Social index × Queen distance")
+  )) %>%
+  kbl(
+    booktabs = TRUE,
+    align = "lcccc",
+    col.names = c(
+      "Variable",
+      "No interaction (Primary)",
+      "No interaction (Secondary)",
+      "With interaction (Primary)",
+      "With interaction (Secondary)"
+    )
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position   = "center",
+    font_size  = 7,
+    latex_options = c("hold_position", "scale_down"),
+    stripe_color  = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  footnote(
+    general = c(
+      "Dependent variable: log house price.",
+      "Control variables included but not shown.",
+      "*** p<0.01, ** p<0.05, * p<0.1"
+    ),
+    general_title = "Note:",
+    footnote_as_chunk = TRUE
   )
 
 ## ==== 4. Appendix ====
@@ -1522,7 +1618,7 @@ school   <- data.frame(x = 0.88, y = 0.84)
 house    <- data.frame(x = 0.75, y = 0.80)
 
 # Plot cell
-ggplot() +
+plot_lim_dist <- ggplot() +
   geom_rect(
     data = cell,
     aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
@@ -1582,7 +1678,7 @@ ggplot() +
     plot.title = element_text(size = 11, hjust = 0.5)
   )
 
-#### ==== 4.1.2 Limitation: Introduction Queens Distance ====
+#### ==== 4.1.2 Method: Introduction Queens Distance ====
 queen_grid_5 <- expand.grid(
   x = 1:5,
   y = 1:5
@@ -1591,7 +1687,7 @@ queen_grid_5 <- expand.grid(
     q_dist = pmax(abs(x - 3), abs(y - 3))
   )
 
-ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) +
+plot_met_qc_1 <- ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) +
   geom_tile(color = "white", linewidth = 0.5) +
   
   # Mark school cell
@@ -1630,7 +1726,7 @@ ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) +
     plot.title = element_text(hjust = 0.5)
   )
 
-#### ==== 4.1.3 Limitation: Queens distance on a bigger scale ====
+#### ==== 4.1.3 Mehtod: Queens distance on a bigger scale ====
 grid_15 <- expand.grid(
   x = 1:15,
   y = 1:15
@@ -1655,7 +1751,7 @@ queen_15 <- grid_15 %>%
     .groups = "drop"
   )
 
-ggplot(queen_15, aes(x = x, y = y, fill = factor(q_dist))) +
+plot_met_qc_2 <- ggplot(queen_15, aes(x = x, y = y, fill = factor(q_dist))) +
   geom_tile(color = "white", linewidth = 0.15) +
   
   # Overlay school locations
