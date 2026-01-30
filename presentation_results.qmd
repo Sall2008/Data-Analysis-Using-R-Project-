@@ -699,7 +699,7 @@ spa_dis
 #| echo: false
 #| results: asis
 #| include: true
-tab_ols_cont2
+tab_ols
 ```
 
 ## Social Index: Interpretaition of the Results
