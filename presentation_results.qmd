@@ -104,9 +104,8 @@ housing prices:
 
 ## Research Question
 
-We study a setting *without binding school catchment areas* (NRW,
-Germany) and assess whether both *school proximity* and a
-*demographically based school* *social index* are capitalized into
+**Out contribution**: We study a setting **without binding school catchment areas** (NRW, Germany) and assess whether both school proximity and a
+**demographically based school social index** are capitalized into
 housing prices.
 
 ## Research Question
@@ -114,6 +113,23 @@ housing prices.
 **Research Question:** How do school proximity and school social indices
 affect the prices of detached houses, and do these effects differ
 between primary and secondary schools in North Rhine–Westphalia?
+
+\vspace{0.05em}
+
+\fcolorbox{blue!60}{white}{
+\parbox{\linewidth}{
+\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\emph{Expected: Negative coefficients on distance variables}
+}}
+
+\vspace{0.05em}
+
+\fcolorbox{blue!60}{white}{
+\parbox{\linewidth}{
+\textbf{H2: Social index moderates the effect of school proximity on house prices}\\[-2pt]
+\emph{Expected: Better schools leading to stronger price premiums}
+}}
+
 
 # Data & Methodology
 
@@ -132,7 +148,7 @@ between primary and secondary schools in North Rhine–Westphalia?
 
 ::: {.center data-latex=""}
 ```{mermaid}
-%%| fig-height: 2.9
+%%| fig-height: 2.6
 
 stateDiagram-v2
     direction LR
@@ -773,6 +789,31 @@ We do not have data for every grid cell of NRW but only a fragmented set of grid
 
 :::
 :::::
+
+
+## Concluding thoughts: Hypotheses Assessment
+
+\fcolorbox{green!50!black}{green!5}{
+\parbox{\linewidth}{
+\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\emph{Expected: Negative coefficients on distance variables}
+
+\vspace{0.4em}
+{\footnotesize\textcolor{green!60!black}{\textbf{Supported}}}
+}}
+
+
+\vspace{0.8em}
+
+\fcolorbox{red!60!black}{red!4}{
+\parbox{\linewidth}{
+\textbf{H2: Social index moderates the effect of school proximity on house prices}\\[-2pt]
+\emph{Expected: Better schools leading to stronger price premiums}
+
+\vspace{0.4em}
+{\footnotesize\textcolor{red!70!black}{\textbf{Not supported}}}
+}}
+
 
 ```{=html}
 <!-- This part has to stay on the last page before the references to indicate
