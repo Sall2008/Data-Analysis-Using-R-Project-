@@ -1895,8 +1895,11 @@ plot_met_qc_2 <- ggplot(queen_15, aes(x = x, y = y, fill = factor(q_dist))) +
     axis.text = element_blank(),
     axis.ticks = element_blank(),
     plot.title = element_text(hjust = 0.5),
-    legend.position = "right"
-  )
+    legend.position = "right",
+    plot.background  = element_rect(fill = "transparent", color = NA),
+    panel.background = element_rect(fill = "transparent", color = NA)
+  ) 
+
 
 ##### ==== 4.1.4.1 Limitation: Adding fragments ====
 
