@@ -484,65 +484,29 @@ print(p_combined)
 
 ```{r}
 #| echo: false
-#| results: asis
 
-modelsummary(
-  models_cont,
-  vcov      = "HC1",
-  coef_map  = coef_map_cont,
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "kableExtra"
-) |>
-  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position"))
+tab_1_ols_cont
 ```
 
 ## Main Results: Binned Model {.smaller}
 
 ```{r}
 #| echo: false
-#| results: asis
 
-modelsummary(
-  models_bin,
-  vcov      = "HC1",
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "kableExtra"
-) |>
-  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position"))
+tab_2_ols_bin
 ```
 
 ## Compare: Continuous vs Binned {.smaller}
 
 ```{r}
 #| echo: false
-#| results: asis
 
-modelsummary(
-  models_main_compare,
-  vcov      = "HC1",
-  coef_map  = coef_map_compare,
-  coef_omit = "log_area|log_plot_area|zimmeranzahl|house_age|\\(Intercept\\)",
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "kableExtra"
-) |>
-  kableExtra::kable_styling(font_size = 7, latex_options = c("scale_down", "hold_position")) |>
-  kableExtra::footnote(general = "Binned coefficients are relative to the reference group: 0-3 km. Controls included but omitted from display.")
+tab_3_main_compare
 ```
 
 ## Model comparison (main models)
 
 -   Continuous fits slightly better.
-
-### In-sample fit and 5-fold out-of-sample performance
 
 ```{r}
 #| echo: false
@@ -580,8 +544,6 @@ tab_4_compare_all
 ## Robustness checks (main models)
 
 -   Binned is slightly more robust to influential points.
-
-### Diagnostics summary (heteroskedasticity, multicollinearity, influence)
 
 ```{r}
 #| echo: false

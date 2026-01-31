@@ -912,208 +912,373 @@ summary(m_bad_ref)
 ### ==== 3.1 Distance Graphics and Tables ====
 
 #### ==== 3.1.1 Table 1: Continuous specifications only ====
-# Coefficient labels for continuous terms and controls only
-coef_map_cont <- c(
-  "dist_primary_km"        = "Distance to primary school (km)",
-  "I(dist_primary_km^2)"   = "Distance to primary school (km)^2",
-  "dist_secondary_km"      = "Distance to secondary school (km)",
-  "I(dist_secondary_km^2)" = "Distance to secondary school (km)^2",
-  "log_area"               = "Log living area",
-  "log_plot_area"          = "Log plot area",
-  "zimmeranzahl"           = "Rooms",
-  "house_age"              = "House age",
-  "(Intercept)"            = "Intercept"
+
+# Helper: significance stars
+stars <- function(p) {
+  case_when(
+    p < 0.01 ~ "***",
+    p < 0.05 ~ "**",
+    p < 0.1  ~ "*",
+    TRUE     ~ ""
+  )
+}
+
+# Extract coefficients from models
+extract_coef <- function(model, terms) {
+  tidy(model) %>%
+    filter(term %in% terms) %>%
+    mutate(
+      coef = paste0(round(estimate, 3), stars(p.value)),
+      se   = paste0("(", round(std.error, 3), ")")
+    ) %>%
+    select(term, coef, se)
+}
+
+terms_cont <- c("dist_primary_km", "I(dist_primary_km^2)", 
+                "dist_secondary_km", "I(dist_secondary_km^2)")
+
+tab1_data <- bind_rows(
+  extract_coef(m1_naive_both_cont, terms_cont) %>% mutate(model = "Naive"),
+  extract_coef(m2_base_both_cont, terms_cont) %>% mutate(model = "Baseline"),
+  extract_coef(m3_poly_both_cont, terms_cont) %>% mutate(model = "Polynomial"),
+  extract_coef(m4_base_primary_cont, terms_cont) %>% mutate(model = "Primary Only"),
+  extract_coef(m5_base_secondary_cont, terms_cont) %>% mutate(model = "Secondary Only")
 )
 
-models_cont <- list(
-  "Naive (Both)"        = m1_naive_both_cont,
-  "Baseline (Both)"     = m2_base_both_cont,
-  "Polynomial (Both)"   = m3_poly_both_cont,
-  "Baseline (Primary)"  = m4_base_primary_cont,
-  "Baseline (Secondary)"= m5_base_secondary_cont
+tab1_wide <- tab1_data %>%
+  pivot_wider(
+    names_from = model,
+    values_from = c(coef, se),
+    names_glue = "{model}_{.value}"
+  ) %>%
+  mutate(
+    Variable = case_when(
+      term == "dist_primary_km" ~ "Distance to primary (km)",
+      term == "I(dist_primary_km^2)" ~ "Distance to primary (km)²",
+      term == "dist_secondary_km" ~ "Distance to secondary (km)",
+      term == "I(dist_secondary_km^2)" ~ "Distance to secondary (km)²"
+    )
+  ) %>%
+  select(Variable, starts_with("Naive"), starts_with("Baseline"), 
+         starts_with("Polynomial"), starts_with("Primary"), starts_with("Secondary"))
+
+gof_row1 <- tibble(
+  Variable = c("N", "R²", "Adj. R²"),
+  Naive_coef = c(as.character(nobs(m1_naive_both_cont)), 
+                 as.character(round(summary(m1_naive_both_cont)$r.squared, 3)),
+                 as.character(round(summary(m1_naive_both_cont)$adj.r.squared, 3))),
+  Naive_se = c("", "", ""),
+  Baseline_coef = c(as.character(nobs(m2_base_both_cont)),
+                    as.character(round(summary(m2_base_both_cont)$r.squared, 3)),
+                    as.character(round(summary(m2_base_both_cont)$adj.r.squared, 3))),
+  Baseline_se = c("", "", ""),
+  Polynomial_coef = c(as.character(nobs(m3_poly_both_cont)),
+                      as.character(round(summary(m3_poly_both_cont)$r.squared, 3)),
+                      as.character(round(summary(m3_poly_both_cont)$adj.r.squared, 3))),
+  Polynomial_se = c("", "", ""),
+  `Primary Only_coef` = c(as.character(nobs(m4_base_primary_cont)),
+                          as.character(round(summary(m4_base_primary_cont)$r.squared, 3)),
+                          as.character(round(summary(m4_base_primary_cont)$adj.r.squared, 3))),
+  `Primary Only_se` = c("", "", ""),
+  `Secondary Only_coef` = c(as.character(nobs(m5_base_secondary_cont)),
+                            as.character(round(summary(m5_base_secondary_cont)$r.squared, 3)),
+                            as.character(round(summary(m5_base_secondary_cont)$adj.r.squared, 3))),
+  `Secondary Only_se` = c("", "", "")
 )
 
-# Quarto version
-tab_1_ols_cont <- modelsummary(
-  models_cont,
-  vcov      = "HC1",
-  coef_map  = coef_map_cont,
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "kableExtra",
-  title     = "Table 1. OLS regressions (log house price): 
-  Continuous distance specifications"
-) %>%
-  kableExtra::kable_styling(font_size = 7, 
-                            latex_options = c("scale_down", "hold_position"))
+tab1_final <- bind_rows(tab1_wide, gof_row1) %>%
+  mutate(across(everything(), ~ifelse(is.na(.), "", as.character(.))))
+
+n_coef_rows <- nrow(tab1_wide)
+
+tab_1_ols_cont <- tab1_final %>%
+  kbl(
+    booktabs = TRUE,
+    escape = FALSE,
+    align = c("l", rep("c", 10)),
+    col.names = c("Variable", rep(c("Coef.", "SE"), 5)),
+    linesep = ""
+  ) %>%
+  add_header_above(
+    c(" " = 1, "Naive" = 2, "Baseline" = 2, "Polynomial" = 2, 
+      "Primary Only" = 2, "Secondary Only" = 2),
+    bold = TRUE
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position"),
+    stripe_color = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  row_spec(n_coef_rows, 
+           extra_css = "border-bottom: 2px solid black;",
+           extra_latex_after = "\\midrule") %>%
+  column_spec(1, bold = TRUE) %>%
+  footnote(
+    general = c(
+      "Dependent variable: log house price.",
+      "HC1 robust standard errors in parentheses.",
+      "*** p<0.01, ** p<0.05, * p<0.1"
+    ),
+    general_title = "Note:",
+    threeparttable = TRUE,
+    escape = FALSE
+  )
 
 tab_1_ols_cont
 
 #### ==== 3.1.2 Table 2: Binned specifications only ====
-models_bin <- list(
-  "Naive (Both)"         = m6_naive_both_bin,
-  "Baseline (Both)"      = m7_base_both_bin,
-  "Baseline (Primary)"   = m8_base_primary_bin,
-  "Baseline (Secondary)" = m9_base_secondary_bin
+
+terms_bin <- c("dist_primary_bin3-6", "dist_primary_bin6-9", "dist_primary_bin>9",
+               "dist_secondary_bin3-6", "dist_secondary_bin6-9", "dist_secondary_bin>9")
+
+tab2_data <- bind_rows(
+  extract_coef(m6_naive_both_bin, terms_bin) %>% mutate(model = "Naive"),
+  extract_coef(m7_base_both_bin, terms_bin) %>% mutate(model = "Baseline"),
+  extract_coef(m8_base_primary_bin, terms_bin) %>% mutate(model = "Primary Only"),
+  extract_coef(m9_base_secondary_bin, terms_bin) %>% mutate(model = "Secondary Only")
 )
 
-tab_2_ols_bin <- modelsummary(
-  models_bin,
-  vcov      = "HC1",
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "kableExtra",
-  title     = "Table 2. OLS regressions (log house price): 
-  Binned distance specifications (ref: 0–3 km)"
-) %>%
-  kableExtra::kable_styling(font_size = 7, latex_options = 
-                              c("scale_down", "hold_position"))
+tab2_wide <- tab2_data %>%
+  pivot_wider(
+    names_from = model,
+    values_from = c(coef, se),
+    names_glue = "{model}_{.value}"
+  ) %>%
+  mutate(
+    Variable = case_when(
+      term == "dist_primary_bin3-6" ~ "Primary: 3-6 km",
+      term == "dist_primary_bin6-9" ~ "Primary: 6-9 km",
+      term == "dist_primary_bin>9" ~ "Primary: >9 km",
+      term == "dist_secondary_bin3-6" ~ "Secondary: 3-6 km",
+      term == "dist_secondary_bin6-9" ~ "Secondary: 6-9 km",
+      term == "dist_secondary_bin>9" ~ "Secondary: >9 km"
+    )
+  ) %>%
+  select(Variable, starts_with("Naive"), starts_with("Baseline"), 
+         starts_with("Primary"), starts_with("Secondary"))
 
+gof_row2 <- tibble(
+  Variable = c("N", "R²", "Adj. R²"),
+  Naive_coef = c(as.character(nobs(m6_naive_both_bin)),
+                 as.character(round(summary(m6_naive_both_bin)$r.squared, 3)),
+                 as.character(round(summary(m6_naive_both_bin)$adj.r.squared, 3))),
+  Naive_se = c("", "", ""),
+  Baseline_coef = c(as.character(nobs(m7_base_both_bin)),
+                    as.character(round(summary(m7_base_both_bin)$r.squared, 3)),
+                    as.character(round(summary(m7_base_both_bin)$adj.r.squared, 3))),
+  Baseline_se = c("", "", ""),
+  `Primary Only_coef` = c(as.character(nobs(m8_base_primary_bin)),
+                          as.character(round(summary(m8_base_primary_bin)$r.squared, 3)),
+                          as.character(round(summary(m8_base_primary_bin)$adj.r.squared, 3))),
+  `Primary Only_se` = c("", "", ""),
+  `Secondary Only_coef` = c(as.character(nobs(m9_base_secondary_bin)),
+                            as.character(round(summary(m9_base_secondary_bin)$r.squared, 3)),
+                            as.character(round(summary(m9_base_secondary_bin)$adj.r.squared, 3))),
+  `Secondary Only_se` = c("", "", "")
+)
+
+tab2_final <- bind_rows(tab2_wide, gof_row2) %>%
+  mutate(across(everything(), ~ifelse(is.na(.), "", as.character(.))))
+
+n_coef_rows2 <- nrow(tab2_wide)
+
+tab_2_ols_bin <- tab2_final %>%
+  kbl(
+    booktabs = TRUE,
+    escape = FALSE,
+    align = c("l", rep("c", 8)),
+    col.names = c("Variable", rep(c("Coef.", "SE"), 4)),
+    na = "",
+    linesep = ""
+  ) %>%
+  add_header_above(
+    c(" " = 1, "Naive" = 2, "Baseline" = 2, "Primary Only" = 2, "Secondary Only" = 2),
+    bold = TRUE
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position"),
+    stripe_color = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  row_spec(n_coef_rows2, 
+           extra_css = "border-bottom: 2px solid black;",
+           extra_latex_after = "\\midrule") %>%
+  column_spec(1, bold = TRUE) %>%
+  footnote(
+    general = c(
+      "Dependent variable: log house price. Reference: 0-3 km.",
+      "HC1 robust standard errors in parentheses.",
+      "*** p<0.01, ** p<0.05, * p<0.1"
+    ),
+    general_title = "Note:",
+    threeparttable = TRUE,
+    escape = FALSE
+  )
 
 tab_2_ols_bin
 
-#### ==== 3.1.3  Table 3: Baseline continuous vs baseline binned ====
-models_main_compare <- list(
-  "Baseline (Continuous)" = m2_base_both_cont,
-  "Baseline (Binned)"     = m7_base_both_bin
+#### ==== 3.1.3 Table 3: Baseline continuous vs baseline binned ====
+
+terms_compare <- c("dist_primary_km", "dist_secondary_km",
+                   "dist_primary_bin3-6", "dist_primary_bin6-9", "dist_primary_bin>9",
+                   "dist_secondary_bin3-6", "dist_secondary_bin6-9", "dist_secondary_bin>9")
+
+tab3_data <- bind_rows(
+  extract_coef(m2_base_both_cont, terms_compare) %>% mutate(model = "Continuous"),
+  extract_coef(m7_base_both_bin, terms_compare) %>% mutate(model = "Binned")
 )
 
-coef_map_bin <- c(
-  # Primary bins (ref = 0-3)
-  "dist_primary_bin3-6" = "Primary: 3–6 km (ref: 0–3)",
-  "dist_primary_bin6-9" = "Primary: 6–9 km (ref: 0–3)",
-  "dist_primary_bin>9"  = "Primary: >9 km (ref: 0–3)",
-  
-  # Secondary bins (ref = 0-3)
-  "dist_secondary_bin3-6" = "Secondary: 3–6 km (ref: 0–3)",
-  "dist_secondary_bin6-9" = "Secondary: 6–9 km (ref: 0–3)",
-  "dist_secondary_bin>9"  = "Secondary: >9 km (ref: 0–3)"
+tab3_wide <- tab3_data %>%
+  pivot_wider(
+    names_from = model,
+    values_from = c(coef, se),
+    names_glue = "{model}_{.value}"
+  ) %>%
+  mutate(
+    Variable = case_when(
+      term == "dist_primary_km" ~ "Distance to primary (km)",
+      term == "dist_secondary_km" ~ "Distance to secondary (km)",
+      term == "dist_primary_bin3-6" ~ "Primary: 3-6 km (ref: 0-3)",
+      term == "dist_primary_bin6-9" ~ "Primary: 6-9 km (ref: 0-3)",
+      term == "dist_primary_bin>9" ~ "Primary: >9 km (ref: 0-3)",
+      term == "dist_secondary_bin3-6" ~ "Secondary: 3-6 km (ref: 0-3)",
+      term == "dist_secondary_bin6-9" ~ "Secondary: 6-9 km (ref: 0-3)",
+      term == "dist_secondary_bin>9" ~ "Secondary: >9 km (ref: 0-3)"
+    )
+  ) %>%
+  select(Variable, Continuous_coef, Continuous_se, Binned_coef, Binned_se)
+
+gof_row3 <- tibble(
+  Variable = c("N", "R²", "Adj. R²"),
+  Continuous_coef = c(as.character(nobs(m2_base_both_cont)),
+                      as.character(round(summary(m2_base_both_cont)$r.squared, 3)),
+                      as.character(round(summary(m2_base_both_cont)$adj.r.squared, 3))),
+  Continuous_se = c("", "", ""),
+  Binned_coef = c(as.character(nobs(m7_base_both_bin)),
+                  as.character(round(summary(m7_base_both_bin)$r.squared, 3)),
+                  as.character(round(summary(m7_base_both_bin)$adj.r.squared, 3))),
+  Binned_se = c("", "", "")
 )
 
-coef_map_compare <- c(
-  # continuous terms
-  "dist_primary_km"   = "Distance to primary school (km)",
-  "dist_secondary_km" = "Distance to secondary school (km)",
-  
-  # binned dummies
-  coef_map_bin
-)
+tab3_final <- bind_rows(tab3_wide, gof_row3) %>%
+  mutate(across(everything(), ~ifelse(is.na(.), "", as.character(.))))
 
-tab_3_main_compare <- modelsummary(
-  models_main_compare,
-  vcov      = "HC1",
-  coef_map  = coef_map_compare,
-  coef_omit = "log_area|log_plot_area|zimmeranzahl|house_age|\\(Intercept\\)",
-  statistic = NULL,
-  stars     = c("*" = .1, "**" = .05, "***" = .01),
-  gof_map   = c("nobs", "r.squared", "adj.r.squared"),
-  fmt       = 3,
-  output    = "kableExtra",
-  title     = 
-    "Table 3. Main comparison (distance effects only): Continuous vs binned"
-) %>%
-  kableExtra::kable_styling(
+n_coef_rows3 <- nrow(tab3_wide)
+
+tab_3_main_compare <- tab3_final %>%
+  kbl(
+    booktabs = TRUE,
+    escape = FALSE,
+    align = c("l", rep("c", 4)),
+    col.names = c("Variable", "Coef.", "SE", "Coef.", "SE"),
+    na = "",
+    linesep = ""
+  ) %>%
+  add_header_above(
+    c(" " = 1, "Continuous" = 2, "Binned" = 2),
+    bold = TRUE
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
     font_size = 7,
-    latex_options = c("scale_down", "hold_position")
-  )%>%
-  kableExtra::footnote(
-    general = "Binned coefficients are relative to the reference group: 0–3 km. Controls are included in the regression but omitted from display.",
-    threeparttable = TRUE
-  )
+    latex_options = c("scale_down", "hold_position"),
+    stripe_color = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  row_spec(n_coef_rows3, 
+           extra_css = "border-bottom: 2px solid black;",
+           extra_latex_after = "\\midrule") %>%
+  column_spec(1, bold = TRUE)
 
 tab_3_main_compare
 
+#### ==== 3.1.4 Table 4: Model comparison ====
 
-#### ==== 3.1.4  Table 4: Model comparison ====
-# Combined comparison table
 compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
   select(Model, N, R2, Adj_R2, AIC, BIC, RMSE, MAE, R2_oos)
 
 tab_4_compare_all <- compare_all %>%
-  gt() %>%
-  tab_header(
-    title    = "Table 4. Model comparison",
-    subtitle = "In-sample fit and 5-fold out-of-sample performance"
-  )%>%
-  tab_source_note(
-    md("**In-sample:** higher R²/Adj. R² is better; lower AIC/BIC is better.  
-       **Out-of-sample (5-fold CV):** lower RMSE/MAE is better; 
-       higher R² is better.")
-  )%>%
-  cols_label(
-    Model  = "Model",
-    N      = "N",
-    R2     = "R²",
-    Adj_R2 = "Adj. R²",
-    AIC    = "AIC",
-    BIC    = "BIC",
-    RMSE   = "CV RMSE",
-    MAE    = "CV MAE",
-    R2_oos = "CV R²"
+  kbl(
+    booktabs = TRUE,
+    escape = FALSE,
+    align = c("l", rep("c", 8)),
+    col.names = c("Model", "N", "R²", "Adj. R²", "AIC", "BIC", 
+                  "CV RMSE", "CV MAE", "CV R²")
   ) %>%
-  tab_options(
-    table.font.size  = gt::px(14),
-    data_row.padding = gt::px(4)
+  add_header_above(
+    c(" " = 1, "In-Sample Fit" = 5, "Out-of-Sample (5-fold CV)" = 3),
+    bold = TRUE
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position"),
+    stripe_color = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  footnote(
+    general = c(
+      "In-sample: higher R²/Adj. R² is better; lower AIC/BIC is better.",
+      "Out-of-sample: lower RMSE/MAE is better; higher R² is better."
+    ),
+    general_title = "Note:",
+    threeparttable = TRUE,
+    escape = FALSE
   )
 
 tab_4_compare_all
 
-#### ==== 3.1.5  Table 5: Robustness checks ====
-tab_5_robust_checks <- diag_robust %>%
+#### ==== 3.1.5 Table 5: Robustness checks ====
+
+tab5_data <- diag_robust %>%
   mutate(
-    BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
+    BP_pvalue = if_else(is.na(BP_pvalue), "-",
                         if_else(BP_pvalue < 0.001, "<0.001", 
                                 sprintf("%.3f", BP_pvalue))),
-    Max_VIF   = if_else(is.na(Max_VIF), NA_character_, 
-                        sprintf("%.2f", Max_VIF)),
-    Cook_max  = if_else(is.na(Cook_max), NA_character_, 
-                        sprintf("%.3f", Cook_max)),
-    Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
+    Max_VIF = if_else(is.na(Max_VIF), "-", sprintf("%.2f", Max_VIF)),
+    Cook_max = if_else(is.na(Cook_max), "-", sprintf("%.3f", Cook_max)),
+    Cook_n_gt_4n = as.character(Cook_n_gt_4n)
+  )
+
+tab_5_robust_checks <- tab5_data %>%
+  kbl(
+    booktabs = TRUE,
+    escape = FALSE,
+    align = c("l", rep("c", 4)),
+    col.names = c("Model", "BP p-value", "Max VIF", "Influential (D>4/n)", "Max Cook's D")
   ) %>%
-  gt() %>%
-  tab_header(
-    title    = "Table 5. Robustness checks (main models)",
-    subtitle = "Diagnostics summary 
-    (heteroskedasticity, multicollinearity, influence)"
+  add_header_above(
+    c(" " = 1, "Heteroskedasticity" = 1, "Multicollinearity" = 1, "Influence" = 2),
+    bold = TRUE
   ) %>%
-  tab_source_note(
-    md("Inference uses **HC1 robust SE**.  
-       Lower BP p-values indicate heteroskedasticity; 
-       higher VIF indicates collinearity; 
-       larger Cook's D indicates influential points.")
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position"),
+    stripe_color = "gray!12"
   ) %>%
-  cols_label(
-    Model        = "Model",
-    BP_pvalue    = "BP p-value",
-    Max_VIF      = "Max VIF",
-    Cook_n_gt_4n = "Influential (D>4/n)",
-    Cook_max     = "Max Cook's D"
-  ) %>%
-  cols_align(
-    align = "left",
-    columns = Model
-  ) %>%
-  cols_align(
-    align = "center",
-    columns = c(BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max)
-  ) %>%
-  tab_style(
-    style = cell_text(weight = "bold"),
-    locations = cells_body(columns = Model)
-  ) %>%
-  tab_style(
-    style = cell_text(color = "grey35"),
-    locations = cells_body(columns = 
-                             c(BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max))
-  ) %>%
-  tab_options(
-    table.font.size  = gt::px(14),
-    data_row.padding = gt::px(5)
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  footnote(
+    general = c(
+      "Inference uses HC1 robust SE.",
+      "Lower BP p-values indicate heteroskedasticity.",
+      "Higher VIF indicates collinearity; larger Cook's D indicates influential points."
+    ),
+    general_title = "Note:",
+    threeparttable = TRUE,
+    escape = FALSE
   )
 
 tab_5_robust_checks
@@ -1970,4 +2135,3 @@ plot_lim_qc <- ggplot(queen_15_frag, aes(x = x, y = y, fill = factor(q_dist))) +
     plot.background  = element_rect(fill = "transparent", color = NA),
     panel.background = element_rect(fill = "transparent", color = NA)
   )
-
