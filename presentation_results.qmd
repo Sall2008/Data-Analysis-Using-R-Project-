@@ -142,7 +142,7 @@ between primary and secondary schools in North Rhine–Westphalia?
     [@MSB_NRW_Schulsozialindex].
 -   **Geodata**: Geodata for Germany's administrative areas used to create
     graphics of NRW. Taken from Germany's Federal Agency for Cartography and  
-    Geodesy: BKG [@BKG_2025].
+    Geodesy [@BKG_2025].
 
 \footnotetext{Housing and school data both refer to the year 2022.}
 
@@ -284,6 +284,43 @@ $
 -   $\text{Index}_i$ is the school social index \vspace{0.1em}
 -   $mu_{\ell(i)}$ are municipality fixed effects \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
+
+## Empirical Framework: Queen contiguity
+
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
+\begin{aligned}
+\text{Dist}_{ij}^{Q}
+&=
+\max \Bigl(
+\lvert x_i - x_j \rvert,\;
+\lvert y_i - y_j \rvert
+\Bigr)
+\end{aligned}
+$
+}
+\end{center}
+
+\vspace{1.5em}
+
+::::: columns
+::: {.column width="50%"}
+-   Results for distance and the social index are re-estimated using Queen      
+    (Chebyshev) distance instead of the distance from the dataset to check 
+    robustness of our results.
+:::
+
+::: {.column width="50%"}
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "90%"
+plot_met_qc_2
+```
+:::
+:::::
 
 # Results and Main Findings
 
