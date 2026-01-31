@@ -133,16 +133,18 @@ between primary and secondary schools in North Rhine–Westphalia?
 
 # Data & Methodology
 
-## Data
+## Data used
 
--   **Housing Data**: Cross-section dataset for houses for sale
-    published by the Research Data Center Ruhr (FDZ Ruhr)
-    [@RWI_ImmobilienScout24_2023].
+-   **Housing Data**: Cross-section real-estate datasets for Germany published 
+    by the Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
 -   **School Data**: School social index dataset from North
     Rhine-Westphalias Ministry of Schools and Education
     [@MSB_NRW_Schulsozialindex].
+-   **Geodata**: Geodata for Germany's administrative areas used to create
+    graphics of NRW. Taken from Germany's Federal Agency for Cartography and  
+    Geodesy: BKG [@BKG_2025].
 
-\footnotetext{Data used from both datasets refer to the year 2022.}
+\footnotetext{Housing and school data both refer to the year 2022.}
 
 ## Pre-Processing of Data
 
