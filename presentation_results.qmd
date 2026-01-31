@@ -304,11 +304,10 @@ $
 
 \vspace{1.5em}
 
-::::: columns
+::::: {.columns align=center .onlytextwidth}
 ::: {.column width="50%"}
 -   Results for distance and the social index are re-estimated using Queen      
-    (Chebyshev) distance instead of the distance from the dataset to check 
-    robustness of our results.
+    (Chebyshev) distance to check robustness of our results.
 :::
 
 ::: {.column width="50%"}
@@ -316,7 +315,7 @@ $
 #| fig.width: 6
 #| fig.height: 3.4
 #| fig.align: center
-#| out.width: "90%"
+#| out.width: "100%"
 plot_met_qc_2
 ```
 :::
@@ -731,7 +730,7 @@ table_qc_dist
 #| fig.width: 6
 #| fig.height: 3.4
 #| fig.align: center
-#| out.width: "90%"
+#| out.width: "65%"
 bar_chart_index
 ```
 
@@ -739,32 +738,64 @@ bar_chart_index
 
 ## Spatial Distribution of School Social Index in NRW
 
+::::: columns
+::: {.column width="50%"}
+
 ```{r}
 #| fig.width: 6
 #| fig.height: 3.4
 #| fig.align: center
-#| out.width: "90%"
+#| out.width: "100%"
 spa_dis
 ```
+:::
 
-## Spatial Distribution of School Social Index in NRW
-
+::: {.column width="50%"}
 ```{r}
 #| fig.width: 6
 #| fig.height: 3.4
 #| fig.align: center
-#| out.width: "90%"
+#| out.width: "100%"
 plot_social_muni
 ```
+:::
+:::::
 
 ## Hedonic Regression Model for Social Index 
 
-### Model Specification:
+\begin{center}
+\colorbox{blue!10}{
+$\displaystyle
+\begin{aligned}
+\log(\text{price}_i)
+&=
+\beta_0
++ \beta_1\, \text{dist\_primary}_{i}
++ \beta_2\, \text{dist\_secondary}_{i} \\
+&\quad
++ \beta_3\, \text{school\_quality}_{i}
++ \beta_4\, \bigl(\text{dist\_primary}_{i}
+\times \text{school\_quality}_{i}\bigr) \\
+&\quad
++ \beta_5\, \bigl(\text{dist\_secondary}_{i}
+\times \text{school\_quality}_{i}\bigr)
++ X_i' \gamma
++ \varepsilon_i
+\end{aligned}
+$
+}
+\end{center}
 
+**Where:**
+
+-   $\log(P_i)$ denotes the natural logarithm of the housing price of house $i$ \vspace{0.1em}
+-   $\text{dist}_{i}^{\text{primary}}$ measures distance to the nearest primary school (km) \vspace{0.1em}
+-   $\text{dist}_{i}^{\text{secondary}}$ measures distance to the nearest secondary school (km) \vspace{0.1em}
+-   $\text{school\_quality}_i$ is a categorical indicator of school quality \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics \vspace{0.1em}
+-   $\varepsilon_i$ captures unobserved factors
 
 ## Social Index: Regression Results
-
-
 
 ```{r}
 #| echo: false
@@ -796,49 +827,7 @@ table_qc_index
 -   The effect is *stronger for average schools* (Estimate = 0.0307, p = 0.0096), meaning proximity to secondary schools is more impactful in areas with average school quality.
 -   *No significant effect* for bad schools (p = 0.7414).
 
-# Limitations and Concluding Thoughts
-
--   **Direct Distance**: The distance is not measured from the houses to
-    the nearest school directly but from the school to the center of the
-    raster cell.
--   **Fragmented Grid**: We do not have data for every grid cell of NRW
-    but only a fragmented set of grids containing houses from the
-    available datasets.
--   **Listing prices**: The prices we have are not transaction but
-    listing prices.
-
-## Limitation: Direct Distance
-
-::::: {.columns align=center .onlytextwidth}
-::: {.column width="35%"}
-The distance is not measured from the houses to the nearest school directly but
-from the school to the center of the raster cell.
-:::
-::: {.column width="65%"}
-```{r}
-#| echo: false
-#| include: true
-plot_lim_dist
-```
-:::
-:::::
-
-## Limitation: Fragmented Grid
-
-::::: {.columns align=center .onlytextwidth}
-::: {.column width="35%"}
-We do not have data for every grid cell of NRW but only a fragmented set of grids containing houses from the available datasets.
-:::
-::: {.column width="65%"}
-```{r}
-#| echo: false
-#| include: true
-plot_lim_qc
-```
-
-:::
-:::::
-
+# Concluding Thoughts and Limitations
 
 ## Concluding thoughts: Hypotheses Assessment
 
@@ -862,6 +851,47 @@ plot_lim_qc
 \vspace{0.4em}
 {\footnotesize\textcolor{red!70!black}{\textbf{Not supported}}}
 }}
+
+## Limitation: Direct Distance
+
+::::: {.columns align=center .onlytextwidth}
+::: {.column width="35%"}
+The distance is not measured from the houses to the nearest school directly but
+from the school to the center of the raster cell.
+:::
+::: {.column width="65%"}
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "90%"
+plot_lim_dist
+```
+:::
+:::::
+
+## Limitation: Fragmented Grid
+
+::::: {.columns align=center .onlytextwidth}
+::: {.column width="35%"}
+We do not have data for every grid cell of NRW but only a fragmented set of grids containing houses from the available datasets.
+:::
+::: {.column width="65%"}
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "90%"
+plot_lim_qc
+```
+
+:::
+:::::
+
+## Limitations: Other
+
+-   **Listing prices**: The prices we have are not transaction but
+    listing prices.
 
 
 ```{=html}
