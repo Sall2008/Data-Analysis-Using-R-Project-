@@ -146,7 +146,7 @@ between primary and secondary schools in North Rhine–Westphalia?
 
 \footnotetext{Housing and school data both refer to the year 2022.}
 
-## Pre-Processing of Data
+## Pre-Processing of Data: Main Analysis
 
 ::: {.center data-latex=""}
 ```{mermaid}
@@ -170,7 +170,7 @@ stateDiagram-v2
             Dedu: Eliminating duplicates 
             Dedu --> Muta
             Muta: Renaming columns
-            Muta --> [*]
+            Muta --> Merge
         }
         
         School_Dist: School Social Index and Distance
@@ -181,20 +181,100 @@ stateDiagram-v2
                 [*] --> Types
                 Types: Grouping school types
                 Types --> Remo
-                Remo: Removing invalid values
+                Remo: Removing NA values
                 Remo --> Muta2
                 Muta2: Renaming columns
-                Muta2 --> [*]
+                Muta2 --> MergeSI
             }
 
 
             Dist: Distance to Schools
             state Dist {
-                [*] --> [*]
+                [*] --> MergeSI
             }
+            
+            MergeSI: Merge Social Index and Distance
+            MergeSI --> Merge
+        }
+        
+        Geodata: 
+        state Geodata {
+                [*] --> NRWarea
+                NRWarea: Filter for NRW administrative areas
+                NRWarea --> RemP
+                RemP: Clean identifier to match with gid2019
+                RemP --> Merge
+        
+        }
+        
+        Merge: Merge all datasets
+
+    }
+
+```
+:::
+
+## Pre-Processing of Data: Queen contiguity
+
+::: {.center data-latex=""}
+```{mermaid}
+%%| fig-height: 2.6
+
+stateDiagram-v2
+    direction LR
+
+    Final: Final Dataset for Queen Contiguiuty
+    state Final {
+        
+        FinalDataset: Final Dataset Analysis
+        state FinalDataset {
+            [*] --> Join
+        }
+        
+         AllHouses: All Houses Dataset
+         state AllHouses {
+          
+            HousesS: Houses for Sale
+              state HousesS {
+                  [*] --> NRWHs
+                  NRWHs: Filtering for only NRW 
+                  NRWHs --> CellsHs
+                  CellsHs: Taking only the ergg_1km cells
+                  CellsHs --> SeparHs
+                  SeparHs: Separating them to x and y coordinates
+                  SeparHs --> Merge
+                  
+              }
+              
+              FlatsS: Flats for Sale
+              state FlatsS {
+                  [*] --> NRWFs
+                  NRWFs: Filtering for only NRW 
+                  NRWFs --> CellsFs
+                  CellsFs: Taking only the ergg_1km cells
+                  CellsFs --> SeparFs
+                  SeparFs: Separating them to x and y coordinates
+                  SeparFs --> Merge
+              }
+              
+              FlatsR: Flats for Rent
+              state FlatsR {
+                  [*] --> NRWFr
+                  NRWFr: Filtering for only NRW 
+                  NRWFr --> CellsFr
+                  CellsFr: Taking only the ergg_1km cells
+                  CellsFr --> SeparFr
+                  SeparFr: Separating them to x and y coordinates
+                  SeparFr --> Merge
+              }
+            
+              Merge: Merge all coordinate cells and only keep uniques
+              Merge --> Join
 
         }
-
+        
+        Join: Join with Final Dataset
+        
     }
 
 ```
