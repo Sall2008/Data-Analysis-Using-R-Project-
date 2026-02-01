@@ -1,5 +1,7 @@
 # ==== 1. Data Preparation ====
+
 ## ==== 1.1 Packages & Global Theme ====
+
 library(tidyverse)
 library(readxl)
 library(fs)
@@ -22,7 +24,6 @@ library(knitr)
 library(interactions)
 library(emmeans)
 
-
 theme_set(
   theme_minimal(base_size = 18) +
     theme(
@@ -35,6 +36,7 @@ theme_set(
 )
 
 ## ==== 1.2 Define Paths & Constants ====
+
 path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_school  <- "course_data/school_data/2022_social_index.csv"
 path_dist    <- "course_data/school_data/distance_to_schools.csv"
@@ -51,6 +53,7 @@ breaks_km <- c(0, 3, 6, 9, Inf)
 labels_km <- c("0-3", "3-6", "6-9", ">9")
 
 ## ==== 1.3 Load & Clean Housing Data ====
+
 raw_housing <- read_delim(
   path_housing,
   delim = ",",
@@ -101,6 +104,7 @@ df_housing <- raw_housing %>%
   drop_na(kaufpreis, wohnflaeche, ergg_1km)
 
 ## ==== 1.4 Load Distance Data & Nearest-School Helper ====
+
 raw_dist <- read_csv(path_dist, show_col_types = FALSE) %>%
   clean_names() %>%
   mutate(
@@ -134,6 +138,7 @@ df_dist_any       <- get_nearest_school(raw_dist, type_all,
                                         "dist_any_km")
 
 ## ==== 1.5 Merge Housing + Distances + Derived Variables ====
+
 df_main <- df_housing %>%
   left_join(df_dist_primary,   by = "ergg_1km") %>%
   left_join(df_dist_secondary, by = "ergg_1km") %>%
@@ -190,7 +195,6 @@ df_school_meta <- read_delim(path_school,
       TRUE ~ "unknown"
     )
   )
-
 
 # 1.6.1 Aggregate housing data to unique `ergg_1km` level
 df_housing_clean_unique <- df_housing %>%
@@ -358,7 +362,6 @@ stopifnot(!anyNA(coords))   # safety check
 nb_queen <- dnearneigh(coords, d1 = 0, d2 = sqrt(2), longlat = FALSE)
 
 # Drop cells with no neighbors
-
 cells_big <- cells_big %>%
   mutate(n_neighbors = spdep::card(nb_queen))
 
@@ -379,11 +382,11 @@ stopifnot(
   length(cells_big$has_secondary) == nrow(cells_big)
 )
 
-# FINAL cell IDs 
+# Cell IDs 
 cells_big <- cells_big %>%
   mutate(cell_id = row_number())
 
-# FINAL school sources
+# School sources
 school_sources <- cells_big %>%
   inner_join(
     school_cells_all,
@@ -443,6 +446,7 @@ df_reg <- df_reg %>%
 ## ==== 2.1 Distance ====
 
 ### ==== 2.1.1 Continuous distance specifications ====
+
 m1_naive_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km, 
                          data = df_reg_dist)
 
@@ -472,6 +476,7 @@ m5_base_secondary_cont <- lm(
 )
 
 ### ==== 2.1.2 Binned distance specifications ====
+
 m6_naive_both_bin <- lm(log_price ~ dist_primary_bin + dist_secondary_bin, 
                         data = df_reg_dist)
 
@@ -494,6 +499,7 @@ m9_base_secondary_bin <- lm(
 )
 
 ###  ==== 2.1.3 Diagnostics Distance ==== 
+
 get_model_diagnostics <- function(model) {
   n <- nobs(model)
   
@@ -529,6 +535,7 @@ diag_robust <- bind_rows(
   )
 
 ### ==== 2.1.4 Model comparison Distance ====
+
 fit_main <- tibble(
   Model   = c("Baseline (Continuous)", "Baseline (Binned)"),
   N       = c(nobs(m2_base_both_cont), nobs(m7_base_both_bin)),
@@ -632,6 +639,7 @@ summary(m_bad_ref)
 
 
 ###  ==== 2.2.2 Diagnostics Social Index ====  
+
 get_model_diagnostics <- function(model) {
   n <- nobs(model)  # Anzahl der Beobachtungen
   
@@ -716,7 +724,6 @@ compute_qdist_school_level <- function(nb, school_sources, n_cells) {
     ref_school_id = ref_sid
   )
 }
-
 
 # Apply function for primary schools
 qdist_primary <- compute_qdist_school_level(
@@ -911,7 +918,7 @@ summary(m_bad_ref)
 
 ### ==== 3.1 Distance Graphics and Tables ====
 
-#### ==== 3.1.1 Table 1: Continuous specifications only ====
+#### ==== 3.1.1 Table: Continuous specifications only ====
 
 # Helper: significance stars
 stars <- function(p) {
@@ -1029,7 +1036,7 @@ tab_1_ols_cont <- tab1_final %>%
 
 tab_1_ols_cont
 
-#### ==== 3.1.2 Table 2: Binned specifications only ====
+#### ==== 3.1.2 Table: Binned specifications only ====
 
 terms_bin <- c("dist_primary_bin3-6", "dist_primary_bin6-9", "dist_primary_bin>9",
                "dist_secondary_bin3-6", "dist_secondary_bin6-9", "dist_secondary_bin>9")
@@ -1123,7 +1130,7 @@ tab_2_ols_bin <- tab2_final %>%
 
 tab_2_ols_bin
 
-#### ==== 3.1.3 Table 3: Baseline continuous vs baseline binned ====
+#### ==== 3.1.3 Table: Baseline continuous vs baseline binned ====
 
 terms_compare <- c("dist_primary_km", "dist_secondary_km",
                    "dist_primary_bin3-6", "dist_primary_bin6-9", "dist_primary_bin>9",
@@ -1199,7 +1206,7 @@ tab_3_main_compare <- tab3_final %>%
 
 tab_3_main_compare
 
-#### ==== 3.1.4 Table 4: Model comparison ====
+#### ==== 3.1.4 Table: Model comparison ====
 
 compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
@@ -1238,7 +1245,7 @@ tab_4_compare_all <- compare_all %>%
 
 tab_4_compare_all
 
-#### ==== 3.1.5 Table 5: Robustness checks ====
+#### ==== 3.1.5 Table: Robustness checks ====
 
 tab5_data <- diag_robust %>%
   mutate(
@@ -1283,7 +1290,8 @@ tab_5_robust_checks <- tab5_data %>%
 
 tab_5_robust_checks
 
-#### ==== 3.1.6 Plot 1: Binned Price Gradients ====
+#### ==== 3.1.6 Plot: Binned Price Gradients ====
+
 pal_muted <- c(
   "Primary"   = "#4C78A8",
   "Secondary" = "#F58518"
@@ -1365,7 +1373,8 @@ fig_1_price_gradient <- ggplot(
 
 print(fig_1_price_gradient)
 
-#### ==== 3.1.7 Plot 2: Continuous Distance vs Log Price per sqm ====
+#### ==== 3.1.7 Plot: Continuous Distance vs Log Price per sqm ====
+
 df_continuous <- df_main %>%
   transmute(
     log_ppsqm,
@@ -1460,11 +1469,9 @@ plot_dist_muni_sec <- ggplot(map_data_dist) +
     axis.title  = element_blank()
   )
 
-
-
 ### ==== 3.2 Social Index Graphics and Tables ====
 
-#### ==== 3.2.1  Table 6: Social Index Regression (5km) ====
+#### ==== 3.2.1  Table: Social Index Regression (5km) ====
 
 df_reg1 <- df_reg %>%
   mutate(school_quality = relevel(school_quality, ref = "good"))
@@ -1512,11 +1519,7 @@ tab_ols <- modelsummary(
     data_row.padding  = gt::px(4)    
   )
 
-# Tabelle anzeigen
-tab_ols
-
-
-#### ==== 3.2.2 Plot 3: Spatial Distribution Social Index Schools in NRW ====
+#### ==== 3.2.2 Plot: Spatial Distribution Social Index Schools in NRW ====
 
 df_grid <- df_final_with_social %>%
   distinct(ergg_1km, social_index) %>%      
@@ -1541,7 +1544,7 @@ spa_dis <- ggplot(df_grid, aes(x = lon, y = lat)) +
   )
 
 
-#### ==== 3.2.3 Plot 4: Bar chart Social Index ====
+#### ==== 3.2.3 Plot: Bar chart Social Index ====
 
 bar_chart_index <- df_school_meta %>%
   ggplot(aes(x = factor(social_index))) +
@@ -1549,7 +1552,7 @@ bar_chart_index <- df_school_meta %>%
   labs(x = "Social Index (1–9)", y = "Number of schools")
 
 
-#### ==== 3.2.4 Plot 5: Simple Slopes for Primary & Secondary Schools ====
+#### ==== 3.2.4 Plot: Simple Slopes for Primary & Secondary Schools ====
 
 # Modell mit Schulqualität "good"
 m_good_ref <- lm(base_formula, data = df_reg1)
@@ -1615,7 +1618,7 @@ plot_social_muni <- ggplot(map_data_social) +
 
 ### ==== 3.3 Queens Distance Graphics and Tables ====
 
-#### ==== 3.3.1 Table 7: Distance only ====
+#### ==== 3.3.1 Table: Distance only ====
 
 # Helper: significance stars
 stars <- function(p) {
@@ -1706,7 +1709,8 @@ table_qc_dist <- reg_table_print %>%
     footnote_as_chunk = FALSE
   )
 
-#### ==== 3.3.2 Plot: 6 Map Primary Schools ====
+#### ==== 3.3.2 Plot: Map Primary Schools ====
+
 plot_queens_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
   labs(
     title = "Queens Distance for Primary Schools"
@@ -1727,7 +1731,8 @@ plot_queens_primary
 
 table(spdep::card(nb_queen))
 
-#### ==== 3.3.3 Plot: 7 Map Secondary Schools ====
+#### ==== 3.3.3 Plot: Map Secondary Schools ====
+
 plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
   labs(
     title = "Queens Distance for Secondary Schools"
@@ -1747,7 +1752,7 @@ plot_queens_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secon
 plot_queens_secondary
 
 
-#### ==== 3.3.4 Plot 8: Mean distance districts plot primary ====
+#### ==== 3.3.4 Plot: Mean distance districts plot primary ====
 
 df_muni_qdist <- df_final %>%
   filter(
@@ -1791,7 +1796,7 @@ plot_qc_dist_muni_pri <- ggplot(map_data) +
     axis.title = element_blank()
   )
 
-#### ==== 3.3.5 Plot 9: Mean distance districts plot secondary ====
+#### ==== 3.3.5 Plot: Mean distance districts plot secondary ====
 
 plot_qc_dist_muni_sec <- ggplot(map_data) +
   geom_sf(aes(fill = q_dist_secondary), color = "white", linewidth = 0.05) +
@@ -1814,7 +1819,7 @@ plot_qc_dist_muni_sec <- ggplot(map_data) +
     axis.title = element_blank()
   )
 
-#### ==== 3.3.6 Table 8: Queen distance and Social Index ====
+#### ==== 3.3.6 Table: Queen distance and Social Index ====
 
 table_qc_index <- bind_rows(
   tidy(model_index_qc) %>%
