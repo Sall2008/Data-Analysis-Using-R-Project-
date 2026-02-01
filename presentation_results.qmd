@@ -41,7 +41,7 @@ source("Code_Final_Clean.R")
 
 \vspace{0.3em}
 
-**2. Data & Methodology**\
+**2. Methodology & Data**\
 *Data used and our empirical model.*
 
 \vspace{0.3em}
@@ -51,7 +51,7 @@ source("Code_Final_Clean.R")
 
 \vspace{0.3em}
 
-**4. Limitations & Conclusion**\
+**4. Conclusion & Limitations**\
 *Limitations of our work and concluding thoughts.*
 
 \vspace{0.3em}
@@ -84,18 +84,18 @@ housing prices:
 
 -   **Empirical Strategies**: While hedonic models are the dominant
     approach to estimating housing price effects, alternative empirical
-    strategies have also been proposed [see @Black_Machin_2011]
+    strategies have also been proposed [see @Black_Machin_2011].
 
 -   **Findings**: Empirical evidence suggests that proximity to schools
     positively affects housing prices [@Rosiers_Lagana_Theriault_2001;
-    @Huang_Hess_2018]
+    @Huang_Hess_2018].
 
 ## Related Literature Background
 
 -   **Other Factors**: Related work also documents capitalization
     effects of school reputation [@Chin_Foong_2006], differences between
     public and private schools [@Sah_Conroy_Narwold_2016] and school
-    quality [@Edusei_Espey_Lin_2007; @Metz_2015]
+    quality [@Edusei_Espey_Lin_2007; @Metz_2015].
 
 -   **Environment of studies**: Much of the literature focuses on
     settings with binding school catchment areas and measures school
@@ -111,14 +111,14 @@ housing prices.
 ## Research Question
 
 **Research Question:** How do school proximity and school social indices
-affect the prices of detached houses, and do these effects differ
+affect the prices of single-family houses, and do these effects differ
 between primary and secondary schools in North Rhine–Westphalia?
 
 \vspace{0.05em}
 
 \fcolorbox{blue!60}{white}{
 \parbox{\linewidth}{
-\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\textbf{H1: House prices differ based on the distance to schools}\\[-2pt]
 \emph{Expected: Negative coefficients on distance variables}
 }}
 
@@ -296,8 +296,9 @@ We estimate regression-based hedonic models to
 $\displaystyle
 \log(P_i) = 
 \beta_0 + 
-\beta_1 \text{Dist}_i + 
+\beta_1 \text{Dist}_i +
 X_i' \gamma + 
+\mu_{\ell(i)} +
 \varepsilon_i
 $
 }
@@ -305,11 +306,17 @@ $
 
 \vspace{1.5em}
 
--   $P_i$ denotes the listing price of house $i$ \vspace{0.1em}
--   $\text{Dist}_i$ measures distance to the nearest school
+-   $P_i$ denotes the listing price of house $i$ 
     \vspace{0.1em}
--   $X_i$ is a vector of housing characteristics \vspace{0.1em}
+-   $\text{Dist}_i$ measures the distance to the nearest school     
+    (primary or secondary, depending on specification)
+    \vspace{0.1em}
+    \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics 
+    \vspace{0.1em}
 -   $\gamma$ is a vector of coefficients corresponding to $X_i$
+    \vspace{0.1em}
+-   $\mu_{\ell(i)}$ are municipality fixed effects 
     \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
@@ -336,7 +343,7 @@ $
 -   $X_i$ is a vector of housing characteristics \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
-## Empirical Framework: Final Model
+## Empirical Framework: Distance and Social Index
 
 \begin{center}
 \colorbox{blue!10}{
@@ -357,12 +364,17 @@ $
 }
 \end{center}
 
--   $P_i$ denotes the listing price of house $i$ \vspace{0.1em}
--   $\text{Dist}_i$ measures distance to the nearest school
+-   $P_i$ denotes the listing price of house $i$ 
     \vspace{0.1em}
--   $X_i$ is a vector of housing characteristics \vspace{0.1em}
--   $\text{Index}_i$ is the school social index \vspace{0.1em}
--   $mu_{\ell(i)}$ are municipality fixed effects \vspace{0.1em}
+-   $\text{Dist}_i$ measures the distance to the nearest school (primary or 
+    secondary, depending on specification)
+    \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics 
+    \vspace{0.1em}
+-   $\text{Index}_i$ is the school social index 
+    \vspace{0.1em}
+-   $\mu_{\ell(i)}$ are municipality fixed effects 
+    \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
 ## Empirical Framework: Queen contiguity
@@ -408,7 +420,7 @@ plot_met_qc_2
 \medskip
 \fcolorbox{blue!60}{white}{
 \parbox{\linewidth}{
-\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\textbf{H1: House prices differ based on the distance to schools}\\[-2pt]
 \emph{Expected: Negative coefficients on distance variables}
 }}
 \medskip
