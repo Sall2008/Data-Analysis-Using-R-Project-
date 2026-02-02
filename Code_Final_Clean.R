@@ -228,7 +228,7 @@ duplicates_check <- df_final_with_social %>%
   ungroup()
 cat("Duplicates (if any):", nrow(duplicates_check), "\n")
 
-# Adding another variable
+# Renaming variable for Queen Contiguiuty part
 df_final <- df_final_with_social
 
 ## ==== 1.7 Queens Distance Preparation  ====
