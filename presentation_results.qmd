@@ -207,7 +207,7 @@ $
     \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
-## Empirical Framework: Queen contiguity
+## Empirical Framework: Queen Contiguity
 
 \begin{center}
 \colorbox{blue!10}{
@@ -569,7 +569,7 @@ tab_4_compare_all
 tab_5_robust_checks
 ```
 
-## Robustness check: Queen contiguity (Distance)
+## Robustness check: Queen Contiguity (Distance)
 
 ```{r}
 #| echo: false
@@ -753,7 +753,7 @@ $
 table_reg1
 ```
 
-## Robustness check: Queen contiguity (Social Index)
+## Robustness check: Queen Contiguity (Social Index)
 
 ```{r}
 #| echo: false
