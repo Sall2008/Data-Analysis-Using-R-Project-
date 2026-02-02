@@ -832,7 +832,7 @@ $
 #| echo: false
 #| results: asis
 #| include: true
-tab_ols
+table_reg1
 ```
 
 ## Robustness check: Queen contiguity (Social Index)
@@ -843,6 +843,30 @@ tab_ols
 #| include: true
 table_qc_index
 ```
+
+## Simple Slopes
+
+::::: columns
+::: {.column width="50%"}
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "100%"
+plot_si_slopri
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "100%"
+plot_si_slosec
+```
+:::
+:::::
 
 ## Social Index: Interpretaition of the Results
 ### Primary School Proximity

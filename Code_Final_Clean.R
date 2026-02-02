@@ -1022,7 +1022,7 @@ tab_1_ols_cont <- tab1_final %>%
   row_spec(n_coef_rows, 
            extra_css = "border-bottom: 2px solid black;",
            extra_latex_after = "\\midrule") %>%
-  column_spec(1, bold = TRUE) %>%
+  column_spec(1, bold = FALSE) %>%
   footnote(
     general = c(
       "Dependent variable: log house price.",
@@ -1519,6 +1519,81 @@ tab_ols <- modelsummary(
     data_row.padding  = gt::px(4)    
   )
 
+tab_ols
+
+# Same table for quarto
+reg_long <- tidy(m1_reg1) %>%
+  filter(term %in% c(
+    "dist_primary_km",
+    "dist_secondary_km",
+    "school_qualityaverage",
+    "school_qualitybad",
+    "dist_primary_km:school_qualityaverage",
+    "dist_primary_km:school_qualitybad",
+    "school_qualityaverage:dist_secondary_km",
+    "school_qualitybad:dist_secondary_km"
+  )) %>%
+  mutate(
+    variable = dplyr::recode(
+      term,
+      "dist_primary_km" = "Distance to primary school (km)",
+      "dist_secondary_km" = "Distance to secondary school (km)",
+      "school_qualityaverage" = "School quality: Average",
+      "school_qualitybad" = "School quality: Bad",
+      "dist_primary_km:school_qualityaverage" =
+        "Distance × Average school quality (Primary)",
+      "dist_primary_km:school_qualitybad" =
+        "Distance × Bad school quality (Primary)",
+      "school_qualityaverage:dist_secondary_km" =
+        "Distance × Average school quality (Secondary)",
+      "school_qualitybad:dist_secondary_km" =
+        "Distance × Bad school quality (Secondary)"
+    ),
+    coef = paste0(round(estimate, 3), stars(p.value)),
+    se   = paste0("(", round(std.error, 3), ")")
+  ) %>%
+  select(variable, coef, se)
+
+reg_table_print <- reg_long %>%
+  pivot_longer(
+    cols = c(coef, se),
+    names_to = "type",
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = type,
+    values_from = value
+  )
+
+table_reg1 <- reg_table_print %>%
+  kbl(
+    booktabs = TRUE,
+    linesep = "",
+    escape = FALSE,
+    align = "lcc",
+    col.names = c("Variable", "Coefficient", "Standard Error")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center",
+    font_size = 7,
+    latex_options = c("scale_down", "hold_position"),
+    stripe_color = "gray!12"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = FALSE) %>%
+  footnote(
+    general = c(
+      "Dependent variable: log house price.",
+      "Reference category for school quality: Good.",
+      "*** p<0.01, ** p<0.05, * p<0.1"
+    ),
+    general_title = "Note:",
+    threeparttable = TRUE,
+    escape = FALSE
+  )
+
+
 #### ==== 3.2.2 Plot: Spatial Distribution Social Index Schools in NRW ====
 
 df_grid <- df_final_with_social %>%
@@ -1541,6 +1616,10 @@ spa_dis <- ggplot(df_grid, aes(x = lon, y = lat)) +
   labs(
     title = "Spatial Distribution of School Social Index in NRW",
     subtitle = "Each grid cell colored by the social index of the nearest school"
+  ) +
+  theme(
+    plot.background  = element_rect(fill = "transparent", color = NA),
+    panel.background = element_rect(fill = "transparent", color = NA)
   )
 
 
@@ -1558,20 +1637,35 @@ bar_chart_index <- df_school_meta %>%
 m_good_ref <- lm(base_formula, data = df_reg1)
 
 # Simple Slopes Analyse für dist_primary_km
-interact_plot(m_good_ref, 
-              pred = dist_primary_km, 
-              modx = school_quality, 
-              modx.values = c("good", "average", "bad"),
-              plot.points = TRUE,
-              main.title = "Simple Slopes Analysis for `dist_primary_km` by School Quality")
+plot_si_slopri <- interact_plot(m_good_ref, 
+                    pred = dist_primary_km, 
+                    modx = school_quality, 
+                    modx.values = c("good", "average", "bad"),
+                    plot.points = TRUE,
+                    main.title = "Simple Slopes Analysis for `dist_primary_km` 
+                    by School Quality") +
+                    theme(
+                      plot.background  = element_rect(fill = "transparent", 
+                                                      color = NA),
+                      panel.background = element_rect(fill = "transparent", 
+                                                      color = NA)
+                      )
+  
 
 # Simple Slopes Analyse für dist_secondary_km
-interact_plot(m_good_ref, 
-              pred = dist_secondary_km, 
-              modx = school_quality, 
-              modx.values = c("good", "average", "bad"),
-              plot.points = TRUE,
-              main.title = "Simple Slopes Analysis for `dist_secondary_km` by School Quality")
+plot_si_slosec <- interact_plot(m_good_ref, 
+                    pred = dist_secondary_km, 
+                    modx = school_quality, 
+                    modx.values = c("good", "average", "bad"),
+                    plot.points = TRUE,
+                    main.title = "Simple Slopes Analysis for `dist_secondary_km`
+                    by School Quality") +
+                    theme(
+                      plot.background  = element_rect(fill = "transparent", 
+                                                      color = NA),
+                      panel.background = element_rect(fill = "transparent", 
+                                                      color = NA)
+                    )
 
 #### ==== 3.2.5 Plot: Average School Social Index by VG ====
 
@@ -1608,13 +1702,10 @@ plot_social_muni <- ggplot(map_data_social) +
   theme(
     panel.grid = element_blank(),
     axis.text  = element_blank(),
-    axis.title = element_blank()
-  ) + 
-  theme(
+    axis.title = element_blank(),
     plot.background  = element_rect(fill = "transparent", color = NA),
     panel.background = element_rect(fill = "transparent", color = NA)
   )
-
 
 ### ==== 3.3 Queens Distance Graphics and Tables ====
 
