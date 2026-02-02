@@ -859,6 +859,7 @@ plot_lim_qc
 
 ## Limitations: Other
 
+-   **Omitted neighborhood characteristics**: Unobserved neighborhood attributes      correlated with school location may bias estimated school effects.
 -   **Listing prices**: The prices we have are not transaction but
     listing prices.
 
