@@ -1721,6 +1721,8 @@ plot_si_slopri <- interact_plot(m_good_ref,
                     modx = school_quality, 
                     modx.values = c("good", "average", "bad"),
                     plot.points = TRUE,
+                    point.alpha = 0.15,
+                    point.size  = 1,
                     main.title = "Simple Slopes Analysis for `dist_primary_km` 
                     by School Quality") +
                     theme(
@@ -1729,7 +1731,14 @@ plot_si_slopri <- interact_plot(m_good_ref,
                       panel.background = element_rect(fill = "transparent", 
                                                       color = NA)
                       )
-  
+
+# Change layers to make the slope lines more visible
+plot_si_slopri$layers <- c(
+  plot_si_slopri$layers[-1],
+  plot_si_slopri$layers[1]
+)
+
+plot_si_slopri
 
 # Simple Slopes Analyse für dist_secondary_km
 plot_si_slosec <- interact_plot(m_good_ref, 
@@ -1737,6 +1746,8 @@ plot_si_slosec <- interact_plot(m_good_ref,
                     modx = school_quality, 
                     modx.values = c("good", "average", "bad"),
                     plot.points = TRUE,
+                    point.alpha = 0.15,
+                    point.size  = 1,
                     main.title = "Simple Slopes Analysis for `dist_secondary_km`
                     by School Quality") +
                     theme(
@@ -1745,6 +1756,14 @@ plot_si_slosec <- interact_plot(m_good_ref,
                       panel.background = element_rect(fill = "transparent", 
                                                       color = NA)
                     )
+
+# Change layers to make the slope lines more visible
+plot_si_slosec$layers <- c(
+  plot_si_slosec$layers[-1],
+  plot_si_slosec$layers[1]
+)
+
+plot_si_slosec
 
 #### ==== 3.2.5 Plot: Average School Social Index by VG ====
 
