@@ -23,6 +23,7 @@ library(kableExtra)
 library(knitr)
 library(interactions)
 library(emmeans)
+library(patchwork)
 
 theme_set(
   theme_minimal(base_size = 18) +
@@ -1116,7 +1117,7 @@ tab_2_ols_bin <- tab2_final %>%
   row_spec(n_coef_rows2, 
            extra_css = "border-bottom: 2px solid black;",
            extra_latex_after = "\\midrule") %>%
-  column_spec(1, bold = TRUE) %>%
+  column_spec(1, bold = FALSE) %>%
   footnote(
     general = c(
       "Dependent variable: log house price. Reference: 0-3 km.",
@@ -1202,7 +1203,7 @@ tab_3_main_compare <- tab3_final %>%
   row_spec(n_coef_rows3, 
            extra_css = "border-bottom: 2px solid black;",
            extra_latex_after = "\\midrule") %>%
-  column_spec(1, bold = TRUE)
+  column_spec(1, bold = FALSE)
 
 tab_3_main_compare
 
@@ -1212,35 +1213,62 @@ compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
   select(Model, N, R2, Adj_R2, AIC, BIC, RMSE, MAE, R2_oos)
 
+# tab_4_compare_all <- compare_all %>%
+#   kbl(
+#     booktabs = TRUE,
+#     escape = FALSE,
+#     align = c("l", rep("c", 8)),
+#     col.names = c("Model", "N", "R²", "Adj. R²", "AIC", "BIC", 
+#                   "CV RMSE", "CV MAE", "CV R²")
+#   ) %>%
+#   add_header_above(
+#     c(" " = 1, "In-Sample Fit" = 5, "Out-of-Sample (5-fold CV)" = 3),
+#     bold = TRUE
+#   ) %>%
+#   kable_styling(
+#     full_width = FALSE,
+#     position = "center",
+#     font_size = 7,
+#     latex_options = c("scale_down", "hold_position"),
+#     stripe_color = "gray!12"
+#   ) %>%
+#   row_spec(0, bold = TRUE) %>%
+#   column_spec(1, bold = FALSE) %>%
+#   footnote(
+#     general = c(
+#       "In-sample: higher R²/Adj. R² is better; lower AIC/BIC is better.",
+#       "Out-of-sample: lower RMSE/MAE is better; higher R² is better."
+#     ),
+#     general_title = "Note:",
+#     threeparttable = TRUE,
+#     escape = FALSE
+#   )
+
 tab_4_compare_all <- compare_all %>%
-  kbl(
-    booktabs = TRUE,
-    escape = FALSE,
-    align = c("l", rep("c", 8)),
-    col.names = c("Model", "N", "R²", "Adj. R²", "AIC", "BIC", 
-                  "CV RMSE", "CV MAE", "CV R²")
+  setNames(c("Model", "N", "$R^2$", "Adj. $R^2$", "AIC", "BIC", 
+             "CV RMSE", "CV MAE", "CV $R^2$")) %>%
+  knitr::kable(
+    format = "latex",
+    digits = 3,                  
+    booktabs = TRUE,            
+    escape = FALSE,               
+    linesep = ""                 
   ) %>%
-  add_header_above(
-    c(" " = 1, "In-Sample Fit" = 5, "Out-of-Sample (5-fold CV)" = 3),
-    bold = TRUE
-  ) %>%
-  kable_styling(
-    full_width = FALSE,
-    position = "center",
-    font_size = 7,
-    latex_options = c("scale_down", "hold_position"),
-    stripe_color = "gray!12"
+  
+  kableExtra::kable_styling(
+    font_size = 7, 
+    latex_options = c("scale_down", "hold_position")
   ) %>%
   row_spec(0, bold = TRUE) %>%
-  column_spec(1, bold = TRUE) %>%
-  footnote(
-    general = c(
-      "In-sample: higher R²/Adj. R² is better; lower AIC/BIC is better.",
-      "Out-of-sample: lower RMSE/MAE is better; higher R² is better."
-    ),
-    general_title = "Note:",
+  column_spec(1, bold = FALSE) %>%
+  kableExtra::footnote(
+    general = "In-sample: higher $R^2$/Adj. $R^2$ is better; 
+    lower AIC/BIC is better. 
+    Out-of-sample (5-fold CV): lower RMSE/MAE is better; 
+    higher $R^2$ is better.",
+    general_title = "Note: ",
     threeparttable = TRUE,
-    escape = FALSE
+    escape = FALSE 
   )
 
 tab_4_compare_all
@@ -1257,36 +1285,70 @@ tab5_data <- diag_robust %>%
     Cook_n_gt_4n = as.character(Cook_n_gt_4n)
   )
 
-tab_5_robust_checks <- tab5_data %>%
-  kbl(
+# tab_5_robust_checks <- tab5_data %>%
+#   kbl(
+#     booktabs = TRUE,
+#     escape = FALSE,
+#     align = c("l", rep("c", 4)),
+#     col.names = c("Model", "BP p-value", "Max VIF", "Influential (D>4/n)", "Max Cook's D")
+#   ) %>%
+#   add_header_above(
+#     c(" " = 1, "Heteroskedasticity" = 1, "Multicollinearity" = 1, "Influence" = 2),
+#     bold = TRUE
+#   ) %>%
+#   kable_styling(
+#     full_width = FALSE,
+#     position = "center",
+#     font_size = 7,
+#     latex_options = c("scale_down", "hold_position"),
+#     stripe_color = "gray!12"
+#   ) %>%
+#   row_spec(0, bold = TRUE) %>%
+#   column_spec(1, bold = FALSE) %>%
+#   footnote(
+#     general = c(
+#       "Inference uses HC1 robust SE.",
+#       "Lower BP p-values indicate heteroskedasticity.",
+#       "Higher VIF indicates collinearity; larger Cook's D indicates influential points."
+#     ),
+#     general_title = "Note:",
+#     threeparttable = TRUE,
+#     escape = FALSE
+#   )
+
+tab_5_robust_checks <- diag_robust %>%
+  mutate(
+    BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
+                        if_else(BP_pvalue < 0.001, "<0.001", 
+                                sprintf("%.3f", BP_pvalue))),
+    Max_VIF   = if_else(is.na(Max_VIF), NA_character_, 
+                        sprintf("%.2f", Max_VIF)),
+    Cook_max  = if_else(is.na(Cook_max), NA_character_, 
+                        sprintf("%.3f", Cook_max)),
+    Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
+  ) %>%
+  select(Model, BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max) %>%
+  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", "Max Cook's $D$")) %>%
+  knitr::kable(
+    format = "latex",
     booktabs = TRUE,
-    escape = FALSE,
-    align = c("l", rep("c", 4)),
-    col.names = c("Model", "BP p-value", "Max VIF", "Influential (D>4/n)", "Max Cook's D")
+    escape = FALSE,  
+    linesep = "",
+    align = "lcccc"
   ) %>%
-  add_header_above(
-    c(" " = 1, "Heteroskedasticity" = 1, "Multicollinearity" = 1, "Influence" = 2),
-    bold = TRUE
-  ) %>%
-  kable_styling(
-    full_width = FALSE,
-    position = "center",
-    font_size = 7,
-    latex_options = c("scale_down", "hold_position"),
-    stripe_color = "gray!12"
+  kableExtra::kable_styling(
+    font_size = 7, 
+    latex_options = c("scale_down", "hold_position")
   ) %>%
   row_spec(0, bold = TRUE) %>%
-  column_spec(1, bold = TRUE) %>%
-  footnote(
-    general = c(
-      "Inference uses HC1 robust SE.",
-      "Lower BP p-values indicate heteroskedasticity.",
-      "Higher VIF indicates collinearity; larger Cook's D indicates influential points."
-    ),
-    general_title = "Note:",
+  column_spec(1, bold = FALSE) %>%
+  kableExtra::footnote(
+    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values indicate heteroskedasticity; higher VIF indicates collinearity; larger Cook's $D$ indicates influential points.",
+    general_title = "Note: ",
     threeparttable = TRUE,
     escape = FALSE
   )
+
 
 tab_5_robust_checks
 
@@ -1407,7 +1469,24 @@ fig_2_scatter_combined <- ggplot(
 
 print(fig_2_scatter_combined)
 
-#### ==== 3.1.8 Plot: Average distance to primary schools by VG ====
+#### ==== 3.1.9 Plot: Plots above combined for Quarto presentation ====
+
+p_left <- fig_2_scatter_combined +
+  labs(title = "Fig 1. Continuous Trend (Raw Scatter)") +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+
+p_right <- fig_1_price_gradient +
+  labs(title = "Fig 2. Discrete Gradient (Binned Means)") +
+  theme(plot.title = element_text(size = 14, face = "bold"),
+        axis.title.y = element_blank())
+
+p_combined <- p_left + p_right +
+  plot_layout(guides = "collect") & 
+  theme(legend.position = "top",
+        legend.box.margin = margin(0, 0, 0, 0),
+        legend.margin = margin(0, 0, 0, 0))
+
+#### ==== 3.1.10 Plot: Average distance to primary schools by VG ====
 
 df_muni_dist <- df_reg_dist %>%
   filter(
@@ -1447,7 +1526,7 @@ plot_dist_muni_pri <- ggplot(map_data_dist) +
     axis.title  = element_blank()
   )
 
-#### ==== 3.1.9 Plot: Average distance to secondary schools by VG ====
+#### ==== 3.1.11 Plot: Average distance to secondary schools by VG ====
 
 plot_dist_muni_sec <- ggplot(map_data_dist) +
   geom_sf(aes(fill = dist_secondary_km),
@@ -1787,7 +1866,7 @@ table_qc_dist <- reg_table_print %>%
   ) %>%
   row_spec(0, bold = TRUE) %>%
   row_spec(1, extra_css = "border-bottom: 2px solid #2C3E50;") %>%
-  column_spec(1, bold = TRUE) %>% 
+  column_spec(1, bold = FALSE) %>% 
   footnote(
     general = c(
       "Dependent variable: log house price, control variables included 
@@ -1960,7 +2039,7 @@ table_qc_index <- bind_rows(
     stripe_color  = "gray!12"
   ) %>%
   row_spec(0, bold = TRUE) %>%
-  column_spec(1, bold = TRUE) %>%
+  column_spec(1, bold = FALSE) %>%
   footnote(
     general = c(
       "Dependent variable: log house price.",

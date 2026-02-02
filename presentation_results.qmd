@@ -527,33 +527,13 @@ stateDiagram-v2
 #| fig-align: center
 #| warning: false
 #| message: false
-
-library(ggplot2)
-library(patchwork)
-
-p_left <- fig_2_scatter_combined +
-  labs(title = "Fig 1. Continuous Trend (Raw Scatter)") +
-  theme(plot.title = element_text(size = 14, face = "bold"))
-
-p_right <- fig_1_price_gradient +
-  labs(title = "Fig 2. Discrete Gradient (Binned Means)") +
-  theme(plot.title = element_text(size = 14, face = "bold"),
-        axis.title.y = element_blank())
-
-p_combined <- p_left + p_right +
-  plot_layout(guides = "collect") & 
-  theme(legend.position = "top",
-        legend.box.margin = margin(0, 0, 0, 0),
-        legend.margin = margin(0, 0, 0, 0))
-
-print(p_combined)
+p_combined
 ```
 
 ## Main Results: Continuous Model {.smaller}
 
 ```{r}
 #| echo: false
-
 tab_1_ols_cont
 ```
 
@@ -561,7 +541,6 @@ tab_1_ols_cont
 
 ```{r}
 #| echo: false
-
 tab_2_ols_bin
 ```
 
@@ -569,7 +548,6 @@ tab_2_ols_bin
 
 ```{r}
 #| echo: false
-
 tab_3_main_compare
 ```
 
@@ -579,35 +557,7 @@ tab_3_main_compare
 
 ```{r}
 #| echo: false
-
-tab_4_compare_all <- compare_all %>%
-  setNames(c("Model", "N", "$R^2$", "Adj. $R^2$", "AIC", "BIC", 
-             "CV RMSE", "CV MAE", "CV $R^2$")) %>%
-  knitr::kable(
-    format = "latex",
-    digits = 3,                  
-    booktabs = TRUE,            
-    escape = FALSE,               
-    linesep = ""                 
-  ) %>%
-  
-  kableExtra::kable_styling(
-    font_size = 7, 
-    latex_options = c("scale_down", "hold_position")
-  ) %>%
-  
-  kableExtra::footnote(
-    general = "In-sample: higher $R^2$/Adj. $R^2$ is better; 
-    lower AIC/BIC is better. 
-    Out-of-sample (5-fold CV): lower RMSE/MAE is better; 
-    higher $R^2$ is better.",
-    general_title = "Note: ",
-    threeparttable = TRUE,
-    escape = FALSE 
-  )
-
 tab_4_compare_all
-
 ```
 
 ## Robustness checks (main models)
@@ -616,38 +566,6 @@ tab_4_compare_all
 
 ```{r}
 #| echo: false
-tab_5_robust_checks <- diag_robust %>%
-  mutate(
-    BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
-                        if_else(BP_pvalue < 0.001, "<0.001", 
-                                sprintf("%.3f", BP_pvalue))),
-    Max_VIF   = if_else(is.na(Max_VIF), NA_character_, 
-                        sprintf("%.2f", Max_VIF)),
-    Cook_max  = if_else(is.na(Cook_max), NA_character_, 
-                        sprintf("%.3f", Cook_max)),
-    Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
-  ) %>%
-  select(Model, BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max) %>%
-  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", "Max Cook's $D$")) %>%
-  knitr::kable(
-    format = "latex",
-    booktabs = TRUE,
-    escape = FALSE,  
-    linesep = "",
-    align = "lcccc"
-  ) %>%
-  kableExtra::kable_styling(
-    font_size = 7, 
-    latex_options = c("scale_down", "hold_position")
-  ) %>%
-  kableExtra::column_spec(1, bold = TRUE) %>%
-  kableExtra::footnote(
-    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values indicate heteroskedasticity; higher VIF indicates collinearity; larger Cook's $D$ indicates influential points.",
-    general_title = "Note: ",
-    threeparttable = TRUE,
-    escape = FALSE
-  )
-
 tab_5_robust_checks
 ```
 
