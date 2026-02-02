@@ -14,8 +14,9 @@
     \begin{beamercolorbox}[wd=\paperwidth,ht=0.4ex,dp=0ex]{progress bar}
       \rule{\dimexpr\paperwidth*
         \numexpr\insertframenumber-1\relax
-        /\numexpr\inserttotalframenumber-1\relax}{0.4ex}
+        /\numexpr\contenttotalframes-1\relax}{0.4ex}
     \end{beamercolorbox}
+
 
     % Footer
     \begin{beamercolorbox}[wd=\paperwidth,ht=3.0ex,dp=2.00ex]{footline}
@@ -40,6 +41,14 @@
 
 \newcommand{\setcontentend}{
   \setcounter{contentframe}{\value{framenumber}}
+}
+
+\newcommand{\contenttotalframes}{
+  \ifnum\value{contentframe}>0
+    \value{contentframe}
+  \else
+    \inserttotalframenumber
+  \fi
 }
 
 %------------------------------------------------------------------------------%

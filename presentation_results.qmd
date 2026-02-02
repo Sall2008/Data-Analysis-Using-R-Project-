@@ -924,16 +924,11 @@ plot_lim_qc
 -   **Listing prices**: The prices we have are not transaction but
     listing prices.
 
-
-```{=html}
-<!-- This part has to stay on the last page before the references to indicate
-the end of the presentation for the progress bar defined in the custom 
-theme file.
-This does not work yet... -->
+```{=latex}
+\setcontentend
 ```
 
-\setcontentend
-
+# References
 
 ## References {.allowframebreaks}
 
