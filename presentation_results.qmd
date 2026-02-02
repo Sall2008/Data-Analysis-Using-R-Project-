@@ -762,36 +762,22 @@ table_reg1
 table_qc_index
 ```
 
-## Simple Slopes
-
-::::: columns
-::: {.column width="50%"}
-```{r}
-#| fig.width: 6
-#| fig.height: 3.4
-#| fig.align: center
-#| out.width: "100%"
-plot_si_slopri
-```
-:::
-
-::: {.column width="50%"}
-```{r}
-#| fig.width: 6
-#| fig.height: 3.4
-#| fig.align: center
-#| out.width: "100%"
-plot_si_slosec
-```
-:::
-:::::
-
 ## Social Index: Interpretaition of the Results
 ### Primary School Proximity
 
 -   *Distance to primary school* is still *significant* and negatively affects house prices.
 -   Interaction Effect: The effect is *stronger for average schools* (Estimate = -0.041, p = 0.009), suggesting that the price drop is greater when the school quality is average.
 -   *No significant effect* for bad schools (p = 0.2996).
+
+## Social Index: Interpretaition of the Results
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "85%"
+plot_si_slopri
+```
   
 ## Social Index: Interpretaition of the Results
 ### Secondary School Proximity
@@ -799,6 +785,16 @@ plot_si_slosec
 -   *Distance to secondary school* is also still *significant* and negatively impacts house prices.
 -   The effect is *stronger for average schools* (Estimate = 0.0307, p = 0.0096), meaning proximity to secondary schools is more impactful in areas with average school quality.
 -   *No significant effect* for bad schools (p = 0.7414).
+
+## Social Index: Interpretaition of the Results
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "85%"
+plot_si_slosec
+```
 
 # Concluding Thoughts and Limitations
 
