@@ -522,7 +522,7 @@ get_model_diagnostics <- function(model) {
   )
 }
 
-diag_robust <- bind_rows(
+diag_robust_di <- bind_rows(
   get_model_diagnostics(m2_base_both_cont) %>% 
     mutate(Model = "Baseline (Continuous)"),
   get_model_diagnostics(m7_base_both_bin)  %>% 
@@ -662,7 +662,7 @@ get_model_diagnostics <- function(model) {
   )
 }
 
-diag_robust <- bind_rows(
+diag_robust_si <- bind_rows(
   get_model_diagnostics(m_good_ref) %>% mutate(Model = "Good Reference"),
   get_model_diagnostics(m_avg_ref) %>% mutate(Model = "Average Reference"),
   get_model_diagnostics(m_bad_ref) %>% mutate(Model = "Bad Reference")
@@ -674,7 +674,7 @@ diag_robust <- bind_rows(
     Cook_max  = signif(Cook_max, 3)
   )
 
-print(diag_robust)
+print(diag_robust_si)
 
 
 
@@ -1213,37 +1213,6 @@ compare_all <- fit_main %>%
   left_join(cv_main, by = "Model") %>%
   select(Model, N, R2, Adj_R2, AIC, BIC, RMSE, MAE, R2_oos)
 
-# tab_4_compare_all <- compare_all %>%
-#   kbl(
-#     booktabs = TRUE,
-#     escape = FALSE,
-#     align = c("l", rep("c", 8)),
-#     col.names = c("Model", "N", "R²", "Adj. R²", "AIC", "BIC", 
-#                   "CV RMSE", "CV MAE", "CV R²")
-#   ) %>%
-#   add_header_above(
-#     c(" " = 1, "In-Sample Fit" = 5, "Out-of-Sample (5-fold CV)" = 3),
-#     bold = TRUE
-#   ) %>%
-#   kable_styling(
-#     full_width = FALSE,
-#     position = "center",
-#     font_size = 7,
-#     latex_options = c("scale_down", "hold_position"),
-#     stripe_color = "gray!12"
-#   ) %>%
-#   row_spec(0, bold = TRUE) %>%
-#   column_spec(1, bold = FALSE) %>%
-#   footnote(
-#     general = c(
-#       "In-sample: higher R²/Adj. R² is better; lower AIC/BIC is better.",
-#       "Out-of-sample: lower RMSE/MAE is better; higher R² is better."
-#     ),
-#     general_title = "Note:",
-#     threeparttable = TRUE,
-#     escape = FALSE
-#   )
-
 tab_4_compare_all <- compare_all %>%
   setNames(c("Model", "N", "$R^2$", "Adj. $R^2$", "AIC", "BIC", 
              "CV RMSE", "CV MAE", "CV $R^2$")) %>%
@@ -1275,7 +1244,7 @@ tab_4_compare_all
 
 #### ==== 3.1.5 Table: Robustness checks ====
 
-tab5_data <- diag_robust %>%
+tab5_data <- diag_robust_di %>%
   mutate(
     BP_pvalue = if_else(is.na(BP_pvalue), "-",
                         if_else(BP_pvalue < 0.001, "<0.001", 
@@ -1285,38 +1254,7 @@ tab5_data <- diag_robust %>%
     Cook_n_gt_4n = as.character(Cook_n_gt_4n)
   )
 
-# tab_5_robust_checks <- tab5_data %>%
-#   kbl(
-#     booktabs = TRUE,
-#     escape = FALSE,
-#     align = c("l", rep("c", 4)),
-#     col.names = c("Model", "BP p-value", "Max VIF", "Influential (D>4/n)", "Max Cook's D")
-#   ) %>%
-#   add_header_above(
-#     c(" " = 1, "Heteroskedasticity" = 1, "Multicollinearity" = 1, "Influence" = 2),
-#     bold = TRUE
-#   ) %>%
-#   kable_styling(
-#     full_width = FALSE,
-#     position = "center",
-#     font_size = 7,
-#     latex_options = c("scale_down", "hold_position"),
-#     stripe_color = "gray!12"
-#   ) %>%
-#   row_spec(0, bold = TRUE) %>%
-#   column_spec(1, bold = FALSE) %>%
-#   footnote(
-#     general = c(
-#       "Inference uses HC1 robust SE.",
-#       "Lower BP p-values indicate heteroskedasticity.",
-#       "Higher VIF indicates collinearity; larger Cook's D indicates influential points."
-#     ),
-#     general_title = "Note:",
-#     threeparttable = TRUE,
-#     escape = FALSE
-#   )
-
-tab_5_robust_checks <- diag_robust %>%
+tab_5_robust_checks <- diag_robust_di %>%
   mutate(
     BP_pvalue = if_else(is.na(BP_pvalue), NA_character_,
                         if_else(BP_pvalue < 0.001, "<0.001", 
