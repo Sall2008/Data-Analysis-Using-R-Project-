@@ -180,6 +180,14 @@ df_region <- read.csv(path_region, fileEncoding = "UTF-8") %>%
 df_main <- df_main %>%
   left_join(df_region, by = c("gid2019" = "gid2019"))
 
+# Log variables for regression
+df_main <- df_main %>% 
+  mutate(
+    log_population_density = log(population_density),
+    log_low_income = log(low_income_hh),
+    log_middle_income = log(middle_income_hh)
+  )
+
 ## ==== 1.6 Social Index Preparation  ====
 
 df_school_meta <- read_delim(path_school, 
@@ -214,10 +222,7 @@ df_housing_clean_unique <- df_housing %>%
   ungroup()
 
 # 1.6.2 Merge distance data with school meta data (Ensure school_quality and social_index are included)
-df_final_with_social <- df_housing_clean_unique %>%
-  left_join(df_dist_primary, by = "ergg_1km") %>%
-  left_join(df_dist_secondary, by = "ergg_1km") %>%
-  left_join(df_dist_any, by = "ergg_1km") %>%
+df_final_with_social <- df_main %>% 
   left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = c("school_id_primary" = "school_id")) %>%
   left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = c("school_id_secondary" = "school_id")) %>%
   left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = c("school_id_any" = "school_id"))
@@ -433,26 +438,11 @@ df_reg_dist <- df_main %>%
     dist_primary_km, dist_secondary_km,
     dist_primary_bin, dist_secondary_bin,
     log_area, log_plot_area,
-    zimmeranzahl, house_age
+    zimmeranzahl, house_age, log_low_income, log_middle_income
   )
 
-# Modellbasis 
-base_formula <- log_price ~
-  dist_primary_km * school_quality +
-  dist_secondary_km * school_quality +
-  log_area + log_plot_area +
-  zimmeranzahl + house_age
 
-# School Quality as Factor 
-df_reg <- df_final_with_social %>%
-  mutate(school_quality = factor(school_quality, levels = c("good", "average", "bad"))) 
 
-# Maximum Distance of 5km 
-df_reg <- df_reg %>%
-  mutate(
-    dist_primary_km = if_else(dist_primary_km > 5, 5, dist_primary_km),
-    dist_secondary_km = if_else(dist_secondary_km > 5, 5, dist_secondary_km)
-  )
 
 ## ==== 2.1 Distance ====
 
@@ -461,53 +451,116 @@ df_reg <- df_reg %>%
 m1_naive_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km, 
                          data = df_reg_dist)
 
-m2_base_both_cont <- lm(
-  log_price ~ dist_primary_km + dist_secondary_km +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_reg_dist
-)
+# m2_base_both_cont <- lm(
+#   log_price ~ dist_primary_km + dist_secondary_km +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
 
-m3_poly_both_cont <- lm(
-  log_price ~ dist_primary_km + I(dist_primary_km^2) +
-    dist_secondary_km + I(dist_secondary_km^2) +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_reg_dist
-)
+# Model 2 with added municipality effects
+m2_base_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km + log_area + log_plot_area + 
+                     zimmeranzahl + house_age + log_population_density + log_low_income + log_middle_income,
+                   data = df_reg_dist)
 
-m4_base_primary_cont <- lm(
-  log_price ~ dist_primary_km +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_reg_dist
-)
+# Model 2 RSE
+m2_base_both_cont_rse <- coeftest(m2_base_both_cont, vcov = sandwich)
 
-m5_base_secondary_cont <- lm(
-  log_price ~ dist_secondary_km +
-    log_area + log_plot_area + zimmeranzahl + house_age,
-  data = df_reg_dist
-)
+# m3_poly_both_cont <- lm(
+#   log_price ~ dist_primary_km + I(dist_primary_km^2) +
+#     dist_secondary_km + I(dist_secondary_km^2) +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
+
+# Model 3 with added municipality effects
+m3_poly_both_cont <- lm(log_price ~ dist_primary_km + I(dist_primary_km^2) + dist_secondary_km + I(dist_secondary_km^2) + 
+                     log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income, 
+                   data = df_reg_dist)
+
+# Model 3 RSE
+m3_poly_both_cont_rse <- coeftest(m3_poly_both_cont, vcov = sandwich)
+
+# m4_base_primary_cont <- lm(
+#   log_price ~ dist_primary_km +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
+
+# Model 4 with added municipality effects
+m4_base_primary_cont <- lm(log_price ~ dist_primary_km + log_area + log_plot_area + 
+                        zimmeranzahl + house_age + log_low_income + log_middle_income, 
+                      data = df_reg_dist)
+
+# Model 4 RSE
+m4_base_primary_cont_rse <- coeftest(m4_base_primary_cont, vcov = sandwich)
+
+# m5_base_secondary_cont <- lm(
+#   log_price ~ dist_secondary_km +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
+
+# Model 5 with added municipality effects
+m5_base_secondary_cont <- lm(log_price ~ dist_secondary_km + log_area + log_plot_area + 
+                          zimmeranzahl + house_age + log_low_income + log_middle_income,
+                        data = df_reg_dist)
+
+# Model 5 RSE
+m5_base_secondary_cont_rse <- coeftest(m5_base_secondary_cont, vcov = sandwich)
+
 
 ### ==== 2.1.2 Binned distance specifications ====
 
 m6_naive_both_bin <- lm(log_price ~ dist_primary_bin + dist_secondary_bin, 
                         data = df_reg_dist)
 
+# m7_base_both_bin <- lm(
+#   log_price ~ dist_primary_bin + dist_secondary_bin +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
+
+# Model 7 with added municipality effects
 m7_base_both_bin <- lm(
   log_price ~ dist_primary_bin + dist_secondary_bin +
-    log_area + log_plot_area + zimmeranzahl + house_age,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_reg_dist
 )
 
+# Model 7 RSE
+m7_base_both_bin_rse <- coeftest(m7_base_both_bin, vcov = sandwich)
+
+# m8_base_primary_bin <- lm(
+#   log_price ~ dist_primary_bin +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
+
+# Model 8 with added municipality effects
 m8_base_primary_bin <- lm(
   log_price ~ dist_primary_bin +
-    log_area + log_plot_area + zimmeranzahl + house_age,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_reg_dist
 )
 
+# Model 8 RSE
+m8_base_primary_bin_rse <- coeftest(m8_base_primary_bin, vcov = sandwich)
+
+# m9_base_secondary_bin <- lm(
+#   log_price ~ dist_secondary_bin +
+#     log_area + log_plot_area + zimmeranzahl + house_age,
+#   data = df_reg_dist
+# )
+
+# Model 9 with added municipality effects
 m9_base_secondary_bin <- lm(
   log_price ~ dist_secondary_bin +
     log_area + log_plot_area + zimmeranzahl + house_age,
   data = df_reg_dist
 )
+
+# Model 9 RSE
+m9_base_secondary_bin_rse <- coeftest(m9_base_secondary_bin, vcov = sandwich)
 
 ###  ==== 2.1.3 Diagnostics Distance ==== 
 
@@ -621,11 +674,28 @@ Base_Model_Social_Index <- lm(
   log_price ~ social_index +
     dist_primary_km + dist_secondary_km +
     log_area + log_plot_area +
-    zimmeranzahl + house_age,
+    zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_final_with_social
 )
 summary(Base_Model_Social_Index)
 
+# Base Model for Interaction
+base_formula <- log_price ~
+  dist_primary_km * school_quality +
+  dist_secondary_km * school_quality +
+  log_area + log_plot_area +
+  zimmeranzahl + house_age
+
+# School Quality as Factor 
+df_reg <- df_final_with_social %>%
+  mutate(school_quality = factor(school_quality, levels = c("good", "average", "bad"))) 
+
+# Maximum Distance of 5km 
+df_reg <- df_reg %>%
+  mutate(
+    dist_primary_km = if_else(dist_primary_km > 5, 5, dist_primary_km),
+    dist_secondary_km = if_else(dist_secondary_km > 5, 5, dist_secondary_km)
+  )
 
 # Model with Reference "good"
 df_reg1 <- df_reg %>%
@@ -647,7 +717,6 @@ df_reg3 <- df_reg %>%
 
 m_bad_ref <- lm(base_formula, data = df_reg3)
 summary(m_bad_ref)
-
 
 ###  ==== 2.2.2 Diagnostics Social Index ====  
 
@@ -685,8 +754,6 @@ diag_robust_si <- bind_rows(
   )
 
 print(diag_robust_si)
-
-
 
 ## ==== 2.3 Queens Distance ====
 
@@ -758,6 +825,7 @@ qdist_secondary <- compute_qdist_school_level(
     ref_school_secondary = ref_school_id
   )
 
+# Join primary and secondary Queen distance
 cells_big <- cells_big %>%
   left_join(qdist_primary,  by = "cell_id") %>%
   left_join(qdist_secondary, by = "cell_id")
@@ -779,17 +847,15 @@ cells_big <- cells_big %>%
   ) %>%
   rename(social_index_secondary = social_index)
 
-
-# Merge back
+# Merge back, remove old school-related variables
 df_final <- df_final %>%
-  # 1) strip old school-related variables
   select(
     -matches("^q_dist"),
     -matches("^social_index"),
     -matches("^school_quality")
   ) %>%
-  
-  # 2) ensure x,y exist
+
+#   # ensure x,y exist
   separate(
     ergg_1km,
     into = c("x","y"),
@@ -797,8 +863,8 @@ df_final <- df_final %>%
     convert = TRUE,
     remove = FALSE
   ) %>%
-  
-  # 3) clean merge (no duplication possible)
+ 
+#   # clean merge (without duplicates)
   left_join(
     cells_big %>%
       select(
@@ -820,7 +886,7 @@ names(df_final)[grepl("index|quality|q_dist", names(df_final))]
 # Primary Schools
 model_primary_all <- lm(
   log_price ~ q_dist_primary +
-    log_area + log_plot_area + zimmeranzahl + house_age,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_final
 )
 
@@ -829,7 +895,7 @@ summary(model_primary_all)
 # Secondary Schools 
 model_secondary_all <- lm(
   log_price ~ q_dist_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_final
 )
 
@@ -842,7 +908,7 @@ model_index_qc <- lm(
   log_price ~
     q_dist_primary + social_index_primary +
     q_dist_secondary + social_index_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_final
 )
 
@@ -853,7 +919,7 @@ model_index_qc_int <- lm(
   log_price ~
     q_dist_primary * social_index_primary +
     q_dist_secondary * social_index_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
   data = df_final
 )
 
@@ -883,7 +949,7 @@ base_formula_qc <- log_price ~
   q_dist_primary * school_quality_primary +
   q_dist_secondary * school_quality_secondary +
   log_area + log_plot_area +
-  zimmeranzahl + house_age
+  zimmeranzahl + house_age + log_low_income + log_middle_income
 
 # Reference school quality good 
 df_final_refgood <- df_final %>%
