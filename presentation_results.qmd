@@ -169,7 +169,7 @@ $
     \vspace{0.1em}
 -   $\gamma$ is a vector of coefficients corresponding to $X_i$
     \vspace{0.1em}
--   $\mu_{\ell(i)}$ are municipality fixed effects 
+-   $\mu_{\ell(i)}$ are municipality-specific characteristics
     \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
@@ -203,7 +203,7 @@ $
     \vspace{0.1em}
 -   $\text{Index}_i$ is the school social index 
     \vspace{0.1em}
--   $\mu_{\ell(i)}$ are municipality fixed effects 
+-   $\mu_{\ell(i)}$ are municipality-specific characteristics
     \vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
@@ -432,6 +432,11 @@ stateDiagram-v2
 -   Plot area
 -   Number of rooms
 -   House age
+
+#### Municipality characteristics
+
+-   Population share low income
+-   Population share middle income
 :::
 
 ::: {.column width="50%"}
@@ -738,20 +743,24 @@ $\displaystyle
 &\quad
 + \beta_5\, \bigl(\text{dist\_secondary}_{i}
 \times \text{school\_quality}_{i}\bigr)
-+ X_i' \gamma
++ X_i' \gamma 
++ \mu_{\ell(i)}
 + \varepsilon_i
 \end{aligned}
 $
 }
 \end{center}
 
-**Where:**
-
 -   $\log(P_i)$ denotes the natural logarithm of the housing price of house $i$ \vspace{0.1em}
--   $\text{dist}_{i}^{\text{primary}}$ measures distance to the nearest primary school (km) \vspace{0.1em}
--   $\text{dist}_{i}^{\text{secondary}}$ measures distance to the nearest secondary school (km) \vspace{0.1em}
+-   $\text{dist}_{i}^{\text{primary}}$ measures distance to the nearest primary school (km) 
+\vspace{0.1em}
+-   $\text{dist}_{i}^{\text{secondary}}$ measures distance to the nearest secondary school (km) 
+\vspace{0.1em}
 -   $\text{school\_quality}_i$ is a categorical indicator of school quality \vspace{0.1em}
--   $X_i$ is a vector of housing characteristics \vspace{0.1em}
+-   $X_i$ is a vector of housing characteristics 
+\vspace{0.1em}
+-   $\mu_{\ell(i)}$ are municipality-specific characteristics
+\vspace{0.1em}
 -   $\varepsilon_i$ captures unobserved factors
 
 ## Social Index: Regression Results
@@ -805,7 +814,6 @@ plot_si_slopri
 
 - **Interaction Effect**: Proximity is less strongly capitalized for Average secondary schools (interaction +0.035), aligning with the expectation that “Good” schools should have the strongest proximity premium.
 - **Bad Schools**: The interaction for Bad schools (−0.006) is not significant, possibly due to a limited number of observations.
-
 
 ## Social Index: Interpretaition of the Results
 
