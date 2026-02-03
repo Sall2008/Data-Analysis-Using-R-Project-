@@ -192,7 +192,8 @@ df_main <- df_main %>%
 
 df_school_meta <- read_delim(path_school, 
                              delim = ";",
-                             locale = readr::locale(encoding = "Latin1", decimal_mark = ","),
+                             locale = readr::locale(encoding = "Latin1", 
+                                                    decimal_mark = ","),
                              show_col_types = FALSE) %>%
   clean_names() %>%
   rename(school_id = schulnummer, social_index = sozialindexstufe) %>%
@@ -221,16 +222,21 @@ df_housing_clean_unique <- df_housing %>%
   slice_max(order_by = kaufpreis, n = 1, with_ties = FALSE) %>%
   ungroup()
 
-# Merge distance data with school meta data (Ensure school_quality and social_index are included)
+# Merge distance data with school meta data (Ensure school_quality and
+# social_index are included)
 df_final_with_social <- df_main %>% 
-  left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = c("school_id_primary" = "school_id")) %>%
-  left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = c("school_id_secondary" = "school_id")) %>%
-  left_join(df_school_meta %>% select(school_id, social_index, school_quality), by = c("school_id_any" = "school_id"))
+  left_join(df_school_meta %>% select(school_id, social_index, school_quality),
+            by = c("school_id_primary" = "school_id")) %>%
+  left_join(df_school_meta %>% select(school_id, social_index, school_quality),
+            by = c("school_id_secondary" = "school_id")) %>%
+  left_join(df_school_meta %>% select(school_id, social_index, school_quality),
+            by = c("school_id_any" = "school_id"))
 
 # Remove incomplete cases (Ensure that social_index columns from joins are considered)
 df_final_with_social <- df_final_with_social %>%
   drop_na(kaufpreis, wohnflaeche, ergg_1km, dist_primary_km, dist_secondary_km, 
-          dist_any_km, school_id_primary, school_id_secondary, school_id_any, social_index)
+          dist_any_km, school_id_primary, school_id_secondary, school_id_any,
+          social_index)
 
 # Diagnostics: dataset dimensions and social index summary
 cat("Merged Dataset Dimensions:", dim(df_final_with_social), "\n")
@@ -258,7 +264,8 @@ raw_housing_sale <- read_delim(
   path_sale_housing, 
   delim = ",", 
   locale = locale(decimal_mark = "."),
-  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value",
+         "Other missing"),
   show_col_types = FALSE
 )
 
@@ -267,7 +274,8 @@ raw_flats_sale <- read_delim(
   path_sale_flats, 
   delim = ",", 
   locale = locale(decimal_mark = "."),
-  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value",
+         "Other missing"),
   show_col_types = FALSE
 )
 
@@ -276,12 +284,14 @@ raw_flats_rent <- read_delim(
   path_rent_flats, 
   delim = ",", 
   locale = locale(decimal_mark = "."),
-  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value", "Other missing"),
+  na = c("-5", "-6", "-7", "-8", "-9", "-11", "NA", "", "Implausible value",
+         "Other missing"),
   show_col_types = FALSE
 )
 
 # NRW Cells Only
-raw_housing_sale_NRW <- raw_housing_sale %>% filter(blid == "North Rhine-Westphalia")
+raw_housing_sale_NRW <- raw_housing_sale %>% filter(
+  blid == "North Rhine-Westphalia")
 raw_flats_sale_NRW <- raw_flats_sale %>% filter(blid == "North Rhine-Westphalia")
 raw_flats_rent_NRW <- raw_flats_rent %>% filter(blid == "North Rhine-Westphalia")
 
@@ -458,8 +468,10 @@ m1_naive_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km,
 # )
 
 # Model 2 with added municipality effects
-m2_base_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km + log_area + log_plot_area + 
-                     zimmeranzahl + house_age + log_population_density + log_low_income + log_middle_income,
+m2_base_both_cont <- lm(log_price ~ dist_primary_km + dist_secondary_km + 
+                          log_area + log_plot_area + zimmeranzahl + house_age + 
+                          log_population_density + log_low_income + 
+                          log_middle_income,
                    data = df_reg_dist)
 
 # Model 2 RSE
@@ -473,8 +485,10 @@ m2_base_both_cont_rse <- coeftest(m2_base_both_cont, vcov = sandwich)
 # )
 
 # Model 3 with added municipality effects
-m3_poly_both_cont <- lm(log_price ~ dist_primary_km + I(dist_primary_km^2) + dist_secondary_km + I(dist_secondary_km^2) + 
-                     log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income, 
+m3_poly_both_cont <- lm(log_price ~ dist_primary_km + I(dist_primary_km^2) + 
+                          dist_secondary_km + I(dist_secondary_km^2) + 
+                          log_area + log_plot_area + zimmeranzahl + house_age + 
+                          log_low_income + log_middle_income, 
                    data = df_reg_dist)
 
 # Model 3 RSE
@@ -487,8 +501,9 @@ m3_poly_both_cont_rse <- coeftest(m3_poly_both_cont, vcov = sandwich)
 # )
 
 # Model 4 with added municipality effects
-m4_base_primary_cont <- lm(log_price ~ dist_primary_km + log_area + log_plot_area + 
-                        zimmeranzahl + house_age + log_low_income + log_middle_income, 
+m4_base_primary_cont <- lm(log_price ~ dist_primary_km + log_area + 
+                             log_plot_area + zimmeranzahl + house_age + 
+                             log_low_income + log_middle_income, 
                       data = df_reg_dist)
 
 # Model 4 RSE
@@ -501,8 +516,9 @@ m4_base_primary_cont_rse <- coeftest(m4_base_primary_cont, vcov = sandwich)
 # )
 
 # Model 5 with added municipality effects
-m5_base_secondary_cont <- lm(log_price ~ dist_secondary_km + log_area + log_plot_area + 
-                          zimmeranzahl + house_age + log_low_income + log_middle_income,
+m5_base_secondary_cont <- lm(log_price ~ dist_secondary_km + log_area + 
+                               log_plot_area + zimmeranzahl + house_age + 
+                               log_low_income + log_middle_income,
                         data = df_reg_dist)
 
 # Model 5 RSE
@@ -523,7 +539,8 @@ m6_naive_both_bin <- lm(log_price ~ dist_primary_bin + dist_secondary_bin,
 # Model 7 with added municipality effects
 m7_base_both_bin <- lm(
   log_price ~ dist_primary_bin + dist_secondary_bin +
-    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income +
+    log_middle_income,
   data = df_reg_dist
 )
 
@@ -539,7 +556,8 @@ m7_base_both_bin_rse <- coeftest(m7_base_both_bin, vcov = sandwich)
 # Model 8 with added municipality effects
 m8_base_primary_bin <- lm(
   log_price ~ dist_primary_bin +
-    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income +
+    log_middle_income,
   data = df_reg_dist
 )
 
@@ -684,11 +702,12 @@ base_formula <- log_price ~
   dist_primary_km * school_quality +
   dist_secondary_km * school_quality +
   log_area + log_plot_area +
-  zimmeranzahl + house_age
+  zimmeranzahl + house_age + log_low_income + log_middle_income
 
 # School Quality as Factor 
 df_reg <- df_final_with_social %>%
-  mutate(school_quality = factor(school_quality, levels = c("good", "average", "bad"))) 
+  mutate(school_quality = factor(school_quality, levels = c("good", "average",
+                                                            "bad"))) 
 
 # Maximum Distance of 5km 
 df_reg <- df_reg %>%
@@ -889,7 +908,8 @@ names(df_final)[grepl("index|quality|q_dist", names(df_final))]
 # Primary Schools
 model_primary_all <- lm(
   log_price ~ q_dist_primary +
-    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income +
+    log_middle_income,
   data = df_final
 )
 
@@ -898,7 +918,8 @@ summary(model_primary_all)
 # Secondary Schools 
 model_secondary_all <- lm(
   log_price ~ q_dist_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income +
+    log_middle_income,
   data = df_final
 )
 
@@ -911,7 +932,8 @@ model_index_qc <- lm(
   log_price ~
     q_dist_primary + social_index_primary +
     q_dist_secondary + social_index_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income +
+    log_middle_income,
   data = df_final
 )
 
@@ -922,7 +944,8 @@ model_index_qc_int <- lm(
   log_price ~
     q_dist_primary * social_index_primary +
     q_dist_secondary * social_index_secondary +
-    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income + log_middle_income,
+    log_area + log_plot_area + zimmeranzahl + house_age + log_low_income +
+    log_middle_income,
   data = df_final
 )
 
@@ -973,8 +996,10 @@ df_final_refavg <- df_final %>%
     school_quality_primary   = factor(school_quality_primary),
     school_quality_secondary = factor(school_quality_secondary),
     
-    school_quality_primary   = relevel(school_quality_primary, ref = "average"),
-    school_quality_secondary = relevel(school_quality_secondary, ref = "average")
+    school_quality_primary   = relevel(school_quality_primary,
+                                       ref = "average"),
+    school_quality_secondary = relevel(school_quality_secondary,
+                                       ref = "average")
   )
 
 m_avg_ref <- lm(base_formula_qc, data = df_final_refavg)
@@ -1028,8 +1053,10 @@ tab1_data <- bind_rows(
   extract_coef(m1_naive_both_cont, terms_cont) %>% mutate(model = "Naive"),
   extract_coef(m2_base_both_cont, terms_cont) %>% mutate(model = "Baseline"),
   extract_coef(m3_poly_both_cont, terms_cont) %>% mutate(model = "Polynomial"),
-  extract_coef(m4_base_primary_cont, terms_cont) %>% mutate(model = "Primary Only"),
-  extract_coef(m5_base_secondary_cont, terms_cont) %>% mutate(model = "Secondary Only")
+  extract_coef(m4_base_primary_cont, terms_cont) %>% mutate(
+    model = "Primary Only"),
+  extract_coef(m5_base_secondary_cont, terms_cont) %>% mutate(
+    model = "Secondary Only")
 )
 
 tab1_wide <- tab1_data %>%
@@ -1047,29 +1074,39 @@ tab1_wide <- tab1_data %>%
     )
   ) %>%
   select(Variable, starts_with("Naive"), starts_with("Baseline"), 
-         starts_with("Polynomial"), starts_with("Primary"), starts_with("Secondary"))
+         starts_with("Polynomial"), starts_with("Primary"), 
+         starts_with("Secondary"))
 
 gof_row1 <- tibble(
   Variable = c("N", "R²", "Adj. R²"),
   Naive_coef = c(as.character(nobs(m1_naive_both_cont)), 
                  as.character(round(summary(m1_naive_both_cont)$r.squared, 3)),
-                 as.character(round(summary(m1_naive_both_cont)$adj.r.squared, 3))),
+                 as.character(round(summary(m1_naive_both_cont)
+                                    $adj.r.squared, 3))),
   Naive_se = c("", "", ""),
   Baseline_coef = c(as.character(nobs(m2_base_both_cont)),
-                    as.character(round(summary(m2_base_both_cont)$r.squared, 3)),
-                    as.character(round(summary(m2_base_both_cont)$adj.r.squared, 3))),
+                    as.character(round(summary(m2_base_both_cont)
+                                       $r.squared, 3)),
+                    as.character(round(summary(m2_base_both_cont)
+                                       $adj.r.squared, 3))),
   Baseline_se = c("", "", ""),
   Polynomial_coef = c(as.character(nobs(m3_poly_both_cont)),
-                      as.character(round(summary(m3_poly_both_cont)$r.squared, 3)),
-                      as.character(round(summary(m3_poly_both_cont)$adj.r.squared, 3))),
+                      as.character(round(summary(m3_poly_both_cont)
+                                         $r.squared, 3)),
+                      as.character(round(summary(m3_poly_both_cont)
+                                         $adj.r.squared, 3))),
   Polynomial_se = c("", "", ""),
   `Primary Only_coef` = c(as.character(nobs(m4_base_primary_cont)),
-                          as.character(round(summary(m4_base_primary_cont)$r.squared, 3)),
-                          as.character(round(summary(m4_base_primary_cont)$adj.r.squared, 3))),
+                          as.character(round(summary(m4_base_primary_cont)
+                                             $r.squared, 3)),
+                          as.character(round(summary(m4_base_primary_cont)
+                                             $adj.r.squared, 3))),
   `Primary Only_se` = c("", "", ""),
   `Secondary Only_coef` = c(as.character(nobs(m5_base_secondary_cont)),
-                            as.character(round(summary(m5_base_secondary_cont)$r.squared, 3)),
-                            as.character(round(summary(m5_base_secondary_cont)$adj.r.squared, 3))),
+                            as.character(round(summary(m5_base_secondary_cont)
+                                               $r.squared, 3)),
+                            as.character(round(summary(m5_base_secondary_cont)
+                                               $adj.r.squared, 3))),
   `Secondary Only_se` = c("", "", "")
 )
 
@@ -1118,14 +1155,19 @@ tab_1_ols_cont
 
 #### ==== 3.1.2 Table 2: Binned specifications only ====
 
-terms_bin <- c("dist_primary_bin3-6", "dist_primary_bin6-9", "dist_primary_bin>9",
-               "dist_secondary_bin3-6", "dist_secondary_bin6-9", "dist_secondary_bin>9")
+terms_bin <- c("dist_primary_bin3-6", "dist_primary_bin6-9", 
+               "dist_primary_bin>9",
+               "dist_secondary_bin3-6", "dist_secondary_bin6-9", 
+               "dist_secondary_bin>9")
 
 tab2_data <- bind_rows(
   extract_coef(m6_naive_both_bin, terms_bin) %>% mutate(model = "Naive"),
-  extract_coef(m7_base_both_bin, terms_bin) %>% mutate(model = "Baseline"),
-  extract_coef(m8_base_primary_bin, terms_bin) %>% mutate(model = "Primary Only"),
-  extract_coef(m9_base_secondary_bin, terms_bin) %>% mutate(model = "Secondary Only")
+  extract_coef(m7_base_both_bin, terms_bin) %>% mutate(model = 
+                                                         "Baseline"),
+  extract_coef(m8_base_primary_bin, terms_bin) %>% mutate(model = 
+                                                            "Primary Only"),
+  extract_coef(m9_base_secondary_bin, terms_bin) %>% mutate(model = 
+                                                              "Secondary Only")
 )
 
 tab2_wide <- tab2_data %>%
@@ -1151,19 +1193,25 @@ gof_row2 <- tibble(
   Variable = c("N", "R²", "Adj. R²"),
   Naive_coef = c(as.character(nobs(m6_naive_both_bin)),
                  as.character(round(summary(m6_naive_both_bin)$r.squared, 3)),
-                 as.character(round(summary(m6_naive_both_bin)$adj.r.squared, 3))),
+                 as.character(round(summary(m6_naive_both_bin)
+                                    $adj.r.squared, 3))),
   Naive_se = c("", "", ""),
   Baseline_coef = c(as.character(nobs(m7_base_both_bin)),
                     as.character(round(summary(m7_base_both_bin)$r.squared, 3)),
-                    as.character(round(summary(m7_base_both_bin)$adj.r.squared, 3))),
+                    as.character(round(summary(m7_base_both_bin)
+                                       $adj.r.squared, 3))),
   Baseline_se = c("", "", ""),
   `Primary Only_coef` = c(as.character(nobs(m8_base_primary_bin)),
-                          as.character(round(summary(m8_base_primary_bin)$r.squared, 3)),
-                          as.character(round(summary(m8_base_primary_bin)$adj.r.squared, 3))),
+                          as.character(round(summary(m8_base_primary_bin)
+                                             $r.squared, 3)),
+                          as.character(round(summary(m8_base_primary_bin)
+                                             $adj.r.squared, 3))),
   `Primary Only_se` = c("", "", ""),
   `Secondary Only_coef` = c(as.character(nobs(m9_base_secondary_bin)),
-                            as.character(round(summary(m9_base_secondary_bin)$r.squared, 3)),
-                            as.character(round(summary(m9_base_secondary_bin)$adj.r.squared, 3))),
+                            as.character(round(summary(m9_base_secondary_bin)
+                                               $r.squared, 3)),
+                            as.character(round(summary(m9_base_secondary_bin)
+                                               $adj.r.squared, 3))),
   `Secondary Only_se` = c("", "", "")
 )
 
@@ -1182,7 +1230,8 @@ tab_2_ols_bin <- tab2_final %>%
     linesep = ""
   ) %>%
   add_header_above(
-    c(" " = 1, "Naive" = 2, "Baseline" = 2, "Primary Only" = 2, "Secondary Only" = 2),
+    c(" " = 1, "Naive" = 2, "Baseline" = 2, "Primary Only" = 2, 
+      "Secondary Only" = 2),
     bold = TRUE
   ) %>%
   kable_styling(
@@ -1213,11 +1262,14 @@ tab_2_ols_bin
 #### ==== 3.1.3 Table 3: Baseline continuous vs baseline binned ====
 
 terms_compare <- c("dist_primary_km", "dist_secondary_km",
-                   "dist_primary_bin3-6", "dist_primary_bin6-9", "dist_primary_bin>9",
-                   "dist_secondary_bin3-6", "dist_secondary_bin6-9", "dist_secondary_bin>9")
+                   "dist_primary_bin3-6", "dist_primary_bin6-9", 
+                   "dist_primary_bin>9",
+                   "dist_secondary_bin3-6", "dist_secondary_bin6-9", 
+                   "dist_secondary_bin>9")
 
 tab3_data <- bind_rows(
-  extract_coef(m2_base_both_cont, terms_compare) %>% mutate(model = "Continuous"),
+  extract_coef(m2_base_both_cont, terms_compare) %>% mutate(model = 
+                                                              "Continuous"),
   extract_coef(m7_base_both_bin, terms_compare) %>% mutate(model = "Binned")
 )
 
@@ -1244,12 +1296,16 @@ tab3_wide <- tab3_data %>%
 gof_row3 <- tibble(
   Variable = c("N", "R²", "Adj. R²"),
   Continuous_coef = c(as.character(nobs(m2_base_both_cont)),
-                      as.character(round(summary(m2_base_both_cont)$r.squared, 3)),
-                      as.character(round(summary(m2_base_both_cont)$adj.r.squared, 3))),
+                      as.character(round(summary(m2_base_both_cont)
+                                         $r.squared, 3)),
+                      as.character(round(summary(m2_base_both_cont)
+                                         $adj.r.squared, 3))),
   Continuous_se = c("", "", ""),
   Binned_coef = c(as.character(nobs(m7_base_both_bin)),
-                  as.character(round(summary(m7_base_both_bin)$r.squared, 3)),
-                  as.character(round(summary(m7_base_both_bin)$adj.r.squared, 3))),
+                  as.character(round(summary(m7_base_both_bin)
+                                     $r.squared, 3)),
+                  as.character(round(summary(m7_base_both_bin)
+                                     $adj.r.squared, 3))),
   Binned_se = c("", "", "")
 )
 
@@ -1345,7 +1401,8 @@ tab_5_robust_checks <- diag_robust_di %>%
     Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
   ) %>%
   select(Model, BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max) %>%
-  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", "Max Cook's $D$")) %>%
+  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", 
+             "Max Cook's $D$")) %>%
   knitr::kable(
     format = "latex",
     booktabs = TRUE,
@@ -1360,7 +1417,9 @@ tab_5_robust_checks <- diag_robust_di %>%
   row_spec(0, bold = TRUE) %>%
   column_spec(1, bold = FALSE) %>%
   kableExtra::footnote(
-    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values indicate heteroskedasticity; higher VIF indicates collinearity; larger Cook's $D$ indicates influential points.",
+    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values 
+    indicate heteroskedasticity; higher VIF indicates collinearity; larger 
+    Cook's $D$ indicates influential points.",
     general_title = "Note: ",
     threeparttable = TRUE,
     escape = FALSE
@@ -1590,10 +1649,14 @@ coef_map <- c(
   "house_age"                      = "House age",
   "school_qualityaverage"          = "School Quality: Average",
   "school_qualitybad"              = "School Quality: Bad",
-  "dist_primary_km:school_qualityaverage" = "Interaction: Distance to primary school * Average School Quality",
-  "dist_primary_km:school_qualitybad"    = "Interaction: Distance to primary school * Bad School Quality",
-  "school_qualityaverage:dist_secondary_km" = "Interaction: Distance to secondary school * Average School Quality",
-  "school_qualitybad:dist_secondary_km"    = "Interaction: Distance to secondary school * Bad School Quality"
+  "dist_primary_km:school_qualityaverage" = "Interaction: Distance to 
+  primary school * Average School Quality",
+  "dist_primary_km:school_qualitybad"    = "Interaction: Distance to 
+  primary school * Bad School Quality",
+  "school_qualityaverage:dist_secondary_km" = "Interaction: Distance to 
+  secondary school * Average School Quality",
+  "school_qualitybad:dist_secondary_km"    = "Interaction: Distance to 
+  secondary school * Bad School Quality"
 )
 
 # Models for table
@@ -1714,7 +1777,8 @@ tab_7_robust_checks <- diag_robust_si %>%
     Cook_n_gt_4n = as.integer(Cook_n_gt_4n)
   ) %>%
   select(Model, BP_pvalue, Max_VIF, Cook_n_gt_4n, Cook_max) %>%
-  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", "Max Cook's $D$")) %>%
+  setNames(c("Model", "BP p-value", "Max VIF", "Influential ($D > 4/n$)", 
+             "Max Cook's $D$")) %>%
   knitr::kable(
     format = "latex",
     booktabs = TRUE,
@@ -1729,7 +1793,9 @@ tab_7_robust_checks <- diag_robust_si %>%
   row_spec(0, bold = TRUE) %>%
   column_spec(1, bold = FALSE) %>%
   kableExtra::footnote(
-    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values indicate heteroskedasticity; higher VIF indicates collinearity; larger Cook's $D$ indicates influential points.",
+    general = "Inference uses \\textbf{HC1 robust SE}. Lower BP p-values 
+    indicate heteroskedasticity; higher VIF indicates collinearity; larger 
+    Cook's $D$ indicates influential points.",
     general_title = "Note: ",
     threeparttable = TRUE,
     escape = FALSE
@@ -1759,10 +1825,9 @@ gvif_tab <- gvif_m_good_ref %>%
   ) %>% 
   mutate(
     variable = dplyr::recode(
-      Variable,   # ← changed from term to Variable
+      Variable,   
       "dist_primary_km"              = "Distance to primary school (km)",
       "school_quality"               = "School Quality",
-      # add the rest if you want nice labels for all variables
       "dist_secondary_km"            = "Distance to secondary school (km)",
       "log_area"                     = "Log building area",
       "log_plot_area"                = "Log plot area",
@@ -1771,7 +1836,8 @@ gvif_tab <- gvif_m_good_ref %>%
       "dist_primary_km:school_quality"       = "Dist primary × School quality",
       "school_quality:dist_secondary_km"     = "School quality × Dist secondary"
     )
-  )
+  ) %>% 
+  select(Variable = variable, everything(), -Variable)
 
 # Beamer-ready table
 fab_10_gvif <- kable(
@@ -1779,6 +1845,8 @@ fab_10_gvif <- kable(
   format = "latex",
   booktabs = TRUE,
   digits = 3,
+  linesep = "",
+  col.names = c("Variable", "VIF", "DF", "GVIF", "Adjusted GVIF"),
   ) %>% 
   kableExtra::kable_styling(
     font_size = 7, 
@@ -1809,7 +1877,8 @@ fig_6_spa_dis <- ggplot(df_grid, aes(x = lon, y = lat)) +
   theme_minimal() +
   labs(
     title = "Spatial Distribution of School Social Index in NRW",
-    subtitle = "Each grid cell colored by the social index of the nearest school"
+    subtitle = "Each grid cell colored by the social index of the nearest 
+    school"
   ) +
   theme(
     plot.background  = element_rect(fill = "transparent", color = NA),
@@ -2010,7 +2079,8 @@ tab_8_qc_dist <- reg_table_print %>%
 
 #### ==== 3.3.2 Figure 11: Map Primary Schools ====
 
-fig_11_queen_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primary)) +
+fig_11_queen_primary <- ggplot(cells_big, aes(x = x, y = y, fill = 
+                                                q_dist_primary)) +
   labs(
     title = "Queens Distance for Primary Schools"
   ) +
@@ -2028,7 +2098,8 @@ fig_11_queen_primary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_primar
 
 #### ==== 3.3.3 Figure 12: Map Secondary Schools ====
 
-fig_12_queen_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = q_dist_secondary)) +
+fig_12_queen_secondary <- ggplot(cells_big, aes(x = x, y = y, fill = 
+                                                  q_dist_secondary)) +
   labs(
     title = "Queens Distance for Secondary Schools"
   ) +
@@ -2258,7 +2329,8 @@ queen_grid_5 <- expand.grid(
     q_dist = pmax(abs(x - 3), abs(y - 3))
   )
 
-fig_16_met_qc_1 <- ggplot(queen_grid_5, aes(x = x, y = y, fill = factor(q_dist))) +
+fig_16_met_qc_1 <- ggplot(queen_grid_5, aes(x = x, y = y, fill = 
+                                              factor(q_dist))) +
   geom_tile(color = "white", linewidth = 0.5) +
   
   # Mark school cell
@@ -2387,7 +2459,8 @@ queen_15_frag <- queen_15 %>%
       )
   )
 
-fig_18_lim_qc <- ggplot(queen_15_frag, aes(x = x, y = y, fill = factor(q_dist))) +
+fig_18_lim_qc <- ggplot(queen_15_frag, aes(x = x, y = y, fill = 
+                                             factor(q_dist))) +
   geom_tile(color = "white", linewidth = 0.15) +
   
   # Overlay school locations
