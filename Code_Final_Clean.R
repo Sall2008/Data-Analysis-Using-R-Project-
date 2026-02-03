@@ -1689,9 +1689,6 @@ table_reg1 <- reg_table_print %>%
     escape = FALSE
   )
 
-#### ==== 3.2.3 Table: Robustness Checks (Social Index) ====
-
-
 #### ==== 3.2.2 Plot: Spatial Distribution Social Index Schools in NRW ====
 
 df_grid <- df_final_with_social %>%
