@@ -1754,16 +1754,6 @@ plot_social_muni <- ggplot(map_data_social) +
 
 #### ==== 3.3.1 Table: Distance only ====
 
-# Helper: significance stars
-stars <- function(p) {
-  case_when(
-    p < 0.01 ~ "***",
-    p < 0.05 ~ "**",
-    p < 0.1  ~ "*",
-    TRUE     ~ ""
-  )
-}
-
 # Extract only the distance coefficients
 reg_table <- bind_rows(
   tidy(model_primary_all) %>%
