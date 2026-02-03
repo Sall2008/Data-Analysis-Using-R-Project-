@@ -41,6 +41,7 @@ theme_set(
 path_housing <- "course_data/housing_data/cross_section/CampusFile_HK_2022.csv"
 path_school  <- "course_data/school_data/2022_social_index.csv"
 path_dist    <- "course_data/school_data/distance_to_schools.csv"
+path_region  <- "course_data/region_data/region_data.csv"
 path_VG250   <- "course_data/VG250/vg250_ebenen_0101/VG250_GEM.shp"
 
 year_ref <- 2022
@@ -169,6 +170,15 @@ df_main <- df_housing %>%
   )
 
 cat("Final dataset dimensions:", dim(df_main), "\n")
+
+## ==== 1.5 Merge Region Data ====
+
+df_region <- read.csv(path_region, fileEncoding = "UTF-8") %>%
+  clean_names() %>%
+  rename(gid2019 = ags)  # Rename ags to gid2019
+
+df_main <- df_main %>%
+  left_join(df_region, by = c("gid2019" = "gid2019"))
 
 ## ==== 1.6 Social Index Preparation  ====
 
@@ -1242,7 +1252,7 @@ tab_4_compare_all <- compare_all %>%
 
 tab_4_compare_all
 
-#### ==== 3.1.5 Table: Robustness checks ====
+#### ==== 3.1.5 Table: Robustness Checks (Distance) ====
 
 tab5_data <- diag_robust_di %>%
   mutate(
@@ -1613,6 +1623,8 @@ table_reg1 <- reg_table_print %>%
     escape = FALSE
   )
 
+#### ==== 3.2.3 Table: Robustness Checks (Social Index) ====
+
 
 #### ==== 3.2.2 Plot: Spatial Distribution Social Index Schools in NRW ====
 
@@ -1642,8 +1654,7 @@ spa_dis <- ggplot(df_grid, aes(x = lon, y = lat)) +
     panel.background = element_rect(fill = "transparent", color = NA)
   )
 
-
-#### ==== 3.2.3 Plot: Bar chart Social Index ====
+#### ==== 3.2.4 Plot: Bar chart Social Index ====
 
 bar_chart_index <- df_school_meta %>%
   ggplot(aes(x = factor(social_index))) +
@@ -1655,7 +1666,7 @@ bar_chart_index <- df_school_meta %>%
   )
 
 
-#### ==== 3.2.4 Plot: Simple Slopes for Primary & Secondary Schools ====
+#### ==== 3.2.5 Plot: Simple Slopes for Primary & Secondary Schools ====
 
 # Modell mit Schulqualität "good"
 m_good_ref <- lm(base_formula, data = df_reg1)
@@ -1710,7 +1721,7 @@ plot_si_slosec$layers <- c(
 
 plot_si_slosec
 
-#### ==== 3.2.5 Plot: Average School Social Index by VG ====
+#### ==== 3.2.6 Plot: Average School Social Index by VG ====
 
 df_muni_social <- df_final_with_social %>%
   filter(
