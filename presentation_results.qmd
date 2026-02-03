@@ -802,7 +802,7 @@ plot_si_slosec
 
 \fcolorbox{green!50!black}{green!5}{
 \parbox{\linewidth}{
-\textbf{H1: House prices are higher related to schools}\\[-2pt]
+\textbf{H1: House prices differ based on the distance to schools}\\[-2pt]
 \emph{Expected: Negative coefficients on distance variables}
 
 \vspace{0.4em}
