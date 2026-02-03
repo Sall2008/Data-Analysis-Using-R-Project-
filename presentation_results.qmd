@@ -104,7 +104,9 @@ housing prices:
 
 ## Research Question
 
-**Out contribution**: We study a setting **without binding school catchment areas** (NRW, Germany) and assess whether both school proximity and a
+**Out contribution**: We study a setting 
+**without binding school catchment areas** (NRW, Germany) and assess whether 
+both school proximity and a
 **demographically based school social index** are capitalized into
 housing prices.
 
@@ -126,7 +128,8 @@ between primary and secondary schools in North Rhine–Westphalia?
 
 \fcolorbox{blue!60}{white}{
 \parbox{\linewidth}{
-\textbf{H2: Social index moderates the effect of school proximity on house prices}\\[-2pt]
+\textbf{H2: Social index moderates the effect of school proximity on house 
+prices}\\[-2pt]
 \emph{Expected: Better schools leading to stronger price premiums}
 }}
 
@@ -652,18 +655,22 @@ tab_8_qc_dist
 \medskip
 \fcolorbox{blue!60}{white}{
 \parbox{\linewidth}{
-\textbf{H2: Social index moderates the effect of school proximity on house prices}\\[-2pt]
+\textbf{H2: Social index moderates the effect of school proximity on house 
+prices}\\[-2pt]
 \emph{Expected: Better schools leading to stronger price premiums}
 }}
 \medskip
 
--   **Key Finding from Distance Analysis:** We’ve already established that *households are willing to pay a premium* for proximity to schools
--   **Next Question:** Now, we investigate *whether this price premium is driven by school quality*, measured through the *Social Index*
+-   **Key Finding from Distance Analysis:** We’ve already established that 
+*households are willing to pay a premium* for proximity to schools
+-   **Next Question:** Now, we investigate *whether this price premium is* 
+*driven by school quality*, measured through the *Social Index*
 
 
 ## What is the Social Index?
 
-**Definition**: The Social Index is a measure that shows the socio-economic and demographic background of a schools students.
+**Definition**: The Social Index is a measure that shows the socio-economic and
+demographic background of a schools students.
   
 **Components of the social index are**:
 
@@ -674,7 +681,8 @@ tab_8_qc_dist
 -   Unemployment in the Family 
 -   Housing Situation 
   
---> It provides insights into the **social environment** that might influence housing prices in that area.
+--> It provides insights into the **social environment** that might influence 
+housing prices in that area.
 
 
 ## Categorization of the Social Index
@@ -685,7 +693,9 @@ tab_8_qc_dist
 -   **Average Schools**: Social Index 3-4
 -   **Bad Schools**: Social Index 5-8
 
--    **Skewed Distribution**: The Social Index classes are heavily skewed, with many schools falling into classes 1, 2 & 3. We excluded class 9 for our analysis because of too less observations
+-    **Skewed Distribution**: The Social Index classes are heavily skewed, with
+many schools falling into classes 1, 2 & 3. We excluded class 9 for our analysis
+because of too less observations
   
 
 ## Categorization of the Social Index: Bar Chart
@@ -698,7 +708,8 @@ tab_8_qc_dist
 fig_7_bar_chart_index
 ```
 
-**Graph**: Distribution of Social Index values across schools showing the skewed nature of the data.
+**Graph**: Distribution of Social Index values across schools showing the 
+skewed nature of the data.
 
 ## Spatial Distribution of School Social Index in NRW
 
@@ -751,12 +762,16 @@ $
 }
 \end{center}
 
--   $\log(P_i)$ denotes the natural logarithm of the housing price of house $i$ \vspace{0.1em}
--   $\text{dist}_{i}^{\text{primary}}$ measures distance to the nearest primary school (km) 
+-   $\log(P_i)$ denotes the natural logarithm of the housing price of house $i$
 \vspace{0.1em}
--   $\text{dist}_{i}^{\text{secondary}}$ measures distance to the nearest secondary school (km) 
+-   $\text{dist}_{i}^{\text{primary}}$ measures distance to the nearest primary 
+school (km) 
 \vspace{0.1em}
--   $\text{school\_quality}_i$ is a categorical indicator of school quality \vspace{0.1em}
+-   $\text{dist}_{i}^{\text{secondary}}$ measures distance to the nearest 
+secondary school (km) 
+\vspace{0.1em}
+-   $\text{school\_quality}_i$ is a categorical indicator of school quality 
+\vspace{0.1em}
 -   $X_i$ is a vector of housing characteristics 
 \vspace{0.1em}
 -   $\mu_{\ell(i)}$ are municipality-specific characteristics
@@ -770,6 +785,73 @@ $
 #| results: asis
 #| include: true
 tab_6_reg_si
+```
+
+## Social Index: Interpretation of the Results
+### Primary School: Proximity and School Quality
+
+-   **Proximity Effect**:  strong proximity effect persists. Each additional 
+kilometer to the nearest primary school reduces log house prices by 7,8% 
+(−0.078).
+- **School Quality Effect**: There is no robust level effect for school quality. 
+The coefficients for “Average” (−0.001) and “Bad” (0,004) are not significant, 
+showing no evidence of a “good-school level premium”.
+
+## Social Index: Interpretation of the Results
+### Primary School: Interaction Effect and Bad Schools
+
+- **Interaction Effect**: Proximity is more strongly capitalized for Average 
+schools (−0.038). This contradicts the expectation that “Good” schools should 
+generate the strongest price premium regarding proximity.
+- **Bad Schools**: The interaction for Bad schools (+0.047) is not significant, 
+possibly due to the limited sample size, indicating no clear difference from 
+“Good” schools.
+
+## Social Index: Interpretation of the Results
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "85%"
+fig_8_si_slopri
+```
+  
+## Social Index: Interpretation of the Results
+### Secondary Schools: Proximity and School Quality
+
+- **Proximity Effect**: We observe a similar strong proximity effect for 
+secondary schools. Each additional kilometer to the nearest secondary school 
+reduces log house prices by 4.3% (-0,043).
+- **School Quality Effect**: As with primary schools, there is no robust level 
+effect for school quality.
+
+## Social Index: Interpretation of the Results
+### Secondary Schools: Interaction Effect and Bad Schools
+
+- **Interaction Effect**: Proximity is less strongly capitalized for Average 
+secondary schools (+0.033), aligning with the expectation that “Good” schools 
+should have the strongest proximity premium.
+- **Bad Schools**: The interaction for Bad schools (−0.01) is not significant, 
+possibly due to a limited number of observations.
+
+## Social Index: Interpretation of the Results
+
+```{r}
+#| fig.width: 6
+#| fig.height: 3.4
+#| fig.align: center
+#| out.width: "85%"
+fig_9_si_slosec
+```
+
+## Robustness check: Queen Contiguity (Social Index)
+
+```{r}
+#| echo: false
+#| results: asis
+#| include: true
+tab_9_qc_index
 ```
 
 ## Robustness check: Social Index
@@ -790,59 +872,6 @@ tab_7_robust_checks
 fab_10_gvif
 ```
 
-## Robustness check: Queen Contiguity (Social Index)
-
-```{r}
-#| echo: false
-#| results: asis
-#| include: true
-tab_9_qc_index
-```
-
-## Social Index: Interpretaition of the Results
-### Primary School: Proximity and School Quality
-
--   **Proximity Effect**: A strong proximity effect persists. Each additional kilometer to the nearest primary school reduces log house prices by 8% (−0.08).
-- **School Quality Effect**: There is no robust level effect for school quality. The coefficients for “Average” (−0.015) and “Bad” (−0.027) are negative but not significant, showing no evidence of a “good-school level premium”.
-
-## Social Index: Interpretaition of the Results
-### Primary School: Interaction Effect and Bad Schools
-
-- **Interaction Effect**: Proximity is more strongly capitalized for Average schools (interaction −0.036). This contradicts the expectation that “Good” schools should generate the strongest price premium regarding proximity.
-- **Bad Schools**: The interaction for Bad schools (+0.057) is not significant, possibly due to the limited sample size, indicating no clear difference from “Good” schools.
-
-## Social Index: Interpretaition of the Results
-
-```{r}
-#| fig.width: 6
-#| fig.height: 3.4
-#| fig.align: center
-#| out.width: "85%"
-fig_8_si_slopri
-```
-  
-## Social Index: Interpretaition of the Results
-### Secondary Schools: Proximity and School Quality
-
-- **Proximity Effect**: We observe a similar strong proximity effect for secondary schools. Each additional kilometer to the nearest secondary school reduces log house prices by 4.2% (-0,042).
-- **School Quality Effect**: As with primary schools, there is no robust level effect for school quality.
-
-## Social Index: Interpretaition of the Results
-### Secondary Schools: Interaction Effect and Bad Schools
-
-- **Interaction Effect**: Proximity is less strongly capitalized for Average secondary schools (interaction +0.035), aligning with the expectation that “Good” schools should have the strongest proximity premium.
-- **Bad Schools**: The interaction for Bad schools (−0.006) is not significant, possibly due to a limited number of observations.
-
-## Social Index: Interpretaition of the Results
-
-```{r}
-#| fig.width: 6
-#| fig.height: 3.4
-#| fig.align: center
-#| out.width: "85%"
-fig_9_si_slosec
-```
-
 # Concluding Thoughts and Limitations
 
 ## Concluding thoughts: Hypotheses Assessment
@@ -861,7 +890,8 @@ fig_9_si_slosec
 
 \fcolorbox{red!60!black}{red!4}{
 \parbox{\linewidth}{
-\textbf{H2: Social index moderates the effect of school proximity on house prices}\\[-2pt]
+\textbf{H2: Social index moderates the effect of school proximity on house 
+prices}\\[-2pt]
 \emph{Expected: Better schools leading to stronger price premiums}
 
 \vspace{0.4em}
@@ -890,7 +920,8 @@ fig_15_lim_dist
 
 ::::: {.columns align=center .onlytextwidth}
 ::: {.column width="35%"}
-We do not have data for every grid cell of NRW but only a fragmented set of grids containing houses from the available datasets.
+We do not have data for every grid cell of NRW but only a fragmented set of 
+grids containing houses from the available datasets.
 :::
 ::: {.column width="65%"}
 ```{r}
@@ -906,7 +937,8 @@ fig_18_lim_qc
 
 ## Limitations: Other
 
--   **Omitted neighborhood characteristics**: Unobserved neighborhood attributes      correlated with school location may bias estimated school effects.
+-   **Omitted neighborhood characteristics**: Unobserved neighborhood attributes
+    correlated with school location may bias estimated school effects.
 -   **Listing prices**: The prices we have are not transaction but
     listing prices.
 -   **Heteroskedasticity**: Despite using robust standard errors, the
