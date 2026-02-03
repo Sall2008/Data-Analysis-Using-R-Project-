@@ -781,6 +781,15 @@ tab_6_reg_si
 tab_7_robust_checks
 ```
 
+## Robustness check: Social Index
+
+```{r}
+#| echo: false
+#| results: asis
+#| include: true
+fab_10_gvif
+```
+
 ## Robustness check: Queen Contiguity (Social Index)
 
 ```{r}
@@ -900,6 +909,9 @@ fig_18_lim_qc
 -   **Omitted neighborhood characteristics**: Unobserved neighborhood attributes      correlated with school location may bias estimated school effects.
 -   **Listing prices**: The prices we have are not transaction but
     listing prices.
+-   **Heteroskedasticity**: Despite using robust standard errors, the
+    Breusch-Pagan test indicates the presence of heteroskedasticity, which may 
+    still affect the precision of coefficient estimates and standard errors.
 
 ```{=latex}
 \setcontentend
