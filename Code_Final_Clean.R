@@ -1422,7 +1422,10 @@ p_combined <- p_left + p_right +
   plot_layout(guides = "collect") & 
   theme(legend.position = "top",
         legend.box.margin = margin(0, 0, 0, 0),
-        legend.margin = margin(0, 0, 0, 0))
+        legend.margin = margin(0, 0, 0, 0),
+        plot.background  = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA)
+        )
 
 #### ==== 3.1.10 Plot: Average distance to primary schools by VG ====
 
