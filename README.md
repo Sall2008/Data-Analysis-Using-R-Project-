@@ -31,8 +31,6 @@ install.packages(c(
 
 Note: `sf` is required for handling spatial data (shapefiles).
 
----
-
 ## 📂 Directory Structure
 
 To ensure the scripts run correctly without path errors, please maintain the following directory structure. The working directory in R should be set to the `project_root`.
