@@ -171,7 +171,7 @@ df_main <- df_housing %>%
 
 cat("Final dataset dimensions:", dim(df_main), "\n")
 
-## ==== 1.5 Merge Region Data ====
+## ==== 1.5 Merge Regional Data ====
 
 df_region <- read.csv(path_region, fileEncoding = "UTF-8") %>%
   clean_names() %>%
