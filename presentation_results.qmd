@@ -238,7 +238,7 @@ $
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "100%"
-plot_met_qc_2
+fig_17_met_qc_2
 ```
 :::
 :::::
@@ -542,7 +542,7 @@ stateDiagram-v2
 #| fig-align: center
 #| warning: false
 #| message: false
-p_combined
+fig_3_p_combined
 ```
 
 ## Main Results: Continuous Model {.smaller}
@@ -590,7 +590,7 @@ tab_5_robust_checks
 #| echo: false
 #| results: asis
 #| include: true
-table_qc_dist
+tab_8_qc_dist
 ```
 
 ## Economic Mechanisms & Interpretations
@@ -695,7 +695,7 @@ table_qc_dist
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "65%"
-bar_chart_index
+fig_7_bar_chart_index
 ```
 
 **Graph**: Distribution of Social Index values across schools showing the skewed nature of the data.
@@ -710,7 +710,7 @@ bar_chart_index
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "100%"
-spa_dis
+fig_6_spa_dis
 ```
 :::
 
@@ -720,7 +720,7 @@ spa_dis
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "100%"
-plot_social_muni
+fig_10_social_muni
 ```
 :::
 :::::
@@ -769,7 +769,16 @@ $
 #| echo: false
 #| results: asis
 #| include: true
-table_reg1
+tab_6_reg_si
+```
+
+## Robustness check: Social Index
+
+```{r}
+#| echo: false
+#| results: asis
+#| include: true
+tab_7_robust_checks
 ```
 
 ## Robustness check: Queen Contiguity (Social Index)
@@ -778,7 +787,7 @@ table_reg1
 #| echo: false
 #| results: asis
 #| include: true
-table_qc_index
+tab_9_qc_index
 ```
 
 ## Social Index: Interpretaition of the Results
@@ -800,7 +809,7 @@ table_qc_index
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "85%"
-plot_si_slopri
+fig_8_si_slopri
 ```
   
 ## Social Index: Interpretaition of the Results
@@ -822,7 +831,7 @@ plot_si_slopri
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "85%"
-plot_si_slosec
+fig_9_si_slosec
 ```
 
 # Concluding Thoughts and Limitations
@@ -863,7 +872,7 @@ from the school to the center of the raster cell.
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "90%"
-plot_lim_dist
+fig_15_lim_dist
 ```
 :::
 :::::
@@ -880,7 +889,7 @@ We do not have data for every grid cell of NRW but only a fragmented set of grid
 #| fig.height: 3.4
 #| fig.align: center
 #| out.width: "90%"
-plot_lim_qc
+fig_18_lim_qc
 ```
 
 :::
