@@ -704,6 +704,9 @@ df_reg1 <- df_reg %>%
 m_good_ref <- lm(base_formula, data = df_reg1)
 summary(m_good_ref)
 
+# Calculating GVIF for model
+gvif_m_good_ref <- vif(m_good_ref)
+
 # Model with Reference "average"
 df_reg2 <- df_reg %>%
   mutate(school_quality = relevel(school_quality, ref = "average"))
@@ -1732,6 +1735,58 @@ tab_7_robust_checks <- diag_robust_si %>%
     escape = FALSE
   )
 
+#### ==== 3.2.2  Table 10: Robustness Checks with GVIF (Social Index) ====
+
+# Convert to data frame
+gvif_tab <- gvif_m_good_ref %>% 
+  as.data.frame() %>% 
+  rownames_to_column("Variable") %>% 
+  mutate(
+    GVIF_adj = if ("Df" %in% colnames(.)) GVIF^(1 / (2 * Df)) else VIF
+  ) %>% 
+  filter(
+    Variable %in% c(
+      "dist_primary_km", 
+      "school_quality", 
+      "dist_secondary_km", 
+      "log_area", 
+      "log_plot_area", 
+      "zimmeranzahl", 
+      "house_age", 
+      "dist_primary_km:school_quality", 
+      "school_quality:dist_secondary_km"
+    )
+  ) %>% 
+  mutate(
+    variable = dplyr::recode(
+      Variable,   # ← changed from term to Variable
+      "dist_primary_km"              = "Distance to primary school (km)",
+      "school_quality"               = "School Quality",
+      # add the rest if you want nice labels for all variables
+      "dist_secondary_km"            = "Distance to secondary school (km)",
+      "log_area"                     = "Log building area",
+      "log_plot_area"                = "Log plot area",
+      "zimmeranzahl"                 = "Number of rooms",
+      "house_age"                    = "House age",
+      "dist_primary_km:school_quality"       = "Dist primary × School quality",
+      "school_quality:dist_secondary_km"     = "School quality × Dist secondary"
+    )
+  )
+
+# Beamer-ready table
+fab_10_gvif <- kable(
+  gvif_tab,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 3,
+  ) %>% 
+  kableExtra::kable_styling(
+    font_size = 7, 
+    latex_options = c("scale_down", "hold_position")
+  ) %>% 
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = FALSE)
+  
 
 #### ==== 3.2.3 Figure 6: Spatial Distribution Social Index Schools in NRW ====
 
