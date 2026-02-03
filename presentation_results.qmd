@@ -249,10 +249,13 @@ plot_met_qc_2
     by the Research Data Center Ruhr (FDZ Ruhr) [@RWI_ImmobilienScout24_2023]. 
 -   **School Data**: School social index dataset from North
     Rhine-Westphalias Ministry of Schools and Education
-    [@MSB_NRW_Schulsozialindex].
+    [-@MSB_NRW_Schulsozialindex].
+-   **Regional Data**: Dataset of demographics on municipality-level in NRW. The
+    dataset contains data from INKAR [-@INKAR_2020] and Germany's Federal 
+    Statistical Office [-@Federal_Statistical_Office_2011].
 -   **Geodata**: Geodata for Germany's administrative areas used to create
     graphics of NRW. Taken from Germany's Federal Agency for Cartography and  
-    Geodesy [@BKG_2025].
+    Geodesy [-@BKG_2025].
 
 \footnotetext{Housing and school data both refer to the year 2022.}
 
@@ -281,6 +284,13 @@ stateDiagram-v2
             Dedu --> Muta
             Muta: Renaming columns
             Muta --> Merge
+        }
+        
+        Regional: Regional data
+        state Regional {
+          [*] --> Rename
+          Rename: Renamed relevant column
+          Rename --> Merge
         }
         
         School_Dist: School Social Index and Distance
