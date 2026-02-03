@@ -721,7 +721,7 @@ summary(m_bad_ref)
 ###  ==== 2.2.2 Diagnostics Social Index ====  
 
 get_model_diagnostics <- function(model) {
-  n <- nobs(model)  # Anzahl der Beobachtungen
+  n <- nobs(model)
   
   bp_p <- bptest(model)$p.value
   
@@ -731,7 +731,7 @@ get_model_diagnostics <- function(model) {
   )
   
   cook <- cooks.distance(model)
-  cook_thr <- 4 / n  # Schwellenwert für Cook's Distance
+  cook_thr <- 4 / n 
   
   tibble(
     BP_pvalue    = bp_p,
@@ -1826,7 +1826,7 @@ fig_9_si_slosec$layers <- c(
   fig_9_si_slosec$layers[1]
 )
 
-#### ==== 3.2.6 Figure 10: Average School Social Index by VG ====
+#### ==== 3.2.7 Figure 10: Average School Social Index by VG ====
 
 df_muni_social <- df_final_with_social %>%
   filter(
@@ -1865,6 +1865,10 @@ fig_10_social_muni <- ggplot(map_data_social) +
     plot.background  = element_rect(fill = "transparent", color = NA),
     panel.background = element_rect(fill = "transparent", color = NA)
   )
+
+#### ==== 3.2.8 Figure 19: Robustness checks (Social Index) with GVIF ====
+
+
 
 ### ==== 3.3 Queens Distance Graphics and Tables ====
 
