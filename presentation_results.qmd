@@ -773,11 +773,16 @@ table_qc_index
 ```
 
 ## Social Index: Interpretaition of the Results
-### Primary School Proximity
+### Primary School: Proximity and School Quality
 
--   *Distance to primary school* is still *significant* and negatively affects house prices.
--   Interaction Effect: The effect is *stronger for average schools* (Estimate = -0.041, p = 0.009), suggesting that the price drop is greater when the school quality is average.
--   *No significant effect* for bad schools (p = 0.2996).
+-   **Proximity Effect**: A strong proximity effect persists. Each additional kilometer to the nearest primary school reduces log house prices by 8% (−0.08).
+- **School Quality Effect**: There is no robust level effect for school quality. The coefficients for “Average” (−0.015) and “Bad” (−0.027) are negative but not significant, showing no evidence of a “good-school level premium”.
+
+## Social Index: Interpretaition of the Results
+### Primary School: Interaction Effect and Bad Schools
+
+- **Interaction Effect**: Proximity is more strongly capitalized for Average schools (interaction −0.036). This contradicts the expectation that “Good” schools should generate the strongest price premium regarding proximity.
+- **Bad Schools**: The interaction for Bad schools (+0.057) is not significant, possibly due to the limited sample size, indicating no clear difference from “Good” schools.
 
 ## Social Index: Interpretaition of the Results
 
@@ -790,11 +795,17 @@ plot_si_slopri
 ```
   
 ## Social Index: Interpretaition of the Results
-### Secondary School Proximity
+### Secondary Schools: Proximity and School Quality
 
--   *Distance to secondary school* is also still *significant* and negatively impacts house prices.
--   The effect is *stronger for average schools* (Estimate = 0.0307, p = 0.0096), meaning proximity to secondary schools is more impactful in areas with average school quality.
--   *No significant effect* for bad schools (p = 0.7414).
+- **Proximity Effect**: We observe a similar strong proximity effect for secondary schools. Each additional kilometer to the nearest secondary school reduces log house prices by 4.2% (-0,042).
+- **School Quality Effect**: As with primary schools, there is no robust level effect for school quality.
+
+## Social Index: Interpretaition of the Results
+### Secondary Schools: Interaction Effect and Bad Schools
+
+- **Interaction Effect**: Proximity is less strongly capitalized for Average secondary schools (interaction +0.035), aligning with the expectation that “Good” schools should have the strongest proximity premium.
+- **Bad Schools**: The interaction for Bad schools (−0.006) is not significant, possibly due to a limited number of observations.
+
 
 ## Social Index: Interpretaition of the Results
 
