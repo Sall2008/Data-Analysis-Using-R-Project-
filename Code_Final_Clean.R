@@ -1645,7 +1645,11 @@ spa_dis <- ggplot(df_grid, aes(x = lon, y = lat)) +
 bar_chart_index <- df_school_meta %>%
   ggplot(aes(x = factor(social_index))) +
   geom_bar() +
-  labs(x = "Social Index (1–9)", y = "Number of schools")
+  labs(x = "Social Index (1–9)", y = "Number of schools") +
+  theme(
+    plot.background  = element_rect(fill = "transparent", color = NA),
+    panel.background = element_rect(fill = "transparent", color = NA)
+  )
 
 
 #### ==== 3.2.4 Plot: Simple Slopes for Primary & Secondary Schools ====
